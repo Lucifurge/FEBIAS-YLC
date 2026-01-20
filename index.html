@@ -7,156 +7,82 @@
   <link rel="icon" href="ico.png">
   <style>
     /* General reset */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-    body {
-      background-color: #ffffff;
-      color: #333333;
-    }
+    body { background-color: #ffffff; color: #333; line-height: 1.6; }
 
     /* Navbar */
     nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
       padding: 1rem 2rem;
-      background: linear-gradient(to right, #006400, #ffd700); /* green-gold */
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      background: linear-gradient(90deg, #006400, #ffd700);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      position: sticky; top: 0; z-index: 1000;
     }
 
-    nav img {
-      height: 50px;
-    }
+    nav img { height: 50px; }
 
-    nav ul {
-      display: flex;
-      list-style: none;
-    }
+    nav ul { display: flex; list-style: none; }
+    nav ul li { margin-left: 1.5rem; }
+    nav ul li a { text-decoration: none; color: white; font-weight: bold; transition: color 0.3s; }
+    nav ul li a:hover { color: #ffd700; }
 
-    nav ul li {
-      margin-left: 1.5rem;
-    }
-
-    nav ul li a {
-      text-decoration: none;
-      color: white;
-      font-weight: bold;
-      transition: color 0.3s;
-    }
-
-    nav ul li a:hover {
-      color: #ffd700;
-    }
-
-    /* Header section */
+    /* Header */
     header {
       text-align: center;
-      padding: 3rem 2rem;
+      padding: 4rem 2rem 2rem 2rem;
       background-color: #f9f9f9;
     }
+    header h1 { font-size: 2.5rem; color: #006400; margin-bottom: 1rem; }
+    header p { font-size: 1.2rem; color: #555; max-width: 700px; margin: 0 auto; }
 
-    header h1 {
-      font-size: 2.5rem;
-      color: #006400;
-      margin-bottom: 1rem;
-    }
-
-    header p {
-      font-size: 1.2rem;
-      color: #555555;
-    }
-
-    /* Registration form */
+    /* Form card */
     .form-container {
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      border: 2px solid #ffd700;
+      max-width: 550px; margin: 2rem auto; padding: 2.5rem;
+      background: #fff; border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border-top: 4px solid #ffd700;
     }
 
-    .form-container h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      color: #006400;
-    }
+    .form-container h2 { text-align: center; margin-bottom: 1.5rem; color: #006400; }
 
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: bold;
-      color: #006400;
-    }
-
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #006400; }
     .form-group input,
     .form-group select {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
+      width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 8px;
+      font-size: 1rem; transition: border-color 0.3s;
     }
-
     .form-group input:focus,
-    .form-group select:focus {
-      border-color: #006400;
-      outline: none;
-    }
+    .form-group select:focus { border-color: #006400; outline: none; }
 
     button {
-      width: 100%;
-      padding: 1rem;
-      background-color: #006400;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
+      width: 100%; padding: 1rem;
+      background: linear-gradient(90deg, #006400, #228B22);
+      color: white; border: none; border-radius: 10px;
+      font-size: 1.1rem; font-weight: bold; cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
     }
+    button:hover { transform: translateY(-2px); background: linear-gradient(90deg, #228B22, #32CD32); }
 
-    button:hover {
-      background-color: #228B22;
-    }
-
+    /* Footer */
     footer {
-      text-align: center;
-      padding: 2rem;
-      background-color: #006400;
-      color: white;
-      margin-top: 2rem;
+      text-align: center; padding: 2rem; background-color: #006400; color: white; margin-top: 3rem;
     }
 
     /* Responsive */
     @media (max-width: 768px) {
-      nav ul {
-        flex-direction: column;
-      }
-
-      nav ul li {
-        margin: 0.5rem 0;
-      }
+      nav ul { flex-direction: column; text-align: center; }
+      nav ul li { margin: 0.5rem 0; }
+      .form-container { margin: 1rem; padding: 2rem; }
     }
   </style>
 </head>
 <body>
+
   <!-- Navbar -->
   <nav>
-    <div class="logo">
-      <img src="logo.png" alt="Febias College Logo">
-    </div>
+    <div class="logo"><img src="logo.jpeg" alt="Febias College Logo"></div>
     <ul>
       <li><a href="#home">Home</a></li>
       <li><a href="#register">Register</a></li>
@@ -167,13 +93,12 @@
   <!-- Header -->
   <header id="home">
     <h1>Welcome to YLC Febias College of Bible</h1>
-    <p>Join our youth fellowship and experience growth in faith, learning, and fellowship.</p>
+    <p>Join our youth fellowship and experience growth in faith, learning, and fellowship. Register now to secure your spot in our upcoming sessions.</p>
   </header>
 
   <!-- Registration Form -->
   <section class="form-container" id="register">
     <h2>Sign Up for YLC Fellowship</h2>
-    <!-- Google Form / Spreadsheet Integration -->
     <form id="registration-form">
       <div class="form-group">
         <label for="name">Full Name</label>
@@ -208,26 +133,25 @@
           <option value="Afternoon Session">Afternoon Session</option>
         </select>
       </div>
-      <button type="submit">Register</button>
+      <button type="submit">Register Now</button>
     </form>
-    <p style="text-align:center; margin-top: 1rem; color: #006400;">Your details will be recorded in our spreadsheet securely.</p>
+    <p style="text-align:center; margin-top: 1rem; color: #006400;">Your details will be securely recorded in our spreadsheet.</p>
   </section>
 
   <!-- Footer -->
   <footer id="contact">
     <p>&copy; 2026 Febias College of Bible | All Rights Reserved</p>
-    <p>Email: info@febias.edu.ph </p>
+    <p>Email: info@febias.edu.ph</p>
   </footer>
 
-  <!-- Google Spreadsheet Integration Script Example -->
+  <!-- Google Spreadsheet Integration Script -->
   <script>
     const form = document.getElementById('registration-form');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // Replace this URL with your Google Apps Script Web App URL
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbwsLB7MG-BTdOIDBQTSahLL8zB475PQ7jA8CTcaWSYFrbVCbHEAvp9-4OMiJn34qbWOBQ/exec;
+      const scriptURL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
       const formData = new FormData(form);
 
@@ -244,5 +168,6 @@
       }
     });
   </script>
+
 </body>
 </html>
