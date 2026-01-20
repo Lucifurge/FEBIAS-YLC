@@ -7,7 +7,7 @@
 
 <link rel="icon" href="logo.ico">
 
-<!-- Elegant Biblical Font for YLC -->
+<!-- Elegant Biblical Font -->
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -48,7 +48,7 @@ body {
   z-index: -2;
   background: linear-gradient(
     to bottom,
-    rgba(255,255,255,.88),
+    rgba(255,255,255,.9),
     rgba(255,255,255,.96)
   );
 }
@@ -66,9 +66,7 @@ nav {
   justify-content: space-between;
 }
 
-nav img {
-  height: 54px;
-}
+nav img { height: 54px; }
 
 nav ul {
   list-style: none;
@@ -94,9 +92,7 @@ nav a::after {
   transition: .3s;
 }
 
-nav a:hover::after {
-  width: 100%;
-}
+nav a:hover::after { width: 100%; }
 
 /* ================= HERO ================= */
 header {
@@ -107,21 +103,18 @@ header {
 header h1 {
   font-size: 3rem;
   color: #0b3d2e;
-  margin-bottom: .8rem;
 }
 
 .ylc {
   font-family: "Cinzel", serif;
   letter-spacing: 6px;
   color: #d4af37;
-  text-shadow:
-    0 0 6px rgba(212,175,55,.6),
-    0 0 16px rgba(11,61,46,.4);
+  text-shadow: 0 0 8px rgba(212,175,55,.6);
 }
 
 header p {
   max-width: 900px;
-  margin: auto;
+  margin: 1rem auto 0;
   font-size: 1.2rem;
   color: #374151;
 }
@@ -129,7 +122,7 @@ header p {
 /* ================= SECTIONS ================= */
 section {
   max-width: 1200px;
-  margin: 3rem auto;
+  margin: 3.5rem auto;
   padding: 0 2rem;
 }
 
@@ -146,12 +139,10 @@ section {
   border: 2px solid #d4af37;
   box-shadow: 0 14px 40px rgba(0,0,0,.12);
   padding: 1.6rem;
-  transition: transform .35s ease;
+  transition: transform .3s;
 }
 
-.card:hover {
-  transform: translateY(-10px);
-}
+.card:hover { transform: translateY(-8px); }
 
 .card img {
   width: 100%;
@@ -161,8 +152,8 @@ section {
 
 .card h3 {
   color: #0b3d2e;
-  margin-bottom: .6rem;
   text-align: center;
+  margin-bottom: .6rem;
 }
 
 .card p {
@@ -170,30 +161,38 @@ section {
   color: #374151;
 }
 
-/* ================= YLC SLIDESHOW ================= */
+/* ================= PERFECT SLIDESHOW ================= */
 .thrive {
   text-align: center;
 }
 
 .thrive h2 {
   color: #0b3d2e;
-  margin-bottom: 1.5rem;
-  font-size: 2.1rem;
+  margin-bottom: 1.8rem;
+  font-size: 2.2rem;
 }
 
 .thrive-box {
   position: relative;
-  max-width: 1100px;
+  max-width: 1150px;
   margin: auto;
   border-radius: 18px;
   overflow: hidden;
   border: 4px solid #d4af37;
-  box-shadow: 0 20px 55px rgba(0,0,0,.25);
+  box-shadow: 0 18px 55px rgba(0,0,0,.25);
+}
+
+/* MAGIC: responsive perfect size */
+.thrive-slides {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 520px;
 }
 
 .thrive-slides img {
   width: 100%;
-  height: 500px; /* PERFECT HEIGHT */
+  height: 100%;
   object-fit: cover;
   position: absolute;
   inset: 0;
@@ -206,21 +205,21 @@ section {
 .thrive-slides img:nth-child(3){ animation-delay:10s; }
 
 @keyframes thriveFade {
-  0%   { opacity:0; }
-  10%  { opacity:1; }
-  30%  { opacity:1; }
-  40%  { opacity:0; }
+  0% { opacity:0; }
+  10% { opacity:1; }
+  30% { opacity:1; }
+  40% { opacity:0; }
   100% { opacity:0; }
 }
 
 .thrive-caption {
-  background: rgba(11,61,46,.9);
+  background: rgba(11,61,46,.92);
   color: #ffffff;
-  padding: 1.6rem;
+  padding: 1.5rem;
   font-size: 1.05rem;
 }
 
-/* ================= REGISTRATION FORM ================= */
+/* ================= FORM ================= */
 .form-box {
   max-width: 620px;
   margin: auto;
@@ -234,14 +233,12 @@ section {
 .form-box h2 {
   text-align: center;
   color: #0b3d2e;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.6rem;
 }
 
 label {
-  display: block;
   font-weight: 600;
   color: #0b3d2e;
-  margin-bottom: .3rem;
 }
 
 input, select {
@@ -277,14 +274,10 @@ footer {
   margin-top: 4rem;
 }
 
-/* ================= RESPONSIVE ================= */
-@media(max-width:1024px){
-  .thrive-slides img { height: 420px; }
-}
-
+/* ================= MOBILE ================= */
 @media(max-width:768px){
   header h1 { font-size: 2.3rem; }
-  .thrive-slides img { height: 300px; }
+  .thrive-slides { max-height: 360px; }
 }
 </style>
 </head>
@@ -295,7 +288,7 @@ footer {
 <div class="bg-mask"></div>
 
 <nav>
-  <img src="logo.jpg" alt="FEBIAS Logo">
+  <img src="logo.jpg">
   <ul>
     <li><a href="#about">About</a></li>
     <li><a href="#thrive">YLC</a></li>
@@ -305,19 +298,19 @@ footer {
 
 <header>
   <h1>Youth Leaders Camp <span class="ylc">YLC</span></h1>
-  <p>FEBIAS College of Bible Youth Fellowship — building Christ-centered leaders for today and tomorrow.</p>
+  <p>FEBIAS College of Bible Youth Fellowship — building Christ-centered leaders.</p>
 </header>
 
 <section id="about" class="info-grid">
   <div class="card">
-    <img src="qw.jpg">
+    <img src="fcb.jpg">
     <h3>FEBIAS College of Bible</h3>
-    <p>FEBIAS is committed to biblical education, discipleship, and training faithful servants of Christ.</p>
+    <p>Training faithful servants of Christ through biblical education and discipleship.</p>
   </div>
   <div class="card">
     <img src="fcb.jpg">
     <h3>Youth Leaders Camp</h3>
-    <p>The YLC equips young believers through worship, leadership training, fellowship, and spiritual growth.</p>
+    <p>Equipping youth through worship, leadership training, and spiritual growth.</p>
   </div>
 </section>
 
