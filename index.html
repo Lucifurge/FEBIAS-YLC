@@ -3,216 +3,376 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC Febias College of Bible Registration</title>
+<title>YLC | FEBIAS College of Bible</title>
 <link rel="icon" href="logo.ico">
+
 <style>
-  /* Reset */
-  * { margin: 0; padding: 0; box-sizing: border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+/* ================= RESET ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
 
-  body { overflow-x: hidden; background: #fff; color: #222; }
+body {
+  background: #fff;
+  color: #1f2937;
+  overflow-x: hidden;
+}
 
-  /* Background slideshow with mask */
-  .slideshow {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
-    background-size: cover; background-position: center; animation: slideBg 18s infinite;
-  }
-  .overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(255,255,255,0.8); z-index: -1;
-  }
-  .floating {
-    position: absolute; width: 50px; height: 50px; border-radius: 50%;
-    background: rgba(255,215,0,0.4); animation: float 6s infinite ease-in-out;
-  }
+/* ================= BACKGROUND SLIDESHOW ================= */
+.bg-slideshow {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  animation: bgFade 24s infinite ease-in-out;
+  background-size: cover;
+  background-position: center;
+}
 
-  @keyframes float {
-    0% { transform: translateY(0) translateX(0); opacity: 0.7; }
-    50% { transform: translateY(-30px) translateX(20px); opacity: 0.5; }
-    100% { transform: translateY(0) translateX(0); opacity: 0.7; }
-  }
+@keyframes bgFade {
+  0%   { background-image: url("f.jpg"); }
+  33%  { background-image: url("c.jpg"); }
+  66%  { background-image: url("b.jpg"); }
+  100% { background-image: url("f.jpg"); }
+}
 
-  @keyframes slideBg {
-    0% { background-image: url('f.jpg'); }
-    33% { background-image: url('c.jpg'); }
-    66% { background-image: url('b.jpg'); }
-    100% { background-image: url('f.jpg'); }
-  }
+/* FEBIAS soft mask */
+.bg-mask {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.88),
+      rgba(255,255,255,0.92)
+    );
+}
 
-  /* Navbar */
-  nav {
-    display:flex; justify-content: space-between; align-items:center;
-    padding:1rem 2rem; background-color:#013220; border-bottom:4px solid #ffd700;
-    box-shadow:0 4px 6px rgba(0,0,0,0.15); position:sticky; top:0; z-index:10;
-  }
-  nav img{height:50px;}
-  nav ul{display:flex; list-style:none;}
-  nav ul li{margin-left:1.8rem;}
-  nav ul li a{
-    text-decoration:none; color:white; font-weight:600; font-size:1rem;
-    transition: color 0.3s, border-bottom 0.3s; padding-bottom:3px;
-  }
-  nav ul li a:hover{color:#ffd700; border-bottom:2px solid #ffd700;}
+/* Floating accents */
+.float {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255,215,0,0.25);
+  animation: float 8s infinite ease-in-out;
+  z-index: -1;
+}
 
-  /* Header */
-  header{text-align:center; padding:3rem 2rem 1.5rem; animation: fadeIn 2s ease forwards;}
-  header h1{font-size:2.8rem; color:#013220; margin-bottom:1rem;}
-  header p{font-size:1.2rem; max-width:800px; margin:auto; color:#444;}
+.float:nth-child(1){ top:20%; left:8%; }
+.float:nth-child(2){ top:65%; left:80%; width:80px; height:80px; }
+.float:nth-child(3){ top:45%; left:35%; width:40px; height:40px; }
 
-  /* Info Section */
-  .info-section{margin:2rem auto; display:flex; justify-content:center; align-items:center; gap:2rem; flex-wrap:wrap; max-width:1000px; padding:1rem;}
-  .info-card{
-    background:#fff; border-radius:12px; border:2px solid #ffd700;
-    box-shadow:0 6px 18px rgba(0,0,0,0.1); max-width:450px; padding:1.5rem;
-    transition:transform 0.3s;
-  }
-  .info-card:hover{transform:translateY(-5px);}
-  .info-card img{width:100%; border-radius:10px; margin-bottom:1rem;}
-  .info-card h3{color:#013220; margin-bottom:0.8rem; text-align:center;}
-  .info-card p{font-size:1rem; color:#333; line-height:1.5; margin-bottom:1rem;}
+@keyframes float {
+  0% { transform: translateY(0); opacity: .6; }
+  50% { transform: translateY(-35px); opacity: .3; }
+  100% { transform: translateY(0); opacity: .6; }
+}
 
-  /* Last Year Thrive Section */
-  .thrive-section{margin:3rem auto; max-width:1000px; padding:1rem; text-align:center;}
-  .thrive-section h2{color:#013220; margin-bottom:2rem;}
-  .thrive-cards{display:flex; flex-wrap:wrap; justify-content:center; gap:1.5rem;}
-  .thrive-card{
-    background:#fff; border-radius:12px; border:2px solid #ffd700;
-    box-shadow:0 6px 18px rgba(0,0,0,0.1); max-width:350px; padding:1rem;
-    transition: transform 0.3s; position:relative;
-    overflow:hidden;
-  }
-  .thrive-card img{width:100%; border-radius:10px; margin-bottom:1rem;}
-  .thrive-card:hover{transform:translateY(-5px);}
-  .thrive-card p{font-size:1rem; color:#333; line-height:1.5;}
+/* ================= NAVBAR ================= */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #0b3d2e;
+  border-bottom: 4px solid #d4af37;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-  /* Registration Form */
-  .form-wrapper{max-width:600px; margin:auto; padding:2rem; background:#fff; border-radius:15px; border-top:4px solid #ffd700; box-shadow:0 8px 22px rgba(0,0,0,0.15); animation:slideUp 1.5s ease forwards;}
-  .form-wrapper h2{text-align:center; color:#013220; margin-bottom:1.5rem;}
-  .form-group{margin-bottom:1rem;}
-  .form-group label{font-weight:bold; color:#013220; display:block; margin-bottom:.4rem;}
-  .form-group input,.form-group select{width:100%; padding:.75rem; font-size:1rem; border:1px solid #aaa; border-radius:8px; transition:border-color .3s, transform .2s;}
-  .form-group input:focus,.form-group select:focus{border-color:#013220; outline:none; transform:scale(1.02);}
-  button{width:100%; padding:1rem; font-size:1.1rem; background:linear-gradient(90deg,#013220,#228B22); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; transition:background .3s, transform .2s;}
-  button:hover{background:linear-gradient(90deg,#228B22,#32CD32); transform:translateY(-3px);}
+nav img { height: 52px; }
 
-  /* Footer */
-  footer{text-align:center; padding:1.8rem; background-color:#013220; color:white; margin-top:3rem;}
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+}
 
-  /* Animations */
-  @keyframes slideUp{from{opacity:0; transform:translateY(50px);} to{opacity:1; transform:translateY(0);}}
-  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: .3px;
+  position: relative;
+}
 
-  @media(max-width:768px){.info-section,.thrive-cards{flex-direction:column;} nav ul{flex-direction:column; text-align:center;} nav ul li{margin:.5rem 0;}}
+nav a::after {
+  content:"";
+  position:absolute;
+  left:0; bottom:-6px;
+  width:0; height:2px;
+  background:#d4af37;
+  transition:.3s;
+}
+
+nav a:hover::after { width:100%; }
+
+/* ================= HERO ================= */
+header {
+  text-align: center;
+  padding: 4rem 2rem 2rem;
+}
+
+header h1 {
+  font-size: 3rem;
+  color: #0b3d2e;
+  margin-bottom: 1rem;
+}
+
+header p {
+  max-width: 850px;
+  margin: auto;
+  font-size: 1.2rem;
+  color: #374151;
+}
+
+/* ================= SECTIONS ================= */
+section {
+  max-width: 1100px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+/* ================= INFO CARDS ================= */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+  gap: 2rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  border: 2px solid #d4af37;
+  box-shadow: 0 12px 30px rgba(0,0,0,.1);
+  padding: 1.5rem;
+  transition: transform .35s;
+}
+
+.card:hover { transform: translateY(-8px); }
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.card h3 {
+  color: #0b3d2e;
+  margin-bottom: .7rem;
+  text-align: center;
+}
+
+.card p {
+  line-height: 1.6;
+  color: #374151;
+}
+
+/* ================= THRIVE SLIDESHOW ================= */
+.thrive {
+  text-align: center;
+}
+
+.thrive h2 {
+  color: #0b3d2e;
+  margin-bottom: 1.5rem;
+}
+
+.thrive-box {
+  position: relative;
+  max-width: 850px;
+  margin: auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid #d4af37;
+  box-shadow: 0 15px 40px rgba(0,0,0,.15);
+}
+
+.thrive-slides img {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: thriveFade 15s infinite;
+}
+
+.thrive-slides img:nth-child(1){ animation-delay:0s; }
+.thrive-slides img:nth-child(2){ animation-delay:5s; }
+.thrive-slides img:nth-child(3){ animation-delay:10s; }
+
+@keyframes thriveFade {
+  0% { opacity:0; }
+  10% { opacity:1; }
+  30% { opacity:1; }
+  40% { opacity:0; }
+  100% { opacity:0; }
+}
+
+.thrive-caption {
+  position: relative;
+  background: rgba(11,61,46,.85);
+  color: #fff;
+  padding: 1.5rem;
+}
+
+/* ================= FORM ================= */
+.form-box {
+  max-width: 600px;
+  margin: auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  border-top: 4px solid #d4af37;
+  box-shadow: 0 12px 30px rgba(0,0,0,.15);
+}
+
+.form-box h2 {
+  text-align: center;
+  color: #0b3d2e;
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-bottom: .3rem;
+  font-weight: 600;
+  color: #0b3d2e;
+}
+
+input, select {
+  width: 100%;
+  padding: .8rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid #9ca3af;
+}
+
+button {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  background: linear-gradient(90deg,#0b3d2e,#1f7a4d);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: linear-gradient(90deg,#1f7a4d,#2fa36a);
+}
+
+/* ================= FOOTER ================= */
+footer {
+  background:#0b3d2e;
+  color:#fff;
+  text-align:center;
+  padding:2rem;
+  margin-top:4rem;
+}
+
+@media(max-width:768px){
+  header h1{ font-size:2.3rem; }
+}
 </style>
 </head>
+
 <body>
 
-  <div class="slideshow"></div>
-  <div class="overlay"></div>
-  <!-- Floating particles -->
-  <div class="floating" style="top:20%; left:10%; width:40px; height:40px;"></div>
-  <div class="floating" style="top:50%; left:80%; width:60px; height:60px;"></div>
-  <div class="floating" style="top:70%; left:30%; width:50px; height:50px;"></div>
+<div class="bg-slideshow"></div>
+<div class="bg-mask"></div>
+<div class="float"></div>
+<div class="float"></div>
+<div class="float"></div>
 
-  <!-- Navbar -->
-  <nav>
-    <div class="logo"><img src="logo.jpg" alt="Febias College Logo"></div>
-    <ul>
-      <li><a href="#home">Home</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="#register">Register</a></li>
-      <li><a href="#thrive">Thrive</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-  </nav>
+<nav>
+  <img src="logo.jpg">
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#thrive">Thrive</a></li>
+    <li><a href="#register">Register</a></li>
+  </ul>
+</nav>
 
-  <!-- Header -->
-  <header id="home">
-    <h1>Welcome to YLC Febias College of Bible</h1>
-    <p>Join our youth fellowship and grow in faith, leadership, and community as part of FEBIAS College of Bible — equipping godly servant leaders since 1948.</p>
-  </header>
+<header>
+  <h1>Youth Leaders Camp (YLC)</h1>
+  <p>FEBIAS College of Bible Youth Fellowship — nurturing faith, leadership, and Christ-centered service.</p>
+</header>
 
-  <!-- About Section -->
-  <section class="info-section" id="about">
-    <div class="info-card">
-      <img src="fcb.jpg" alt="Febias College of Bible">
-      <h3>About FEBIAS College of Bible</h3>
-      <p>FEBIAS College of Bible equips students to become spiritual leaders, pastors, and teachers through holistic biblical training rooted in Christ and service to others.</p>
+<section id="about" class="info-grid">
+  <div class="card">
+    <img src="fcb.jpg">
+    <h3>FEBIAS College of Bible</h3>
+    <p>FEBIAS equips Christian leaders through biblical education, discipleship, and ministry training.</p>
+  </div>
+  <div class="card">
+    <img src="fcb.jpg">
+    <h3>Youth Leaders Camp</h3>
+    <p>YLC empowers young leaders through worship, teaching, fellowship, and leadership development.</p>
+  </div>
+</section>
+
+<section id="thrive" class="thrive">
+  <h2>Last Year YLC Theme: <strong>THRIVE</strong></h2>
+  <div class="thrive-box">
+    <div class="thrive-slides">
+      <img src="1.jpg">
+      <img src="2.jpg">
+      <img src="3.jpg">
     </div>
-    <div class="info-card">
-      <img src="fcb.jpg" alt="YLC Camp">
-      <h3>YLC Youth Leaders Camp</h3>
-      <p>The Youth Leaders Camp (YLC) is a dynamic experience designed to nurture youth in faith, leadership, and Christian living through teaching, mentorship, worship, and community.</p>
+    <div class="thrive-caption">
+      <p>
+        YLC Thrive focused on spiritual growth, leadership formation, unity, and empowering youth to flourish in Christ.
+      </p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Registration Form -->
-  <section class="form-wrapper" id="register">
-    <h2>Sign Up for YLC Fellowship</h2>
+<section id="register">
+  <div class="form-box">
+    <h2>Register Now</h2>
     <form id="registration-form">
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" name="name" required>
-      </div>
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" required>
-      </div>
-      <div class="form-group">
-        <label for="phone">Phone Number</label>
-        <input type="text" id="phone" name="phone">
-      </div>
-      <div class="form-group">
-        <label for="age">Age</label>
-        <input type="number" id="age" name="age">
-      </div>
-      <div class="form-group">
-        <label for="gender">Gender</label>
-        <select id="gender" name="gender">
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <button type="submit">Register Now</button>
+      <label>Full Name</label>
+      <input type="text" name="name" required>
+      <label>Email</label>
+      <input type="email" name="email" required>
+      <label>Phone</label>
+      <input type="text" name="phone">
+      <label>Age</label>
+      <input type="number" name="age">
+      <label>Gender</label>
+      <select name="gender">
+        <option value="">Select</option>
+        <option>Male</option>
+        <option>Female</option>
+      </select>
+      <button type="submit">Submit Registration</button>
     </form>
-    <p style="text-align:center; margin-top:1rem; color:#013220;">Your details will be securely recorded in our spreadsheet.</p>
-  </section>
+  </div>
+</section>
 
-  <!-- Last Year Thrive Section -->
-  <section class="thrive-section" id="thrive">
-    <h2>Last Year YLC Thrive Program</h2>
-    <div class="thrive-cards">
-      <div class="thrive-card">
-        <img src="fcb.jpg" alt="YLC Thrive">
-        <p>The Thrive program last year was focused on equipping youth with leadership skills, spiritual growth, and teamwork experiences that strengthened faith and community bonds.</p>
-      </div>
-      <div class="thrive-card">
-        <img src="fcb.jpg" alt="YLC Thrive Activity">
-        <p>Activities included worship sessions, mentorship, outdoor teamwork, and seminars designed to inspire students to serve as future leaders in their communities and church.</p>
-      </div>
-    </div>
-  </section>
+<footer>
+  © 2026 FEBIAS College of Bible
+</footer>
 
-  <!-- Footer -->
-  <footer id="contact">
-    <p>&copy; 2026 FEBIAS College of Bible | All Rights Reserved</p>
-    <p>Email: info@febias.edu.ph</p>
-  </footer>
+<script>
+document.getElementById("registration-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const url = "https://script.google.com/macros/s/AKfycbwsLB7MG-BTdOIDBQTSahLL8zB475PQ7jA8CTcaWSYFrbVCbHEAvp9-4OMiJn34qbWOBQ/exec";
+  const data = new FormData(e.target);
+  const res = await fetch(url,{method:"POST",body:data});
+  alert(res.ok ? "Registration submitted!" : "Error submitting form");
+  e.target.reset();
+});
+</script>
 
-  <!-- Integration Script -->
-  <script>
-    const form = document.getElementById('registration-form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbwsLB7MG-BTdOIDBQTSahLL8zB475PQ7jA8CTcaWSYFrbVCbHEAvp9-4OMiJn34qbWOBQ/exec';
-      const formData = new FormData(form);
-      try{
-        const res = await fetch(scriptURL, { method:'POST', body: formData });
-        if(res.ok){ alert('Thank you! Registration submitted.'); form.reset(); }
-        else{ alert('Error submitting form.'); }
-      }catch(err){ alert('Connection error.'); }
-    });
-  </script>
 </body>
 </html>
