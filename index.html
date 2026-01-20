@@ -1,153 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF‑8">
-  <meta name="viewport" content="width=device‑width, initial‑scale=1.0">
-  <title>YLC Febias College of Bible Registration</title>
-  <link rel="icon" href="logo.ico">
-  <style>
-    /* Reset */
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YLC Febias College of Bible Registration</title>
+<link rel="icon" href="logo.ico">
+<style>
+  /* Reset */
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-    body {
-      overflow-x: hidden;
-      background: #fff;
-      color: #222;
-    }
+  body { overflow-x: hidden; background: #fff; color: #222; }
 
-    /* Slideshow Background */
-    .slideshow {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: -2;
-      animation: slideBg 18s infinite;
-      background-size: cover;
-      background-position: center;
-    }
-    @keyframes slideBg {
-      0% { background-image: url('f.jpg'); }
-      33% { background-image: url('c.jpg'); }
-      66% { background-image: url('b.jpg'); }
-      100% { background-image: url('f.jpg'); }
-    }
+  /* Background slideshow with mask */
+  .slideshow {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+    background-size: cover; background-position: center; animation: slideBg 18s infinite;
+  }
+  .overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.8); z-index: -1;
+  }
+  .floating {
+    position: absolute; width: 50px; height: 50px; border-radius: 50%;
+    background: rgba(255,215,0,0.4); animation: float 6s infinite ease-in-out;
+  }
 
-    /* Overlay for readability */
-    .overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255,255,255,0.85);
-      z-index: -1;
-    }
+  @keyframes float {
+    0% { transform: translateY(0) translateX(0); opacity: 0.7; }
+    50% { transform: translateY(-30px) translateX(20px); opacity: 0.5; }
+    100% { transform: translateY(0) translateX(0); opacity: 0.7; }
+  }
 
-    /* Navbar */
-    nav {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 1rem 2rem;
-      background-color: #013220; /* dark green */
-      border-bottom: 4px solid #ffd700; /* gold border */
-      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-      position: sticky; top: 0; z-index: 10;
-    }
-    nav img { height: 50px; }
-    nav ul { display: flex; list-style: none; }
-    nav ul li { margin-left: 1.8rem; }
-    nav ul li a {
-      text-decoration: none; color: white; font-weight: 600; font-size: 1rem;
-      transition: color 0.3s, border-bottom 0.3s; padding-bottom: 3px;
-    }
-    nav ul li a:hover { color: #ffd700; border-bottom: 2px solid #ffd700; }
+  @keyframes slideBg {
+    0% { background-image: url('f.jpg'); }
+    33% { background-image: url('c.jpg'); }
+    66% { background-image: url('b.jpg'); }
+    100% { background-image: url('f.jpg'); }
+  }
 
-    /* Intro Header */
-    header {
-      text-align: center; padding: 3rem 2rem 1.5rem;
-      animation: fadeIn 2s ease forwards;
-    }
-    header h1 { font-size: 2.8rem; color: #013220; margin-bottom: 1rem; }
-    header p { font-size: 1.2rem; max-width: 800px; margin: auto; color: #444; }
+  /* Navbar */
+  nav {
+    display:flex; justify-content: space-between; align-items:center;
+    padding:1rem 2rem; background-color:#013220; border-bottom:4px solid #ffd700;
+    box-shadow:0 4px 6px rgba(0,0,0,0.15); position:sticky; top:0; z-index:10;
+  }
+  nav img{height:50px;}
+  nav ul{display:flex; list-style:none;}
+  nav ul li{margin-left:1.8rem;}
+  nav ul li a{
+    text-decoration:none; color:white; font-weight:600; font-size:1rem;
+    transition: color 0.3s, border-bottom 0.3s; padding-bottom:3px;
+  }
+  nav ul li a:hover{color:#ffd700; border-bottom:2px solid #ffd700;}
 
-    /* Info Section */
-    .info-section {
-      margin: 2rem auto 3rem auto;
-      display: flex; justify-content: center;
-      align-items: center;
-      gap: 2rem; flex-wrap: wrap;
-      max-width: 1000px; padding: 1rem;
-    }
+  /* Header */
+  header{text-align:center; padding:3rem 2rem 1.5rem; animation: fadeIn 2s ease forwards;}
+  header h1{font-size:2.8rem; color:#013220; margin-bottom:1rem;}
+  header p{font-size:1.2rem; max-width:800px; margin:auto; color:#444;}
 
-    .info-card {
-      background: #fff; border-radius: 12px; border: 2px solid #ffd700;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-      max-width: 450px; padding: 1.5rem;
-      transition: transform 0.3s;
-    }
-    .info-card:hover { transform: translateY(-5px); }
-    .info-card img {
-      width: 100%; border-radius: 10px; margin-bottom: 1rem;
-    }
-    .info-card h3 {
-      color: #013220; margin-bottom: 0.8rem;
-      text-align: center;
-    }
-    .info-card p {
-      font-size: 1rem; color: #333; line-height: 1.5;
-      margin-bottom: 1rem;
-    }
+  /* Info Section */
+  .info-section{margin:2rem auto; display:flex; justify-content:center; align-items:center; gap:2rem; flex-wrap:wrap; max-width:1000px; padding:1rem;}
+  .info-card{
+    background:#fff; border-radius:12px; border:2px solid #ffd700;
+    box-shadow:0 6px 18px rgba(0,0,0,0.1); max-width:450px; padding:1.5rem;
+    transition:transform 0.3s;
+  }
+  .info-card:hover{transform:translateY(-5px);}
+  .info-card img{width:100%; border-radius:10px; margin-bottom:1rem;}
+  .info-card h3{color:#013220; margin-bottom:0.8rem; text-align:center;}
+  .info-card p{font-size:1rem; color:#333; line-height:1.5; margin-bottom:1rem;}
 
-    /* Registration Form */
-    .form-wrapper {
-      max-width: 600px; margin: auto; padding: 2rem;
-      background: #fff; border-radius: 15px;
-      border-top: 4px solid #ffd700;
-      box-shadow: 0 8px 22px rgba(0,0,0,0.15);
-      animation: slideUp 1.5s ease forwards;
-    }
-    .form-wrapper h2 {
-      text-align: center; color: #013220; margin-bottom: 1.5rem;
-    }
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { font-weight: bold; color: #013220; display: block; margin-bottom: .4rem; }
-    .form-group input, .form-group select {
-      width: 100%; padding: .75rem; font-size: 1rem;
-      border: 1px solid #aaa; border-radius: 8px;
-      transition: border-color .3s, transform .2s;
-    }
-    .form-group input:focus, .form-group select:focus {
-      border-color: #013220; outline: none; transform: scale(1.02);
-    }
-    button {
-      width: 100%; padding: 1rem; font-size: 1.1rem;
-      background: linear-gradient(90deg, #013220, #228B22);
-      color: white; border: none; border-radius: 10px;
-      font-weight: bold; cursor: pointer;
-      transition: background .3s, transform .2s;
-    }
-    button:hover {
-      background: linear-gradient(90deg,#228B22,#32CD32);
-      transform: translateY(-3px);
-    }
+  /* Last Year Thrive Section */
+  .thrive-section{margin:3rem auto; max-width:1000px; padding:1rem; text-align:center;}
+  .thrive-section h2{color:#013220; margin-bottom:2rem;}
+  .thrive-cards{display:flex; flex-wrap:wrap; justify-content:center; gap:1.5rem;}
+  .thrive-card{
+    background:#fff; border-radius:12px; border:2px solid #ffd700;
+    box-shadow:0 6px 18px rgba(0,0,0,0.1); max-width:350px; padding:1rem;
+    transition: transform 0.3s; position:relative;
+    overflow:hidden;
+  }
+  .thrive-card img{width:100%; border-radius:10px; margin-bottom:1rem;}
+  .thrive-card:hover{transform:translateY(-5px);}
+  .thrive-card p{font-size:1rem; color:#333; line-height:1.5;}
 
-    /* Footer */
-    footer {
-      text-align: center; padding: 1.8rem; background-color: #013220;
-      color: white; margin-top: 3rem;
-    }
+  /* Registration Form */
+  .form-wrapper{max-width:600px; margin:auto; padding:2rem; background:#fff; border-radius:15px; border-top:4px solid #ffd700; box-shadow:0 8px 22px rgba(0,0,0,0.15); animation:slideUp 1.5s ease forwards;}
+  .form-wrapper h2{text-align:center; color:#013220; margin-bottom:1.5rem;}
+  .form-group{margin-bottom:1rem;}
+  .form-group label{font-weight:bold; color:#013220; display:block; margin-bottom:.4rem;}
+  .form-group input,.form-group select{width:100%; padding:.75rem; font-size:1rem; border:1px solid #aaa; border-radius:8px; transition:border-color .3s, transform .2s;}
+  .form-group input:focus,.form-group select:focus{border-color:#013220; outline:none; transform:scale(1.02);}
+  button{width:100%; padding:1rem; font-size:1.1rem; background:linear-gradient(90deg,#013220,#228B22); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; transition:background .3s, transform .2s;}
+  button:hover{background:linear-gradient(90deg,#228B22,#32CD32); transform:translateY(-3px);}
 
-    /* Animations */
-    @keyframes slideUp { from {opacity:0; transform: translateY(50px);} to {opacity:1; transform: translateY(0);} }
-    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+  /* Footer */
+  footer{text-align:center; padding:1.8rem; background-color:#013220; color:white; margin-top:3rem;}
 
-    @media(max-width:768px) {
-      .info-section { flex-direction: column; }
-      nav ul { flex-direction: column; text-align: center; }
-      nav ul li { margin: .5rem 0; }
-    }
-  </style>
+  /* Animations */
+  @keyframes slideUp{from{opacity:0; transform:translateY(50px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+
+  @media(max-width:768px){.info-section,.thrive-cards{flex-direction:column;} nav ul{flex-direction:column; text-align:center;} nav ul li{margin:.5rem 0;}}
+</style>
 </head>
 <body>
 
   <div class="slideshow"></div>
   <div class="overlay"></div>
+  <!-- Floating particles -->
+  <div class="floating" style="top:20%; left:10%; width:40px; height:40px;"></div>
+  <div class="floating" style="top:50%; left:80%; width:60px; height:60px;"></div>
+  <div class="floating" style="top:70%; left:30%; width:50px; height:50px;"></div>
 
   <!-- Navbar -->
   <nav>
@@ -156,6 +120,7 @@
       <li><a href="#home">Home</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#register">Register</a></li>
+      <li><a href="#thrive">Thrive</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
   </nav>
@@ -163,7 +128,7 @@
   <!-- Header -->
   <header id="home">
     <h1>Welcome to YLC Febias College of Bible</h1>
-    <p>Join our youth fellowship and grow in faith, leadership, and community as part of FEBIAS College of Bible — equipping godly servant leaders since 1948. :contentReference[oaicite:1]{index=1}</p>
+    <p>Join our youth fellowship and grow in faith, leadership, and community as part of FEBIAS College of Bible — equipping godly servant leaders since 1948.</p>
   </header>
 
   <!-- About Section -->
@@ -171,11 +136,12 @@
     <div class="info-card">
       <img src="fcb.jpg" alt="Febias College of Bible">
       <h3>About FEBIAS College of Bible</h3>
-      <p>FEBIAS College of Bible equips students to become spiritual leaders, pastors, and teachers through holistic biblical training rooted in Christ and service to others. :contentReference[oaicite:2]{index=2}</p>
+      <p>FEBIAS College of Bible equips students to become spiritual leaders, pastors, and teachers through holistic biblical training rooted in Christ and service to others.</p>
     </div>
     <div class="info-card">
+      <img src="fcb.jpg" alt="YLC Camp">
       <h3>YLC Youth Leaders Camp</h3>
-      <p>The Youth Leaders Camp (YLC) is a dynamic experience designed to nurture youth in faith, leadership, and Christian living through teaching, mentorship, worship, and community. Participants develop deeper spiritual roots and grow in their calling. :contentReference[oaicite:3]{index=3}</p>
+      <p>The Youth Leaders Camp (YLC) is a dynamic experience designed to nurture youth in faith, leadership, and Christian living through teaching, mentorship, worship, and community.</p>
     </div>
   </section>
 
@@ -213,26 +179,40 @@
     <p style="text-align:center; margin-top:1rem; color:#013220;">Your details will be securely recorded in our spreadsheet.</p>
   </section>
 
+  <!-- Last Year Thrive Section -->
+  <section class="thrive-section" id="thrive">
+    <h2>Last Year YLC Thrive Program</h2>
+    <div class="thrive-cards">
+      <div class="thrive-card">
+        <img src="fcb.jpg" alt="YLC Thrive">
+        <p>The Thrive program last year was focused on equipping youth with leadership skills, spiritual growth, and teamwork experiences that strengthened faith and community bonds.</p>
+      </div>
+      <div class="thrive-card">
+        <img src="fcb.jpg" alt="YLC Thrive Activity">
+        <p>Activities included worship sessions, mentorship, outdoor teamwork, and seminars designed to inspire students to serve as future leaders in their communities and church.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer id="contact">
     <p>&copy; 2026 FEBIAS College of Bible | All Rights Reserved</p>
     <p>Email: info@febias.edu.ph</p>
   </footer>
 
-  <!-- Integration Script (keep your Apps Script link) -->
+  <!-- Integration Script -->
   <script>
     const form = document.getElementById('registration-form');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const scriptURL = 'https://script.google.com/macros/s/AKfycbwsLB7MG-BTdOIDBQTSahLL8zB475PQ7jA8CTcaWSYFrbVCbHEAvp9-4OMiJn34qbWOBQ/exec';
       const formData = new FormData(form);
-      try {
-        const res = await fetch(scriptURL,{ method:'POST', body: formData });
-        if (res.ok) { alert('Thank you! Registration submitted.'); form.reset(); }
-        else { alert('Error submitting form.'); }
-      } catch (err) { alert('Connection error.'); }
+      try{
+        const res = await fetch(scriptURL, { method:'POST', body: formData });
+        if(res.ok){ alert('Thank you! Registration submitted.'); form.reset(); }
+        else{ alert('Error submitting form.'); }
+      }catch(err){ alert('Connection error.'); }
     });
   </script>
-
 </body>
 </html>
