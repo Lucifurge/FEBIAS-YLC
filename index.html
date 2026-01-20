@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YLC Febias College of Bible Registration</title>
+  <link rel="icon" href="ico.png">
+  <style>
+    /* General reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #ffffff;
+      color: #333333;
+    }
+
+    /* Navbar */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: linear-gradient(to right, #006400, #ffd700); /* green-gold */
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    nav img {
+      height: 50px;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+    }
+
+    nav ul li {
+      margin-left: 1.5rem;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+
+    nav ul li a:hover {
+      color: #ffd700;
+    }
+
+    /* Header section */
+    header {
+      text-align: center;
+      padding: 3rem 2rem;
+      background-color: #f9f9f9;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      color: #006400;
+      margin-bottom: 1rem;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      color: #555555;
+    }
+
+    /* Registration form */
+    .form-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border: 2px solid #ffd700;
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #006400;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #006400;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #006400;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      background-color: #006400;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #228B22;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background-color: #006400;
+      color: white;
+      margin-top: 2rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav ul {
+        flex-direction: column;
+      }
+
+      nav ul li {
+        margin: 0.5rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav>
+    <div class="logo">
+      <img src="logo.png" alt="Febias College Logo">
+    </div>
+    <ul>
+      <li><a href="#home">Home</a></li>
+      <li><a href="#register">Register</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- Header -->
+  <header id="home">
+    <h1>Welcome to YLC Febias College of Bible</h1>
+    <p>Join our youth fellowship and experience growth in faith, learning, and fellowship.</p>
+  </header>
+
+  <!-- Registration Form -->
+  <section class="form-container" id="register">
+    <h2>Sign Up for YLC Fellowship</h2>
+    <!-- Google Form / Spreadsheet Integration -->
+    <form id="registration-form">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="text" id="phone" name="phone">
+      </div>
+      <div class="form-group">
+        <label for="age">Age</label>
+        <input type="number" id="age" name="age">
+      </div>
+      <div class="form-group">
+        <label for="gender">Gender</label>
+        <select id="gender" name="gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="camp">Preferred Camp</label>
+        <select id="camp" name="camp">
+          <option value="">Select</option>
+          <option value="Morning Session">Morning Session</option>
+          <option value="Afternoon Session">Afternoon Session</option>
+        </select>
+      </div>
+      <button type="submit">Register</button>
+    </form>
+    <p style="text-align:center; margin-top: 1rem; color: #006400;">Your details will be recorded in our spreadsheet securely.</p>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <p>&copy; 2026 Febias College of Bible | All Rights Reserved</p>
+    <p>Email: info@febias.edu.ph </p>
+  </footer>
+
+  <!-- Google Spreadsheet Integration Script Example -->
+  <script>
+    const form = document.getElementById('registration-form');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Replace this URL with your Google Apps Script Web App URL
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbwsLB7MG-BTdOIDBQTSahLL8zB475PQ7jA8CTcaWSYFrbVCbHEAvp9-4OMiJn34qbWOBQ/exec;
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(scriptURL, { method: 'POST', body: formData });
+        if (response.ok) {
+          alert('Thank you! Your registration has been submitted.');
+          form.reset();
+        } else {
+          alert('Error submitting form. Please try again.');
+        }
+      } catch (error) {
+        alert('Error connecting to server. Please try again later.');
+      }
+    });
+  </script>
+</body>
+</html>
