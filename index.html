@@ -18,121 +18,99 @@
 }
 
 body {
-  background: #ffffff;
+  background: #f9fafb;
   color: #1f2937;
-  overflow-x: hidden;
-}
-
-/* ================= BACKGROUND ================= */
-.bg-slideshow {
-  position: fixed;
-  inset: 0;
-  z-index: -3;
-  background-size: cover;
-  background-position: center;
-  animation: bgFade 30s infinite ease-in-out;
-}
-
-@keyframes bgFade {
-  0% { background-image: url("f.jpg"); }
-  33% { background-image: url("c.jpg"); }
-  66% { background-image: url("b.jpg"); }
-  100% { background-image: url("f.jpg"); }
-}
-
-.bg-mask {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background: rgba(255,255,255,.95);
 }
 
 /* ================= NAV ================= */
 nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
   background: #0b3d2e;
   border-bottom: 4px solid #d4af37;
-  padding: 1rem 2.5rem;
+  padding: 1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-nav img { height: 54px; }
+nav img {
+  height: 48px;
+}
 
 nav ul {
   list-style: none;
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 nav a {
   color: #fff;
   text-decoration: none;
   font-weight: 600;
+  font-size: 1.05rem;
 }
 
 /* ================= HERO ================= */
 header {
   text-align: center;
-  padding: 4.5rem 2rem 2rem;
+  padding: 3rem 1.5rem 2rem;
+  background: #ffffff;
 }
 
 header h1 {
-  font-size: 3rem;
+  font-size: 2.6rem;
   color: #0b3d2e;
 }
 
 .ylc {
   font-family: "Cinzel", serif;
-  letter-spacing: 6px;
+  letter-spacing: 5px;
   color: #d4af37;
 }
 
 header p {
-  max-width: 900px;
-  margin: 1rem auto 0;
-  font-size: 1.25rem;
+  margin-top: 1rem;
+  font-size: 1.15rem;
+  max-width: 700px;
+  margin-inline: auto;
 }
 
-/* ================= BIG REGISTER ================= */
+/* ================= BIG REGISTER BUTTON ================= */
 .big-register {
   display: block;
-  max-width: 460px;
-  margin: 2.8rem auto;
-  padding: 1.8rem;
-  font-size: 1.9rem;
+  max-width: 420px;
+  margin: 2.5rem auto;
+  padding: 1.6rem;
+  font-size: 1.7rem;
   font-weight: 800;
   text-align: center;
-  border-radius: 20px;
+  border-radius: 18px;
   background: #d4af37;
   color: #0b3d2e;
   text-decoration: none;
-  box-shadow: 0 14px 34px rgba(0,0,0,.28);
+  box-shadow: 0 10px 25px rgba(0,0,0,.25);
 }
 
 /* ================= SECTIONS ================= */
 section {
-  max-width: 1200px;
-  margin: 3.5rem auto;
-  padding: 0 2rem;
+  max-width: 1100px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
 }
 
-/* ================= CARDS ================= */
+/* ================= INFO CARDS ================= */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
-  gap: 2.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+  gap: 2rem;
 }
 
 .card {
   background: #fff;
   border-radius: 16px;
   border: 2px solid #d4af37;
-  box-shadow: 0 14px 40px rgba(0,0,0,.12);
-  padding: 1.6rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  padding: 1.4rem;
 }
 
 .card img {
@@ -144,95 +122,66 @@ section {
 .card h3 {
   color: #0b3d2e;
   text-align: center;
+  margin-bottom: .5rem;
 }
 
-/* ================= SLIDESHOW FIXED ================= */
-.thrive {
-  text-align: center;
-}
-
-.thrive h2 {
-  font-size: 2.2rem;
-  color: #0b3d2e;
-  margin-bottom: 1.8rem;
-}
-
-.thrive-box {
-  max-width: 1150px;
-  margin: auto;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 4px solid #d4af37;
-}
-
-.thrive-slides {
-  position: relative;
-  width: 100%;
-  height: 520px;
-  overflow: hidden;
-}
-
-.thrive-slides img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  animation: fade 15s infinite ease-in-out;
-}
-
-.thrive-slides img:nth-child(1){animation-delay:0s;}
-.thrive-slides img:nth-child(2){animation-delay:5s;}
-.thrive-slides img:nth-child(3){animation-delay:10s;}
-
-@keyframes fade {
-  0% { opacity:0; }
-  10% { opacity:1; }
-  30% { opacity:1; }
-  40% { opacity:0; }
-  100% { opacity:0; }
-}
-
-.thrive-caption {
-  background: #0b3d2e;
-  color: #fff;
-  padding: 1.5rem;
-  font-size: 1.1rem;
+.card p {
+  line-height: 1.6;
+  font-size: 1.05rem;
 }
 
 /* ================= FORM ================= */
 .form-box {
-  max-width: 650px;
+  max-width: 600px;
   margin: auto;
   background: #fff;
-  padding: 2.5rem;
+  padding: 2.2rem;
   border-radius: 20px;
   border-top: 5px solid #d4af37;
-  box-shadow: 0 16px 45px rgba(0,0,0,.2);
+  box-shadow: 0 14px 40px rgba(0,0,0,.2);
+}
+
+.form-box h2 {
+  text-align: center;
+  color: #0b3d2e;
+  font-size: 2rem;
+}
+
+.form-box p {
+  text-align: center;
+  font-size: 1.1rem;
+  margin: 1rem 0 2rem;
 }
 
 label {
   font-size: 1.15rem;
   font-weight: 700;
+  color: #0b3d2e;
 }
 
 input, select {
   width: 100%;
-  padding: 1.15rem;
+  padding: 1.1rem;
   margin: .5rem 0 1.4rem;
   font-size: 1.2rem;
+  border-radius: 10px;
+  border: 1px solid #9ca3af;
 }
 
 button {
   width: 100%;
-  padding: 1.5rem;
-  font-size: 1.6rem;
+  padding: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
   background: #0b3d2e;
   color: #fff;
   border: none;
   border-radius: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1f7a4d;
 }
 
 /* ================= FOOTER ================= */
@@ -240,29 +189,37 @@ footer {
   background: #0b3d2e;
   color: #fff;
   text-align: center;
-  padding: 2.2rem;
+  padding: 2rem 1rem;
   margin-top: 4rem;
+  font-size: 1rem;
 }
 
-/* ================= MOBILE ================= */
-@media (max-width:768px) {
-  header h1 { font-size: 2.3rem; }
-  .big-register { font-size: 1.6rem; }
-  .thrive-slides { height: 320px; }
+/* ================= MOBILE OPTIMIZATION ================= */
+@media (max-width: 600px) {
+  header h1 {
+    font-size: 2.1rem;
+  }
+
+  .big-register {
+    font-size: 1.5rem;
+    padding: 1.4rem;
+  }
+
+  nav ul {
+    width: 100%;
+    justify-content: center;
+    margin-top: .8rem;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div class="bg-slideshow"></div>
-<div class="bg-mask"></div>
-
 <nav>
-  <img src="logo.jpg">
+  <img src="logo.jpg" alt="FEBIAS Logo">
   <ul>
     <li><a href="#about">About</a></li>
-    <li><a href="#thrive">YLC</a></li>
     <li><a href="#register">Register</a></li>
   </ul>
 </nav>
@@ -276,42 +233,31 @@ footer {
 
 <section id="about" class="info-grid">
   <div class="card">
-    <img src="qw.jpg">
+    <img src="qw.jpg" alt="">
     <h3>FEBIAS College of Bible</h3>
     <p>Training faithful servants of Christ through biblical education and discipleship.</p>
   </div>
+
   <div class="card">
-    <img src="fcb.jpg">
+    <img src="fcb.jpg" alt="">
     <h3>Youth Leaders Camp</h3>
     <p>Equipping youth through worship, leadership training, and spiritual growth.</p>
-  </div>
-</section>
-
-<section id="thrive" class="thrive">
-  <h2>Last Year YLC Theme: <strong>THRIVE</strong></h2>
-  <div class="thrive-box">
-    <div class="thrive-slides">
-      <img src="1.jpg">
-      <img src="2.jpg">
-      <img src="3.jpg">
-    </div>
-    <div class="thrive-caption">
-      Growing deeper in faith, leadership, unity, and service — thriving together in Christ.
-    </div>
   </div>
 </section>
 
 <section id="register">
   <div class="form-box">
     <h2>YLC Registration Form</h2>
+    <p>Please fill out this form. If you need help, ask a family member or church staff.</p>
+
     <form id="registration-form">
       <label>Full Name</label>
       <input type="text" name="name" required>
 
-      <label>Email</label>
+      <label>Email Address</label>
       <input type="email" name="email" required>
 
-      <label>Phone</label>
+      <label>Mobile Number</label>
       <input type="text" name="phone">
 
       <label>Age</label>
@@ -319,12 +265,12 @@ footer {
 
       <label>Gender</label>
       <select name="gender">
-        <option value="">Select</option>
+        <option value="">Please select</option>
         <option>Male</option>
         <option>Female</option>
       </select>
 
-      <button type="submit">✅ SUBMIT REGISTRATION</button>
+      <button type="submit">✅SUBMIT</button>
     </form>
   </div>
 </section>
