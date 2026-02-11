@@ -3,87 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Payment | FEBIAS College of Bible</title>
+<title>YLC 2026 Attendance | FEBIAS College of Bible</title>
 
 <link rel="icon" href="logo.ico">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family: "Segoe UI", system-ui, sans-serif; }
-body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
-.container { max-width:900px; margin:2rem auto; padding:2rem; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.12);}
-h1,h2{text-align:center; color:#0b3d2e; margin-bottom:1rem;}
-h2{margin-top:2rem;}
-label{display:block; font-weight:600; margin-top:1rem; color:#0b3d2e;}
-input[type="radio"]{margin-right:0.5rem;}
-button{display:block; width:100%; padding:1.5rem; margin-top:1.5rem; font-size:1.3rem; font-weight:700; background:#0b3d2e; color:#fff; border:none; border-radius:12px; cursor:pointer;}
-button:hover{background:#1f7a4d;}
-.instructions{background:#f0f0f0; padding:1rem; border-left:5px solid #d4af37; border-radius:8px; margin-top:1rem;}
-.payment-images{display:flex; justify-content:space-around; margin-top:1rem;}
-.payment-images img{max-width:150px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.1);}
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f8f8f8;
+  color: #1f2937;
+  line-height: 1.5;
+  padding: 2rem;
+}
+
+h1 { text-align: center; color: #0b3d2e; margin-bottom: 2rem; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.8rem;
+  text-align: left;
+}
+
+th {
+  background: #0b3d2e;
+  color: #fff;
+}
+
+.status-paid { color: green; font-weight: bold; }
+.status-onsite { color: orange; font-weight: bold; }
+.status-not { color: red; font-weight: bold; }
+
+.attendance-check { cursor: pointer; text-align: center; }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>YLC 2026 Payment</h1>
+<h1>YLC 2026 Attendance</h1>
+<p>Check the boxes to confirm camper attendance. Payment status is shown with symbols.</p>
 
-  <p>Please complete your payment to secure your registration. After payment, <strong>save or screenshot your receipt</strong> to present onsite during registration.</p>
-
-  <!-- Payment Form -->
-  <form id="payment-form">
-    <section>
-      <h2>Select Payment Type</h2>
-      <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment (Pay at FEBIAS)</label>
-      <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
-    </section>
-
-    <section class="instructions">
-      <h2>Payment Instructions</h2>
-      <p><strong>Onsite Payment:</strong> Pay directly at FEBIAS College of Bible during registration. Bring your registration and receipt screenshot if available.</p>
-      <p><strong>Online Payment:</strong> Transfer via any of the following methods. Save or screenshot your receipt to present onsite.</p>
-      <div class="payment-images">
-        <div>
-          <p>FEBIAS QR Code</p>
-          <img src="febias_qr.jpg" alt="FEBIAS QR Code">
-        </div>
-        <div>
-          <p>GCash</p>
-          <img src="gcash_qr.jpg" alt="GCash QR Code">
-        </div>
-        <div>
-          <p>Bank Transfer</p>
-          <img src="bank_qr.jpg" alt="Bank Payment QR">
-        </div>
-      </div>
-    </section>
-
-    <button type="submit">✅ Confirm Payment</button>
-  </form>
-</div>
-
-<footer>© 2026 FEBIAS College of Bible — Youth Leaders Camp</footer>
+<table id="attendance-table">
+  <thead>
+    <tr>
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>Payment Status</th>
+      <th>Attendance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Rows will load dynamically -->
+  </tbody>
+</table>
 
 <script>
-// Submit Payment Form
-document.getElementById('payment-form').addEventListener('submit', async function(e){
-  e.preventDefault();
-  const url = "https://script.google.com/macros/s/AKfycbzYnQmVzjdADw0JTyB474Q-bOqRcahgbRXSp1Cd6JWcILX7xRxAP9YbSexjnRUVv8bJ6w/exec"; // Replace with your Apps Script URL
-  const formData = new FormData(this);
+// Load data from Google Sheets Web App JSON endpoint
+const sheetUrl = "https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec?action=getAttendance"; // replace with your endpoint
 
-  const res = await fetch(url,{
-    method:'POST',
-    body: formData
-  });
+async function loadAttendance() {
+  const tbody = document.querySelector("#attendance-table tbody");
+  tbody.innerHTML = "";
 
-  const result = await res.json();
-  if(result.result === "success"){
-    alert("Payment submitted successfully! Thank you. Remember to save or screenshot your receipt for onsite confirmation.");
-    window.location.href = "attendance.html"; // Redirect to attendance page
-  } else {
-    alert("Submission failed: "+result.error);
+  try {
+    const res = await fetch(sheetUrl);
+    const data = await res.json(); // Expect array of objects: {first_name, last_name, payment_status, attended_status}
+
+    data.forEach(person => {
+      const tr = document.createElement("tr");
+
+      // First Name
+      const tdFirst = document.createElement("td");
+      tdFirst.textContent = person.first_name || "";
+      tr.appendChild(tdFirst);
+
+      // Last Name
+      const tdLast = document.createElement("td");
+      tdLast.textContent = person.last_name || "";
+      tr.appendChild(tdLast);
+
+      // Payment Status with symbol
+      const tdPayment = document.createElement("td");
+      if(person.payment_status.toLowerCase() === "online payment") {
+        tdPayment.textContent = "✅ Online";
+        tdPayment.className = "status-paid";
+      } else if(person.payment_status.toLowerCase() === "onsite payment") {
+        tdPayment.textContent = "⚠️ Onsite";
+        tdPayment.className = "status-onsite";
+      } else {
+        tdPayment.textContent = "❌ Not Paid";
+        tdPayment.className = "status-not";
+      }
+      tr.appendChild(tdPayment);
+
+      // Attendance checkbox
+      const tdAttend = document.createElement("td");
+      tdAttend.className = "attendance-check";
+      tdAttend.textContent = person.attended_status === "Arrived" ? "✅" : "⚠️";
+      tdAttend.addEventListener("click", async () => {
+        // Toggle attendance
+        tdAttend.textContent = tdAttend.textContent === "✅" ? "⚠️" : "✅";
+
+        // Optional: Send update to Apps Script
+        await fetch(sheetUrl + "?action=markAttendance&id=" + person.rowId + "&status=" + (tdAttend.textContent === "✅" ? "Arrived" : "Not Arrived"));
+      });
+      tr.appendChild(tdAttend);
+
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Failed to load attendance:", err);
+    tbody.innerHTML = "<tr><td colspan='4'>Failed to load data.</td></tr>";
   }
-});
+}
+
+// Initial load
+loadAttendance();
 </script>
 
 </body>
