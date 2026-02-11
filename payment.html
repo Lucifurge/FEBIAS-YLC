@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YLC 2026 Payment | FEBIAS College of Bible</title>
+
+<link rel="icon" href="logo.ico">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: "Segoe UI", system-ui, sans-serif; }
+body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
+.container { max-width:900px; margin:2rem auto; padding:2rem; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.12);}
+h1,h2{text-align:center; color:#0b3d2e; margin-bottom:1rem;}
+h2{margin-top:2rem;}
+label{display:block; font-weight:600; margin-top:1rem; color:#0b3d2e;}
+input,select,textarea{width:100%; padding:0.9rem; margin-top:0.4rem; border-radius:8px; border:1px solid #9ca3af; font-size:1rem;}
+textarea{resize:vertical;}
+button{display:block; width:100%; padding:1.2rem; margin-top:1.5rem; font-size:1.2rem; font-weight:700; background:#0b3d2e; color:#fff; border:none; border-radius:12px; cursor:pointer;}
+button:hover{background:#1f7a4d;}
+.instructions{background:#f0f0f0; padding:1rem; border-left:5px solid #d4af37; border-radius:8px; margin-top:1rem;}
+.payment-images{display:flex; justify-content:space-around; margin-top:1rem;}
+.payment-images img{max-width:150px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.1);}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>YLC 2026 Payment</h1>
+
+  <p>Please complete your payment to secure your registration. Follow the instructions below for each payment type. A receipt will be sent to the registrar email automatically.</p>
+
+  <!-- Payment Form -->
+  <form id="payment-form">
+    <section>
+      <h2>Select Payment Type</h2>
+      <label><input type="radio" name="payment_by" value="No Payment" required> No Payment (Pay Later / Free) </label>
+      <label><input type="radio" name="payment_by" value="Onsite"> Onsite Payment (Pay at FEBIAS) </label>
+      <label><input type="radio" name="payment_by" value="Online"> Online Payment (Upload Receipt)</label>
+    </section>
+
+    <section id="online-section" style="display:none;">
+      <h2>Upload Online Payment Receipt</h2>
+      <label>Receipt URL <input type="url" name="receipt_url" placeholder="Paste your receipt link here"></label>
+    </section>
+
+    <section class="instructions">
+      <h2>Payment Instructions</h2>
+      <p><strong>Onsite Payment:</strong> You can pay directly at FEBIAS College of Bible during registration. Bring a printed copy of your registration.</p>
+      <p><strong>Online Payment:</strong> Transfer via any of the following methods and paste the receipt URL above:</p>
+      <div class="payment-images">
+        <div>
+          <p>FEBIAS QR Code</p>
+          <img src="febias_qr.jpg" alt="FEBIAS QR Code">
+        </div>
+        <div>
+          <p>GCash</p>
+          <img src="gcash_qr.jpg" alt="GCash QR Code">
+        </div>
+        <div>
+          <p>Bank Transfer</p>
+          <img src="bank_qr.jpg" alt="Bank Payment QR">
+        </div>
+      </div>
+    </section>
+
+    <button type="submit">✅ Submit Payment</button>
+  </form>
+</div>
+
+<footer>© 2026 FEBIAS College of Bible — Youth Leaders Camp</footer>
+
+<script>
+// Show receipt field only if Online payment is selected
+const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+const onlineSection = document.getElementById('online-section');
+
+paymentRadios.forEach(radio => {
+  radio.addEventListener('change', () => {
+    if(radio.value === 'Online') {
+      onlineSection.style.display = 'block';
+    } else {
+      onlineSection.style.display = 'none';
+    }
+  });
+});
+
+// Submit Payment Form
+document.getElementById('payment-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const url = "https://script.google.com/macros/s/AKfycbzD_HK6N6cQhpIJmhP5qV3BhZsHaHr-dRwk2jQgDQ-lo1oZtv-hj6Np7E9ZGwR1jWHuPQ/exec"; // Apps Script URL
+  const formData = new FormData(this);
+
+  const res = await fetch(url,{
+    method:'POST',
+    body: formData
+  });
+
+  const result = await res.json();
+  if(result.result === "success"){
+    alert("Payment submitted successfully! Thank you.");
+    window.location.href = "attendance.html"; // Redirect to attendance page
+  } else {
+    alert("Submission failed: "+result.error);
+  }
+});
+</script>
+
+</body>
+</html>
