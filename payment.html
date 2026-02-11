@@ -89,7 +89,7 @@ paymentRadios.forEach(radio => {
 // Submit Payment Form
 document.getElementById('payment-form').addEventListener('submit', async function(e){
   e.preventDefault();
-  const url = "https://script.google.com/macros/s/AKfycbzD_HK6N6cQhpIJmhP5qV3BhZsHaHr-dRwk2jQgDQ-lo1oZtv-hj6Np7E9ZGwR1jWHuPQ/exec"; // Apps Script URL
+  const url = "https://script.google.com/macros/s/AKfycbxQug-H3q2e6nrjzCpCUPzaCctStODPq38CONWkJYHE8GwnFaTiYF8Y5VjKkNhG_X771w/exec"; // Apps Script URL
   const formData = new FormData(this);
 
   const res = await fetch(url,{
@@ -100,7 +100,7 @@ document.getElementById('payment-form').addEventListener('submit', async functio
   const result = await res.json();
   if(result.result === "success"){
     alert("Payment submitted successfully! Thank you.");
-    window.location.href = "attendance.html"; // Redirect to attendance page
+    window.location.href = ""; // Redirect to attendance page
   } else {
     alert("Submission failed: "+result.error);
   }
