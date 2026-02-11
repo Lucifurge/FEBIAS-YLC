@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YLC 2026 Attendance & Payment Status | FEBIAS College of Bible</title>
+
+<link rel="icon" href="logo.ico">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI", system-ui, sans-serif; }
+body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
+.container { max-width:1000px; margin:2rem auto; padding:2rem; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.12);}
+h1,h2{text-align:center; color:#0b3d2e; margin-bottom:1rem;}
+table{width:100%; border-collapse:collapse; margin-top:2rem;}
+th,td{border:1px solid #ccc; padding:0.8rem; text-align:left;}
+th{background:#0b3d2e; color:#fff;}
+tr:nth-child(even){background:#f0f0f0;}
+.status-paid{color:green; font-weight:bold;}
+.status-onsite{color:orange; font-weight:bold;}
+.status-nopayment{color:red; font-weight:bold;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>YLC 2026 Attendance & Payment Status</h1>
+  <p>Below is the list of registered participants and their payment status.</p>
+
+  <table id="attendance-table">
+    <thead>
+      <tr>
+        <th>Last Name</th>
+        <th>First Name</th>
+        <th>Nickname</th>
+        <th>Age</th>
+        <th>Email</th>
+        <th>Contact Number</th>
+        <th>Payment Type</th>
+        <th>Receipt</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="8">Loading data...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+async function loadAttendance() {
+  const url = "https://script.google.com/macros/s/AKfycbzD_HK6N6cQhpIJmhP5qV3BhZsHaHr-dRwk2jQgDQ-lo1oZtv-hj6Np7E9ZGwR1jWHuPQ/exec?action=getAttendance"; // Apps Script endpoint for GET
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const tbody = document.querySelector("#attendance-table tbody");
+  tbody.innerHTML = ""; // Clear loading
+
+  if(data.length === 0){
+    tbody.innerHTML = "<tr><td colspan='8'>No registrations yet.</td></tr>";
+    return;
+  }
+
+  data.forEach(row => {
+    // Determine status style
+    let statusClass = "";
+    if(row.payment_by === "Online") statusClass = "status-paid";
+    else if(row.payment_by === "Onsite") statusClass = "status-onsite";
+    else statusClass = "status-nopayment";
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${row.last_name}</td>
+        <td>${row.first_name}</td>
+        <td>${row.nickname}</td>
+        <td>${row.age}</td>
+        <td>${row.email}</td>
+        <td>${row.contact_number}</td>
+        <td class="${statusClass}">${row.payment_by}</td>
+        <td>${row.receipt_url ? `<a href="${row.receipt_url}" target="_blank">View</a>` : "-"}</td>
+      </tr>
+    `;
+  });
+}
+
+// Load on page load
+window.addEventListener("DOMContentLoaded", loadAttendance);
+</script>
+
+</body>
+</html>
