@@ -89,7 +89,7 @@ paymentRadios.forEach(radio => {
 // Submit Payment Form
 document.getElementById('payment-form').addEventListener('submit', async function(e){
   e.preventDefault();
-  const url = "https://script.google.com/macros/s/AKfycbxQug-H3q2e6nrjzCpCUPzaCctStODPq38CONWkJYHE8GwnFaTiYF8Y5VjKkNhG_X771w/exec"; // Apps Script URL
+  const url = "https://script.google.com/macros/s/AKfycbzYnQmVzjdADw0JTyB474Q-bOqRcahgbRXSp1Cd6JWcILX7xRxAP9YbSexjnRUVv8bJ6w/exec"; // Apps Script URL
   const formData = new FormData(this);
 
   const res = await fetch(url,{
