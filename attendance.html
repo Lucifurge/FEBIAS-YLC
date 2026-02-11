@@ -3,92 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Attendance & Payment Status | FEBIAS College of Bible</title>
+<title>YLC 2026 Attendance | FEBIAS College of Bible</title>
 
 <link rel="icon" href="logo.ico">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI", system-ui, sans-serif; }
-body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
-.container { max-width:1000px; margin:2rem auto; padding:2rem; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.12);}
-h1,h2{text-align:center; color:#0b3d2e; margin-bottom:1rem;}
-table{width:100%; border-collapse:collapse; margin-top:2rem;}
-th,td{border:1px solid #ccc; padding:0.8rem; text-align:center;}
-th{background:#0b3d2e; color:#fff;}
-tr:nth-child(even){background:#f0f0f0;}
-.symbol-paid{color:green; font-weight:bold; font-size:1.2rem;}
-.symbol-onsite{color:orange; font-weight:bold; font-size:1.2rem;}
-.symbol-notpaid{color:red; font-weight:bold; font-size:1.2rem;}
-.symbol-arrived{color:green; font-weight:bold; font-size:1.2rem;}
-.symbol-waiting{color:orange; font-weight:bold; font-size:1.2rem;}
-.symbol-notarrived{color:red; font-weight:bold; font-size:1.2rem;}
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f8f8f8;
+  color: #1f2937;
+  line-height: 1.5;
+  padding: 2rem;
+}
+
+h1 { text-align: center; color: #0b3d2e; margin-bottom: 2rem; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.8rem;
+  text-align: left;
+}
+
+th {
+  background: #0b3d2e;
+  color: #fff;
+}
+
+.status-paid { color: green; font-weight: bold; }
+.status-onsite { color: orange; font-weight: bold; }
+.status-not { color: red; font-weight: bold; }
+
+.attendance-check { cursor: pointer; text-align: center; }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>YLC 2026 Attendance & Payment Status</h1>
-  <p>Quick view of participants, payment, and attendance.</p>
+<h1>YLC 2026 Attendance</h1>
+<p>Check the boxes to confirm camper attendance. Payment status is shown with symbols.</p>
 
-  <table id="attendance-table">
-    <thead>
-      <tr>
-        <th>Last Name</th>
-        <th>First Name</th>
-        <th>Nickname</th>
-        <th>Payment</th>
-        <th>Receipt</th>
-        <th>Attendance</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td colspan="6">Loading data...</td></tr>
-    </tbody>
-  </table>
-</div>
+<table id="attendance-table">
+  <thead>
+    <tr>
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>Payment Status</th>
+      <th>Attendance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Rows will load dynamically -->
+  </tbody>
+</table>
 
 <script>
-async function loadAttendance() {
-  const url = "https://script.google.com/macros/s/AKfycbzYnQmVzjdADw0JTyB474Q-bOqRcahgbRXSp1Cd6JWcILX7xRxAP9YbSexjnRUVv8bJ6w/exec"; // Replace with your Apps Script URL
-  const res = await fetch(url);
-  const data = await res.json();
+// Load data from Google Sheets Web App JSON endpoint
+const sheetUrl = "https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec?action=getAttendance"; // replace with your endpoint
 
+async function loadAttendance() {
   const tbody = document.querySelector("#attendance-table tbody");
   tbody.innerHTML = "";
 
-  if(data.length === 0){
-    tbody.innerHTML = "<tr><td colspan='6'>No registrations yet.</td></tr>";
-    return;
+  try {
+    const res = await fetch(sheetUrl);
+    const data = await res.json(); // Expect array of objects: {first_name, last_name, payment_status, attended_status}
+
+    data.forEach(person => {
+      const tr = document.createElement("tr");
+
+      // First Name
+      const tdFirst = document.createElement("td");
+      tdFirst.textContent = person.first_name || "";
+      tr.appendChild(tdFirst);
+
+      // Last Name
+      const tdLast = document.createElement("td");
+      tdLast.textContent = person.last_name || "";
+      tr.appendChild(tdLast);
+
+      // Payment Status with symbol
+      const tdPayment = document.createElement("td");
+      if(person.payment_status.toLowerCase() === "online payment") {
+        tdPayment.textContent = "✅ Online";
+        tdPayment.className = "status-paid";
+      } else if(person.payment_status.toLowerCase() === "onsite payment") {
+        tdPayment.textContent = "⚠️ Onsite";
+        tdPayment.className = "status-onsite";
+      } else {
+        tdPayment.textContent = "❌ Not Paid";
+        tdPayment.className = "status-not";
+      }
+      tr.appendChild(tdPayment);
+
+      // Attendance checkbox
+      const tdAttend = document.createElement("td");
+      tdAttend.className = "attendance-check";
+      tdAttend.textContent = person.attended_status === "Arrived" ? "✅" : "⚠️";
+      tdAttend.addEventListener("click", async () => {
+        // Toggle attendance
+        tdAttend.textContent = tdAttend.textContent === "✅" ? "⚠️" : "✅";
+
+        // Optional: Send update to Apps Script
+        await fetch(sheetUrl + "?action=markAttendance&id=" + person.rowId + "&status=" + (tdAttend.textContent === "✅" ? "Arrived" : "Not Arrived"));
+      });
+      tr.appendChild(tdAttend);
+
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Failed to load attendance:", err);
+    tbody.innerHTML = "<tr><td colspan='4'>Failed to load data.</td></tr>";
   }
-
-  data.forEach(row => {
-    // Payment symbols
-    let paymentSymbol = "";
-    if(row.payment_by === "Online") paymentSymbol = '<span class="symbol-paid">✅</span>';
-    else if(row.payment_by === "Onsite") paymentSymbol = '<span class="symbol-onsite">🟠</span>';
-    else paymentSymbol = '<span class="symbol-notpaid">❌</span>';
-
-    // Attendance symbols
-    let attendanceSymbol = "";
-    if(row.attended === "Yes") attendanceSymbol = '<span class="symbol-arrived">✅</span>';
-    else if(row.attended === "Waiting") attendanceSymbol = '<span class="symbol-waiting">🟠</span>';
-    else attendanceSymbol = '<span class="symbol-notarrived">❌</span>';
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${row.last_name}</td>
-        <td>${row.first_name}</td>
-        <td>${row.nickname}</td>
-        <td>${paymentSymbol}</td>
-        <td>${row.receipt_url ? `<a href="${row.receipt_url}" target="_blank">View</a>` : "-"}</td>
-        <td>${attendanceSymbol}</td>
-      </tr>
-    `;
-  });
 }
 
-window.addEventListener("DOMContentLoaded", loadAttendance);
+// Initial load
+loadAttendance();
 </script>
 
 </body>
