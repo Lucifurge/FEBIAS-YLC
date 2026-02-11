@@ -18,7 +18,7 @@
 }
 
 body {
-  background: transparent; /* UPDATED so animation shows */
+  background: transparent;
   color: #1f2937;
 }
 
@@ -175,60 +175,6 @@ section {
   font-size: 1.05rem;
 }
 
-/* ================= FORM ================= */
-.form-box {
-  max-width: 600px;
-  margin: auto;
-  background: #fff;
-  padding: 2.2rem;
-  border-radius: 20px;
-  border-top: 5px solid #d4af37;
-  box-shadow: 0 14px 40px rgba(0,0,0,.2);
-}
-
-.form-box h2 {
-  text-align: center;
-  color: #0b3d2e;
-  font-size: 2rem;
-}
-
-.form-box p {
-  text-align: center;
-  font-size: 1.1rem;
-  margin: 1rem 0 2rem;
-}
-
-label {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #0b3d2e;
-}
-
-input, select {
-  width: 100%;
-  padding: 1.1rem;
-  margin: .5rem 0 1.4rem;
-  font-size: 1.2rem;
-  border-radius: 10px;
-  border: 1px solid #9ca3af;
-}
-
-button {
-  width: 100%;
-  padding: 1.4rem;
-  font-size: 1.5rem;
-  font-weight: 800;
-  background: #0b3d2e;
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #1f7a4d;
-}
-
 /* ================= FOOTER ================= */
 footer {
   background: #0b3d2e;
@@ -273,7 +219,7 @@ footer {
   <img src="logo.jpg" alt="FEBIAS Logo">
   <ul>
     <li><a href="#about">About</a></li>
-    <li><a href="#register">Register</a></li>
+    <li><a href="ylc.html">Register</a></li>
   </ul>
 </nav>
 
@@ -282,7 +228,8 @@ footer {
   <p>FEBIAS College of Bible Youth Fellowship — building Christ-centered leaders.</p>
 </header>
 
-<a href="#register" class="big-register">👉 CLICK HERE TO REGISTER</a>
+<!-- BUTTON NOW LINKS TO ylc.html -->
+<a href="ylc.html" class="big-register">👉 CLICK HERE TO REGISTER</a>
 
 <section id="about" class="info-grid">
   <div class="card">
@@ -298,50 +245,9 @@ footer {
   </div>
 </section>
 
-<section id="register">
-  <div class="form-box">
-    <h2>YLC Registration Form</h2>
-    <p>Please fill out this form. If you need help, ask a family member or church staff.</p>
-
-    <form id="registration-form">
-      <label>Full Name</label>
-      <input type="text" name="name" required>
-
-      <label>Email Address</label>
-      <input type="email" name="email" required>
-
-      <label>Mobile Number</label>
-      <input type="text" name="phone">
-
-      <label>Age</label>
-      <input type="number" name="age">
-
-      <label>Gender</label>
-      <select name="gender">
-        <option value="">Please select</option>
-        <option>Male</option>
-        <option>Female</option>
-      </select>
-
-      <button type="submit">✅SUBMIT</button>
-    </form>
-  </div>
-</section>
-
 <footer>
 © 2026 FEBIAS College of Bible — Youth Leaders Camp
 </footer>
-
-<script>
-document.getElementById("registration-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const url = "https://script.google.com/macros/s/AKfycbwsLB7MG-BTdOIDBQTSahLL8zB475PQ7jA8CTcaWSYFrbVCbHEAvp9-4OMiJn34qbWOBQ/exec";
-  const data = new FormData(e.target);
-  const res = await fetch(url, { method: "POST", body: data });
-  alert(res.ok ? "Registration submitted successfully!" : "Submission failed.");
-  e.target.reset();
-});
-</script>
 
 </body>
 </html>
