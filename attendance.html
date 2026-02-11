@@ -14,19 +14,22 @@ body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
 .container { max-width:1000px; margin:2rem auto; padding:2rem; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.12);}
 h1,h2{text-align:center; color:#0b3d2e; margin-bottom:1rem;}
 table{width:100%; border-collapse:collapse; margin-top:2rem;}
-th,td{border:1px solid #ccc; padding:0.8rem; text-align:left;}
+th,td{border:1px solid #ccc; padding:0.8rem; text-align:center;}
 th{background:#0b3d2e; color:#fff;}
 tr:nth-child(even){background:#f0f0f0;}
-.status-paid{color:green; font-weight:bold;}
-.status-onsite{color:orange; font-weight:bold;}
-.status-nopayment{color:red; font-weight:bold;}
+.symbol-paid{color:green; font-weight:bold; font-size:1.2rem;}
+.symbol-onsite{color:orange; font-weight:bold; font-size:1.2rem;}
+.symbol-notpaid{color:red; font-weight:bold; font-size:1.2rem;}
+.symbol-arrived{color:green; font-weight:bold; font-size:1.2rem;}
+.symbol-waiting{color:orange; font-weight:bold; font-size:1.2rem;}
+.symbol-notarrived{color:red; font-weight:bold; font-size:1.2rem;}
 </style>
 </head>
 <body>
 
 <div class="container">
   <h1>YLC 2026 Attendance & Payment Status</h1>
-  <p>Below is the list of registered participants and their payment status.</p>
+  <p>Quick view of participants, payment, and attendance.</p>
 
   <table id="attendance-table">
     <thead>
@@ -34,56 +37,57 @@ tr:nth-child(even){background:#f0f0f0;}
         <th>Last Name</th>
         <th>First Name</th>
         <th>Nickname</th>
-        <th>Age</th>
-        <th>Email</th>
-        <th>Contact Number</th>
-        <th>Payment Type</th>
+        <th>Payment</th>
         <th>Receipt</th>
+        <th>Attendance</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td colspan="8">Loading data...</td></tr>
+      <tr><td colspan="6">Loading data...</td></tr>
     </tbody>
   </table>
 </div>
 
 <script>
 async function loadAttendance() {
-  const url = "https://script.google.com/macros/s/AKfycbzD_HK6N6cQhpIJmhP5qV3BhZsHaHr-dRwk2jQgDQ-lo1oZtv-hj6Np7E9ZGwR1jWHuPQ/exec?action=getAttendance"; // Apps Script endpoint for GET
+  const url = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=getAttendance"; // Replace with your Apps Script URL
   const res = await fetch(url);
   const data = await res.json();
 
   const tbody = document.querySelector("#attendance-table tbody");
-  tbody.innerHTML = ""; // Clear loading
+  tbody.innerHTML = "";
 
   if(data.length === 0){
-    tbody.innerHTML = "<tr><td colspan='8'>No registrations yet.</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='6'>No registrations yet.</td></tr>";
     return;
   }
 
   data.forEach(row => {
-    // Determine status style
-    let statusClass = "";
-    if(row.payment_by === "Online") statusClass = "status-paid";
-    else if(row.payment_by === "Onsite") statusClass = "status-onsite";
-    else statusClass = "status-nopayment";
+    // Payment symbols
+    let paymentSymbol = "";
+    if(row.payment_by === "Online") paymentSymbol = '<span class="symbol-paid">✅</span>';
+    else if(row.payment_by === "Onsite") paymentSymbol = '<span class="symbol-onsite">🟠</span>';
+    else paymentSymbol = '<span class="symbol-notpaid">❌</span>';
+
+    // Attendance symbols
+    let attendanceSymbol = "";
+    if(row.attended === "Yes") attendanceSymbol = '<span class="symbol-arrived">✅</span>';
+    else if(row.attended === "Waiting") attendanceSymbol = '<span class="symbol-waiting">🟠</span>';
+    else attendanceSymbol = '<span class="symbol-notarrived">❌</span>';
 
     tbody.innerHTML += `
       <tr>
         <td>${row.last_name}</td>
         <td>${row.first_name}</td>
         <td>${row.nickname}</td>
-        <td>${row.age}</td>
-        <td>${row.email}</td>
-        <td>${row.contact_number}</td>
-        <td class="${statusClass}">${row.payment_by}</td>
+        <td>${paymentSymbol}</td>
         <td>${row.receipt_url ? `<a href="${row.receipt_url}" target="_blank">View</a>` : "-"}</td>
+        <td>${attendanceSymbol}</td>
       </tr>
     `;
   });
 }
 
-// Load on page load
 window.addEventListener("DOMContentLoaded", loadAttendance);
 </script>
 
