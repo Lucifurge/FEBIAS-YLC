@@ -254,5 +254,28 @@ footer {
 © 2026 FEBIAS College of Bible — Youth Leaders Camp
 </footer>
 
+<!-- Apps Script Submission -->
+
+<script>
+document.getElementById("ylc-form").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const url = "https://script.google.com/macros/s/AKfycbzD_HK6N6cQhpIJmhP5qV3BhZsHaHr-dRwk2jQgDQ-lo1oZtv-hj6Np7E9ZGwR1jWHuPQ/exec"; // Replace with your Apps Script URL
+  const formData = new FormData(this);
+  
+  const res = await fetch(url, {
+    method: "POST",
+    body: formData
+  });
+
+  const result = await res.json();
+  if(result.result === "success"){
+    alert("Registration submitted successfully! You will now proceed to payment.");
+    // Redirect to payment page
+    window.location.href = "payment.html";
+  } else {
+    alert("Submission failed: " + result.error);
+  }
+});
+</script>
 </body>
 </html>
