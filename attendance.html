@@ -40,13 +40,19 @@ th {
 .status-onsite { color: orange; font-weight: bold; }
 .status-not { color: red; font-weight: bold; }
 
-.attendance-check { cursor: pointer; text-align: center; font-size: 1.2rem; }
+.attendance-check {
+  cursor: pointer;
+  text-align: center;
+  font-size: 1.3rem;
+}
 </style>
 </head>
 <body>
 
 <h1>YLC 2026 Attendance</h1>
-<p>Click on the attendance indicator to mark campers. Payment status updates automatically if attended.</p>
+<p>Click the emoji to update attendance.</p>
+
+<button onclick="loadAttendance()">🔄 Refresh Now</button>
 
 <table id="attendance-table">
   <thead>
@@ -57,16 +63,18 @@ th {
       <th>Attendance</th>
     </tr>
   </thead>
-  <tbody>
-    <!-- Rows will load dynamically -->
-  </tbody>
+  <tbody></tbody>
 </table>
 
 <script>
 const sheetUrl = "https://script.google.com/macros/s/AKfycbzEMOPQOPhDKRpSSNZx8iNMo2J-8xxW0c9tREHLi40-5c1idUoq69g5LYVRSjl5QGi_BQ/exec?sheet=ylc";
 const tbody = document.querySelector("#attendance-table tbody");
 
+let isUpdating = false;
+
 async function loadAttendance() {
+  if (isUpdating) return;
+
   try {
     const res = await fetch(sheetUrl);
     const data = await res.json();
@@ -86,15 +94,12 @@ async function loadAttendance() {
       const paymentStatus = person["Payment Status"] || "";
       const attendanceStatus = person["Attendance Status"] || "";
 
-      // FIRST NAME
       const tdFirst = document.createElement("td");
       tdFirst.textContent = firstName;
 
-      // LAST NAME
       const tdLast = document.createElement("td");
       tdLast.textContent = lastName;
 
-      // PAYMENT
       const tdPayment = document.createElement("td");
 
       if (paymentStatus.toLowerCase().includes("online")) {
@@ -108,7 +113,6 @@ async function loadAttendance() {
         tdPayment.className = "status-not";
       }
 
-      // ATTENDANCE
       const tdAttend = document.createElement("td");
       tdAttend.className = "attendance-check";
 
@@ -127,6 +131,12 @@ async function loadAttendance() {
       updateEmoji(currentStatus);
 
       tdAttend.addEventListener("click", async () => {
+
+        if (isUpdating) return;
+
+        isUpdating = true;
+        tdAttend.style.pointerEvents = "none";
+
         let newStatus;
 
         if (currentStatus === "Attended") {
@@ -141,7 +151,7 @@ async function loadAttendance() {
         formData.append("action", "attendance");
         formData.append("rowIndex", person.rowIndex);
         formData.append("attendance_status", newStatus);
-        formData.append("sheet", "ylc"); // IMPORTANT
+        formData.append("sheet", "ylc");
 
         try {
           const update = await fetch(sheetUrl, {
@@ -162,6 +172,9 @@ async function loadAttendance() {
           console.error("Update error:", err);
           alert("Network error.");
         }
+
+        tdAttend.style.pointerEvents = "auto";
+        isUpdating = false;
       });
 
       tr.appendChild(tdFirst);
@@ -178,7 +191,12 @@ async function loadAttendance() {
 }
 
 loadAttendance();
-setInterval(loadAttendance, 8000);
+
+// ✅ Safe auto refresh every 30 seconds
+setInterval(() => {
+  loadAttendance();
+}, 30000);
+
 </script>
 
 </body>
