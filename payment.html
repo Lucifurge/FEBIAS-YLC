@@ -54,23 +54,32 @@ Online Payment
 document.getElementById("payment-form").addEventListener("submit", async function(e){
   e.preventDefault();
 
+  // Get the selected payment type
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   if(!paymentBy){
     alert("Please select a payment type.");
     return;
   }
 
-  // Prepare form data for Apps Script
+  // Get the rowIndex from the URL query (e.g., payment.html?row=5)
+  const urlParams = new URLSearchParams(window.location.search);
+  const rowIndex = urlParams.get("row");
+
+  if(!rowIndex){
+    alert("Missing registration reference. Please register first.");
+    return;
+  }
+
+  // Prepare form data
   const formData = new FormData();
   formData.append("action", "payment");
+  formData.append("rowIndex", rowIndex);
+  formData.append("sheet", "ylc"); // change to "ylc2" if needed
   formData.append("payment_by", paymentBy);
-  formData.append("sheet", "ylc"); // change to "ylc2" for walk-ins
 
   const url = "https://script.google.com/macros/s/AKfycbzsogZgtMU79P_E7cR0DMZ3ZDr5xOL7xvUi7ggecr9dNH9wifjUq5oRVbEklB3ezoh_BA/exec"; // Replace with your Apps Script URL
 
   try {
-    // Fetch the last row index from Apps Script
-    // This will update the payment in the last registered row automatically
     const res = await fetch(url, {
       method: "POST",
       body: formData
@@ -79,7 +88,7 @@ document.getElementById("payment-form").addEventListener("submit", async functio
     const result = await res.json();
 
     if(result.result === "success"){
-      alert("Payment updated successfully. Please save or screenshot your receipt for onsite confirmation.");
+      alert("Payment updated successfully. Please save or screenshot your receipt.");
       window.location.href = "thankyou.html";
     } else {
       alert("Error: " + result.error);
