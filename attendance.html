@@ -62,18 +62,106 @@ th {
 </thead>
 <tbody></tbody>
 </table>
-
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbwSyyqzGF7IK6L_rmdRFg7EBGOPfoyUQRrXKlCSNBx9vTz-7GwVuFTUnSw5qjOIUakpUQ/exec";
 const tbody = document.querySelector("#attendance-table tbody");
 
-let isUpdating = false;
+let peopleMap = new Map(); // store rows by rowIndex
+let isSyncing = false;
 
 // ===============================
-// LOAD DATA
+// RENDER OR UPDATE ROW
+// ===============================
+function renderRow(person) {
+
+  let existingRow = peopleMap.get(person.rowIndex);
+
+  if (!existingRow) {
+    const tr = document.createElement("tr");
+    tr.dataset.row = person.rowIndex;
+
+    tr.innerHTML = `
+      <td>${person.firstName || ""}</td>
+      <td>${person.lastName || ""}</td>
+      <td class="payment"></td>
+      <td class="attendance-check"></td>
+    `;
+
+    tbody.appendChild(tr);
+    peopleMap.set(person.rowIndex, tr);
+    existingRow = tr;
+  }
+
+  const paymentCell = existingRow.querySelector(".payment");
+  const attendanceCell = existingRow.querySelector(".attendance-check");
+
+  // Payment display
+  const payment = (person.paymentStatus || "").toLowerCase();
+
+  if (payment.includes("online")) {
+    paymentCell.textContent = "✅ Paid";
+    paymentCell.className = "payment status-paid";
+  } else if (payment.includes("onsite")) {
+    paymentCell.textContent = "⚠️ Onsite";
+    paymentCell.className = "payment status-onsite";
+  } else {
+    paymentCell.textContent = "❌ Not Paid";
+    paymentCell.className = "payment status-not";
+  }
+
+  // Attendance emoji
+  function setEmoji(status) {
+    if (status === "Attended") attendanceCell.textContent = "✅";
+    else if (status === "Cancelled") attendanceCell.textContent = "❌";
+    else attendanceCell.textContent = "🟠";
+  }
+
+  setEmoji(person.attendanceStatus);
+
+  // Prevent duplicate listeners
+  attendanceCell.onclick = async () => {
+
+    if (isSyncing) return;
+    isSyncing = true;
+
+    let newStatus;
+
+    if (person.attendanceStatus === "Attended") {
+      newStatus = "Waiting";
+    } else {
+      newStatus = "Attended";
+    }
+
+    // 🔥 INSTANT UI UPDATE (NO WAIT)
+    person.attendanceStatus = newStatus;
+    setEmoji(newStatus);
+
+    const formData = new FormData();
+    formData.append("action", "attendance");
+    formData.append("rowIndex", person.rowIndex);
+    formData.append("attendance_status", newStatus);
+    formData.append("sheet", "ylc");
+
+    try {
+      await fetch(BASE_URL, {
+        method: "POST",
+        body: formData
+      });
+    } catch (err) {
+      console.error("Sync failed:", err);
+    }
+
+    isSyncing = false;
+  };
+}
+
+
+// ===============================
+// LOAD DATA (SMART UPDATE)
 // ===============================
 async function loadAttendance() {
-  if (isUpdating) return;
+
+  if (isSyncing) return;
 
   try {
     const res = await fetch(BASE_URL + "?sheet=ylc");
@@ -81,105 +169,8 @@ async function loadAttendance() {
 
     if (!Array.isArray(data)) return;
 
-    tbody.innerHTML = "";
-
     data.forEach(person => {
-
-      const tr = document.createElement("tr");
-
-      const tdFirst = document.createElement("td");
-      tdFirst.textContent = person.firstName || "";
-
-      const tdLast = document.createElement("td");
-      tdLast.textContent = person.lastName || "";
-
-      const tdPayment = document.createElement("td");
-      const payment = (person.paymentStatus || "").toLowerCase();
-
-      if (payment.includes("online")) {
-        tdPayment.textContent = "✅ Paid";
-        tdPayment.className = "status-paid";
-      } else if (payment.includes("onsite")) {
-        tdPayment.textContent = "⚠️ Onsite";
-        tdPayment.className = "status-onsite";
-      } else {
-        tdPayment.textContent = "❌ Not Paid";
-        tdPayment.className = "status-not";
-      }
-
-      const tdAttend = document.createElement("td");
-      tdAttend.className = "attendance-check";
-
-      let currentStatus = person.attendanceStatus || "ON-waiting";
-
-      function updateEmoji(status) {
-        if (status === "Attended") {
-          tdAttend.textContent = "✅";
-        } else if (status === "Cancelled") {
-          tdAttend.textContent = "❌";
-        } else {
-          tdAttend.textContent = "🟠";
-        }
-      }
-
-      updateEmoji(currentStatus);
-
-      // ===============================
-      // CLICK HANDLER
-      // ===============================
-      tdAttend.addEventListener("click", async () => {
-
-        if (isUpdating) return;
-
-        isUpdating = true;
-        tdAttend.style.pointerEvents = "none";
-
-        let newStatus;
-
-        if (currentStatus === "Attended") {
-          newStatus = "Waiting";
-        } else if (currentStatus === "Cancelled") {
-          newStatus = "Waiting";
-        } else {
-          newStatus = "Attended";
-        }
-
-        const formData = new FormData();
-        formData.append("action", "attendance");
-        formData.append("rowIndex", person.rowIndex);
-        formData.append("attendance_status", newStatus);
-        formData.append("sheet", "ylc");
-
-        try {
-          const response = await fetch(BASE_URL, {
-            method: "POST",
-            body: formData
-          });
-
-          const result = await response.json();
-
-          if (result.result === "success") {
-            currentStatus = newStatus;
-            updateEmoji(newStatus);
-          } else {
-            alert("Update failed.");
-          }
-
-        } catch (err) {
-          alert("Network error.");
-          console.error(err);
-        }
-
-        tdAttend.style.pointerEvents = "auto";
-        isUpdating = false;
-      });
-
-      tr.appendChild(tdFirst);
-      tr.appendChild(tdLast);
-      tr.appendChild(tdPayment);
-      tr.appendChild(tdAttend);
-
-      tbody.appendChild(tr);
+      renderRow(person);
     });
 
   } catch (err) {
@@ -187,13 +178,16 @@ async function loadAttendance() {
   }
 }
 
-// Initial load
+
+// ===============================
+// INITIAL LOAD
+// ===============================
 loadAttendance();
 
-// Auto refresh every 30 seconds
-setInterval(loadAttendance, 30000);
-
+// 🔄 Silent auto-refresh every 20 sec (NO table wipe)
+setInterval(loadAttendance, 20000);
 </script>
+
 
 </body>
 </html>
