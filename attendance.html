@@ -73,7 +73,7 @@ async function loadAttendance() {
     const res = await fetch(sheetUrl + "?action=getAll");
     const data = await res.json();
 
-    if(!Array.isArray(data) || data.length === 0){
+    if (!Array.isArray(data) || data.length === 0) {
       tbody.innerHTML = "<tr><td colspan='4'>No data available.</td></tr>";
       return;
     }
@@ -96,10 +96,10 @@ async function loadAttendance() {
 
       // Payment Status
       const tdPayment = document.createElement("td");
-      if(person.payment_status?.toLowerCase().includes("paid") || person.payment_status?.toLowerCase().includes("confirmed")){
+      if (person.payment_status?.toLowerCase().includes("paid") || person.payment_status?.toLowerCase().includes("confirmed")) {
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
-      } else if(person.payment_status?.toLowerCase().includes("onsite")){
+      } else if (person.payment_status?.toLowerCase().includes("onsite")) {
         tdPayment.textContent = "⚠️ Onsite";
         tdPayment.className = "status-onsite";
       } else {
@@ -116,12 +116,17 @@ async function loadAttendance() {
                              person.attendance_status === "Cancelled" ? "❌" : "⚠️";
 
       tdAttend.addEventListener("click", async () => {
+        if (!person.rowIndex) {
+          alert("Row index not found. Cannot update attendance.");
+          return;
+        }
+
         let newAttendance;
 
-        if(tdAttend.textContent === "✅"){
+        if (tdAttend.textContent === "✅") {
           tdAttend.textContent = "🟠";
-          newAttendance = "Waiting";
-        } else if(tdAttend.textContent === "🟠"){
+          newAttendance = "ON-waiting";
+        } else if (tdAttend.textContent === "🟠") {
           tdAttend.textContent = "❌";
           newAttendance = "Cancelled";
         } else {
@@ -140,12 +145,12 @@ async function loadAttendance() {
           formData.append("attendance_status", newAttendance);
 
           const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
-          const result = await updateRes.json();
+          const result = await updateRes.json(); // fixed variable name
 
-          if(result.result !== "success"){
+          if (result.result !== "success") {
             alert("Error updating attendance: " + result.error);
           }
-        } catch(err){
+        } catch (err) {
           console.error("Network error:", err);
           alert("Network error. Please try again.");
         }
