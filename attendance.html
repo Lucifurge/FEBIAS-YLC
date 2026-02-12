@@ -62,48 +62,40 @@ th {
 </thead>
 <tbody></tbody>
 </table>
+
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbyL2XS7nPe_72Uy0Hns7s3gHt-YiCIJSuQtkApZrC5VBPMabJcciAQyX6CGRS8HGvI_/exec";
 const tbody = document.querySelector("#attendance-table tbody");
 
 let peopleMap = new Map();
-
-// ===============================
-// EMOJI ROTATION ORDER
-// ===============================
 const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
 
-// ===============================
-// RENDER OR UPDATE ROW
-// ===============================
+// Render or update a row
 function renderRow(person) {
+  let tr = peopleMap.get(person.rowIndex);
 
-  let existingRow = peopleMap.get(person.rowIndex);
-
-  if (!existingRow) {
-    const tr = document.createElement("tr");
+  if (!tr) {
+    tr = document.createElement("tr");
     tr.dataset.row = person.rowIndex;
 
     tr.innerHTML = `
-      <td>${person.firstName || ""}</td>
-      <td>${person.lastName || ""}</td>
+      <td class="first"></td>
+      <td class="last"></td>
       <td class="payment"></td>
       <td class="attendance-check"></td>
     `;
-
     tbody.appendChild(tr);
     peopleMap.set(person.rowIndex, tr);
-    existingRow = tr;
   }
 
-  const paymentCell = existingRow.querySelector(".payment");
-  const attendanceCell = existingRow.querySelector(".attendance-check");
+  tr.querySelector(".first").textContent = person.firstName || "";
+  tr.querySelector(".last").textContent = person.lastName || "";
 
-  // ===============================
-  // PAYMENT DISPLAY
-  // ===============================
+  const paymentCell = tr.querySelector(".payment");
+  const attendanceCell = tr.querySelector(".attendance-check");
+
+  // Payment display
   const payment = (person.paymentStatus || "").toLowerCase();
-
   if (payment.includes("online")) {
     paymentCell.textContent = "✅ Paid";
     paymentCell.className = "payment status-paid";
@@ -115,78 +107,60 @@ function renderRow(person) {
     paymentCell.className = "payment status-not";
   }
 
-  // ===============================
-  // ATTENDANCE DISPLAY
-  // ===============================
+  // Attendance emoji
   function setEmoji(status) {
-    if (status === "Attended") attendanceCell.textContent = "✅";
-    else if (status === "Cancelled") attendanceCell.textContent = "❌";
-    else attendanceCell.textContent = "🟠";
+    attendanceCell.textContent = status === "Attended" ? "✅"
+                             : status === "Cancelled" ? "❌" : "🟠";
   }
-
   setEmoji(person.attendanceStatus);
 
-  // ===============================
-  // FAST CLICK HANDLER (NO WAIT)
-  // ===============================
+  // Fast click handler
   attendanceCell.onclick = () => {
+    let idx = statusCycle.indexOf(person.attendanceStatus);
+    if (idx === -1) idx = 0;
+    let newStatus = statusCycle[(idx + 1) % statusCycle.length];
 
-    // Rotate status
-    let currentIndex = statusCycle.indexOf(person.attendanceStatus);
-    if (currentIndex === -1) currentIndex = 0;
-
-    let newStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
-
-    // 🔥 INSTANT UI UPDATE
+    // Instant UI update
     person.attendanceStatus = newStatus;
     setEmoji(newStatus);
 
-    // 🔥 BACKGROUND SYNC (no await, no blocking)
+    // Update payment if necessary
+    if (newStatus === "Attended") {
+      person.paymentStatus = "Online Payment";
+      paymentCell.textContent = "✅ Paid";
+      paymentCell.className = "payment status-paid";
+    }
+
+    // Background sync
     const formData = new FormData();
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
     formData.append("attendance_status", newStatus);
     formData.append("sheet", "ylc");
 
-    fetch(BASE_URL, {
-      method: "POST",
-      body: formData
-    }).catch(err => console.error("Sync error:", err));
+    fetch(BASE_URL, { method: "POST", body: formData })
+      .catch(err => console.error("Sync error:", err));
   };
 }
 
-
-// ===============================
-// LOAD DATA (NO TABLE WIPE)
-// ===============================
+// Load data without wiping table
 async function loadAttendance() {
-
   try {
     const res = await fetch(BASE_URL + "?sheet=ylc");
     const data = await res.json();
-
     if (!Array.isArray(data)) return;
 
-    data.forEach(person => {
-      renderRow(person);
-    });
+    data.forEach(person => renderRow(person));
 
   } catch (err) {
     console.error("Load error:", err);
   }
 }
 
-
-// ===============================
-// INITIAL LOAD
-// ===============================
+// Initial load + silent refresh every 15s
 loadAttendance();
-
-// 🔄 Silent auto-refresh every 20 sec
-setInterval(loadAttendance, 20000);
+setInterval(loadAttendance, 15000);
 </script>
-
-
 
 </body>
 </html>
