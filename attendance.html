@@ -66,8 +66,12 @@ th {
 const BASE_URL = "https://script.google.com/macros/s/AKfycbwSyyqzGF7IK6L_rmdRFg7EBGOPfoyUQRrXKlCSNBx9vTz-7GwVuFTUnSw5qjOIUakpUQ/exec";
 const tbody = document.querySelector("#attendance-table tbody");
 
-let peopleMap = new Map(); // store rows by rowIndex
-let isSyncing = false;
+let peopleMap = new Map();
+
+// ===============================
+// EMOJI ROTATION ORDER
+// ===============================
+const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
 
 // ===============================
 // RENDER OR UPDATE ROW
@@ -95,7 +99,9 @@ function renderRow(person) {
   const paymentCell = existingRow.querySelector(".payment");
   const attendanceCell = existingRow.querySelector(".attendance-check");
 
-  // Payment display
+  // ===============================
+  // PAYMENT DISPLAY
+  // ===============================
   const payment = (person.paymentStatus || "").toLowerCase();
 
   if (payment.includes("online")) {
@@ -109,7 +115,9 @@ function renderRow(person) {
     paymentCell.className = "payment status-not";
   }
 
-  // Attendance emoji
+  // ===============================
+  // ATTENDANCE DISPLAY
+  // ===============================
   function setEmoji(status) {
     if (status === "Attended") attendanceCell.textContent = "✅";
     else if (status === "Cancelled") attendanceCell.textContent = "❌";
@@ -118,50 +126,40 @@ function renderRow(person) {
 
   setEmoji(person.attendanceStatus);
 
-  // Prevent duplicate listeners
-  attendanceCell.onclick = async () => {
+  // ===============================
+  // FAST CLICK HANDLER (NO WAIT)
+  // ===============================
+  attendanceCell.onclick = () => {
 
-    if (isSyncing) return;
-    isSyncing = true;
+    // Rotate status
+    let currentIndex = statusCycle.indexOf(person.attendanceStatus);
+    if (currentIndex === -1) currentIndex = 0;
 
-    let newStatus;
+    let newStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
 
-    if (person.attendanceStatus === "Attended") {
-      newStatus = "Waiting";
-    } else {
-      newStatus = "Attended";
-    }
-
-    // 🔥 INSTANT UI UPDATE (NO WAIT)
+    // 🔥 INSTANT UI UPDATE
     person.attendanceStatus = newStatus;
     setEmoji(newStatus);
 
+    // 🔥 BACKGROUND SYNC (no await, no blocking)
     const formData = new FormData();
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
     formData.append("attendance_status", newStatus);
     formData.append("sheet", "ylc");
 
-    try {
-      await fetch(BASE_URL, {
-        method: "POST",
-        body: formData
-      });
-    } catch (err) {
-      console.error("Sync failed:", err);
-    }
-
-    isSyncing = false;
+    fetch(BASE_URL, {
+      method: "POST",
+      body: formData
+    }).catch(err => console.error("Sync error:", err));
   };
 }
 
 
 // ===============================
-// LOAD DATA (SMART UPDATE)
+// LOAD DATA (NO TABLE WIPE)
 // ===============================
 async function loadAttendance() {
-
-  if (isSyncing) return;
 
   try {
     const res = await fetch(BASE_URL + "?sheet=ylc");
@@ -184,9 +182,10 @@ async function loadAttendance() {
 // ===============================
 loadAttendance();
 
-// 🔄 Silent auto-refresh every 20 sec (NO table wipe)
+// 🔄 Silent auto-refresh every 20 sec
 setInterval(loadAttendance, 20000);
 </script>
+
 
 
 </body>
