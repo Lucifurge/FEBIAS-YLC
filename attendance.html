@@ -64,58 +64,32 @@ th {
 
 <script>
 const sheetUrl = "https://script.google.com/macros/s/AKfycbzEMOPQOPhDKRpSSNZx8iNMo2J-8xxW0c9tREHLi40-5c1idUoq69g5LYVRSjl5QGi_BQ/exec";
+const tbody = document.querySelector("#attendance-table tbody");
+let rowMap = {}; // Map rowIndex -> <tr>
 
 async function loadAttendance() {
   try {
     const res = await fetch(`${sheetUrl}?action=getAll`);
     const data = await res.json();
-    const tbody = document.querySelector("#attendance-table tbody");
+    if (!Array.isArray(data) || data.length === 0) return;
 
-    if (!Array.isArray(data) || data.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='4'>No data available.</td></tr>";
-      return;
-    }
-
-    // Reuse existing rows if possible
-    data.forEach((person, index) => {
-      let tr = tbody.children[index];
+    data.forEach((person) => {
+      const rowIndex = person.rowIndex;
+      let tr = rowMap[rowIndex];
       if (!tr) {
         tr = document.createElement("tr");
+        // Create 4 td cells
+        for (let i = 0; i < 4; i++) tr.appendChild(document.createElement("td"));
         tbody.appendChild(tr);
-      }
+        rowMap[rowIndex] = tr;
 
-      person.rowIndex = person.rowIndex || (index + 2);
-
-      // First Name
-      tr.children[0] ? tr.children[0].textContent = person["First Name"] || person["first_name"] || "" 
-                      : tr.appendChild(document.createElement("td")).textContent = person["First Name"] || person["first_name"] || "";
-
-      // Last Name
-      tr.children[1] ? tr.children[1].textContent = person["Last Name"] || person["last_name"] || "" 
-                      : tr.appendChild(document.createElement("td")).textContent = person["Last Name"] || person["last_name"] || "";
-
-      // Payment Status
-      const paymentText = person["Payment Status"] || person["payment_status"] || "";
-      let tdPayment = tr.children[2] || document.createElement("td");
-      if (!tr.children[2]) tr.appendChild(tdPayment);
-      if (paymentText.toLowerCase().includes("paid") || paymentText.toLowerCase().includes("confirmed")) {
-        tdPayment.textContent = "✅ Paid";
-        tdPayment.className = "status-paid";
-      } else if (paymentText.toLowerCase().includes("onsite")) {
-        tdPayment.textContent = "⚠️ Onsite";
-        tdPayment.className = "status-onsite";
-      } else {
-        tdPayment.textContent = "❌ Not Paid";
-        tdPayment.className = "status-not";
-      }
-
-      // Attendance
-      let tdAttend = tr.children[3] || document.createElement("td");
-      if (!tr.children[3]) {
-        tdAttend.className = "attendance-check";
-        tr.appendChild(tdAttend);
-        tdAttend.addEventListener("click", async () => {
+        // Add click handler for attendance
+        tr.children[3].className = "attendance-check";
+        tr.children[3].addEventListener("click", async () => {
+          let tdAttend = tr.children[3];
+          let tdPayment = tr.children[2];
           let newAttendance;
+
           if(tdAttend.textContent === "✅") {
             tdAttend.textContent = "🟠";
             newAttendance = "Waiting";
@@ -132,7 +106,7 @@ async function loadAttendance() {
           try {
             const formData = new FormData();
             formData.append("action", "attendance");
-            formData.append("rowIndex", person.rowIndex);
+            formData.append("rowIndex", rowIndex);
             formData.append("attendance_status", newAttendance);
             const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
             const result = await updateRes.json();
@@ -144,10 +118,30 @@ async function loadAttendance() {
         });
       }
 
-      const attendanceStatus = person["Attendance Status"] || person["attendance_status"] || "";
-      tdAttend.textContent = attendanceStatus === "Attended" ? "✅" :
-                             attendanceStatus === "ON-waiting" ? "🟠" :
-                             attendanceStatus === "Cancelled" ? "❌" : "⚠️";
+      // Update First Name / Last Name
+      tr.children[0].textContent = person.first_name || "";
+      tr.children[1].textContent = person.last_name || "";
+
+      // Update Payment
+      const payment = (person.payment_status || "").toLowerCase();
+      const tdPayment = tr.children[2];
+      if(payment.includes("paid") || payment.includes("confirmed")) {
+        tdPayment.textContent = "✅ Paid";
+        tdPayment.className = "status-paid";
+      } else if(payment.includes("onsite")) {
+        tdPayment.textContent = "⚠️ Onsite";
+        tdPayment.className = "status-onsite";
+      } else {
+        tdPayment.textContent = "❌ Not Paid";
+        tdPayment.className = "status-not";
+      }
+
+      // Update Attendance
+      const attendance = person.attendance_status || "";
+      const tdAttend = tr.children[3];
+      tdAttend.textContent = attendance === "Attended" ? "✅" :
+                             attendance === "ON-waiting" ? "🟠" :
+                             attendance === "Cancelled" ? "❌" : "⚠️";
     });
 
   } catch(err) {
@@ -160,7 +154,7 @@ loadAttendance();
 
 // Auto-refresh every 5 seconds
 setInterval(loadAttendance, 5000);
-
 </script>
+
 </body>
 </html>
