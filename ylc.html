@@ -3,163 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Payment | FEBIAS College of Bible</title>
+<title>YLC 2026 Registration | FEBIAS College of Bible</title>
 
 <link rel="icon" href="logo.ico">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family: "Segoe UI", system-ui, sans-serif; }
-
-body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
-
-.container {
-  max-width:900px;
-  margin:2rem auto;
-  padding:2rem;
-  background:#fff;
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.12);
-}
-
-h1,h2 {
-  text-align:center;
-  color:#0b3d2e;
-  margin-bottom:1rem;
-}
-
-h2 { margin-top:2rem; }
-
-label {
-  display:block;
-  font-weight:600;
-  margin-top:1rem;
-  color:#0b3d2e;
-  font-size:1.1rem;
-}
-
-input[type="radio"] {
-  margin-right:10px;
-}
-
-button {
-  display:block;
-  width:100%;
-  padding:1.2rem;
-  margin-top:2rem;
-  font-size:1.2rem;
-  font-weight:700;
-  background:#0b3d2e;
-  color:#fff;
-  border:none;
-  border-radius:12px;
-  cursor:pointer;
-}
-
-button:hover { background:#1f7a4d; }
-
-.instructions {
-  background:#f9fafb;
-  padding:1.5rem;
-  border-left:6px solid #d4af37;
-  border-radius:10px;
-  margin-top:1.5rem;
-}
-
-.payment-images {
-  display:flex;
-  justify-content:space-around;
-  flex-wrap:wrap;
-  margin-top:1rem;
-  gap:1rem;
-}
-
-.payment-images img {
-  max-width:150px;
-  border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.1);
-}
-
-.big-warning {
-  margin-top:2rem;
-  padding:1.5rem;
-  background:#fff4e5;
-  border:3px solid #d97706;
-  border-radius:12px;
-  text-align:center;
-  font-size:1.3rem;
-  font-weight:800;
-  color:#b45309;
-}
-footer{
-  text-align:center;
-  padding:2rem;
-  font-size:0.9rem;
-  color:#555;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
+body{background:#f8f8f8;color:#1f2937;line-height:1.6;}
+.container{max-width:900px;margin:2rem auto;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.12);}
+h1,h2{text-align:center;color:#0b3d2e;margin-bottom:1rem;}
+h2{margin-top:2rem;}
+label{display:block;font-weight:600;margin-top:1rem;color:#0b3d2e;}
+input,select,textarea{width:100%;padding:.9rem;margin-top:.4rem;border-radius:8px;border:1px solid #9ca3af;font-size:1rem;}
+textarea{resize:vertical;}
+button{display:block;width:100%;padding:1.2rem;margin-top:1.5rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:12px;cursor:pointer;}
+button:hover{background:#1f7a4d;}
+section{margin-top:2rem;}
+.checkbox-group{margin-top:.5rem;}
+.checkbox-group label{display:block;font-weight:500;margin-top:.5rem;}
+.privacy{font-size:.95rem;background:#f0f0f0;padding:1rem;border-left:5px solid #d4af37;border-radius:8px;}
+footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#555;}
 </style>
 </head>
 
 <body>
-
 <div class="container">
-  <h1>YLC 2026 Payment</h1>
+<h1>YLC 2026 Registration</h1>
 
-  <p style="text-align:center; font-size:1.1rem;">
-    Please select your payment method below to confirm your registration.
-  </p>
+<section class="privacy">
+<h2>Privacy Statement</h2>
+<p>Your information will be used solely for YLC 2026 administration, communication, health safety, and documentation purposes.</p>
+</section>
 
-  <form id="payment-form">
+<form id="ylc-form">
 
-    <h2>Select Payment Type</h2>
+<!-- Minor Consent -->
+<section>
+<h2>Minor Consent</h2>
 
-    <label>
-      <input type="radio" name="payment_by" value="Onsite" required>
-      Onsite Payment (Pay at FEBIAS Campus)
-    </label>
+<label>
+<input type="radio" name="minor_consent" value="18+ No Consent Required" required>
+I am 18+ and do not require parental consent
+</label>
 
-    <label>
-      <input type="radio" name="payment_by" value="Online">
-      Online Payment (Transfer before arrival)
-    </label>
+<label>
+<input type="radio" name="minor_consent" value="Minor with Parental Consent">
+I am a minor with parental consent
+</label>
 
-    <div class="instructions">
-      <h2>Payment Instructions</h2>
+<label>
+<input type="radio" name="minor_consent" value="Parent/Guardian Consent Given">
+I am a parent/guardian giving consent
+</label>
+</section>
 
-      <p><strong>Onsite Payment:</strong><br>
-      Pay directly at FEBIAS College of Bible during the event registration day.</p>
+<!-- Personal Info -->
+<section>
+<h2>Personal Information</h2>
 
-      <p><strong>Online Payment:</strong><br>
-      Transfer through any method below. Present proof of transfer during onsite confirmation.</p>
+<label>Last Name<input type="text" name="last_name" required></label>
+<label>First Name<input type="text" name="first_name" required></label>
+<label>Middle Name<input type="text" name="middle_name"></label>
+<label>Nickname<input type="text" name="nickname"></label>
+<label>Age<input type="number" name="age" required></label>
+<label>Date of Birth<input type="date" name="dob" required></label>
 
-      <div class="payment-images">
-        <div>
-          <p style="text-align:center;">FEBIAS QR</p>
-          <img src="febias_qr.jpg" alt="FEBIAS QR Code">
-        </div>
+<label>Gender
+<select name="gender" required>
+<option value="">Select</option>
+<option value="Male">Male</option>
+<option value="Female">Female</option>
+</select>
+</label>
 
-        <div>
-          <p style="text-align:center;">GCash</p>
-          <img src="gcash_qr.jpg" alt="GCash QR">
-        </div>
+<label>Contact Number<input type="text" name="contact_number" required></label>
+<label>Home Address<textarea name="home_address" rows="2" required></textarea></label>
+<label>Email<input type="email" name="email" required></label>
+<label>Facebook<input type="text" name="facebook"></label>
+</section>
 
-        <div>
-          <p style="text-align:center;">Bank Transfer</p>
-          <img src="bank_qr.jpg" alt="Bank QR">
-        </div>
-      </div>
-    </div>
+<!-- Christian Info -->
+<section>
+<h2>Christian Service Information</h2>
 
-    <!-- BIG INSTRUCTION -->
-    <div class="big-warning">
-      ⚠️ IMPORTANT: PLEASE SCREENSHOT OR SAVE YOUR REGISTRATION CONFIRMATION.
-      <br>
-      You must present it onsite for payment verification.
-    </div>
+<label>Church Name<input type="text" name="church_name"></label>
+<label>Church Location<input type="text" name="church_location"></label>
+<label>Pastor Name<input type="text" name="pastor_name"></label>
 
-    <button type="submit">✅ Confirm Payment Type</button>
+<label>Accepted Christ?
+<select name="accepted_christ" required>
+<option value="">Select</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</label>
 
-  </form>
+<label>Water Baptized?
+<select name="water_baptized" required>
+<option value="">Select</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</label>
+
+<label>Church Ministries?
+<select name="church_ministries" required>
+<option value="">Select</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</label>
+
+<label>Youth Leader Status
+<select name="youth_leader" required>
+<option value="">Select</option>
+<option value="More than 2 years">More than 2 years</option>
+<option value="Less than 2 years">Less than 2 years</option>
+<option value="Training">Training to become one</option>
+</select>
+</label>
+
+<label>Ministries (Check all that apply)</label>
+<div class="checkbox-group">
+<label><input type="checkbox" name="ministries" value="Pastoral"> Pastoral</label>
+<label><input type="checkbox" name="ministries" value="Christian Education"> Christian Education</label>
+<label><input type="checkbox" name="ministries" value="Music"> Music</label>
+<label><input type="checkbox" name="ministries" value="Evangelism & Discipleship"> Evangelism & Discipleship</label>
+<label><input type="checkbox" name="ministries" value="Multimedia & Technical"> Multimedia & Technical</label>
+<label><input type="checkbox" name="ministries" value="Church Administration"> Church Administration</label>
+<label><input type="checkbox" name="ministries" value="Events & Worship"> Events & Worship</label>
+<label><input type="checkbox" name="ministries" value="Others"> Others</label>
+</div>
+</section>
+
+<!-- Health -->
+<section>
+<h2>Health Information</h2>
+
+<label>Allergies<textarea name="allergies"></textarea></label>
+<label>Dietary Restrictions<textarea name="dietary_restrictions"></textarea></label>
+<label>Health Conditions<textarea name="health_conditions"></textarea></label>
+
+<div class="checkbox-group">
+<label><input type="checkbox" name="health_declaration" value="Answers True" required> Answers are true</label>
+<label><input type="checkbox" name="health_declaration" value="Physically Fit" required> Physically fit</label>
+<label><input type="checkbox" name="health_declaration" value="Responsible for Health" required> Responsible for health</label>
+<label><input type="checkbox" name="health_declaration" value="No Liability Clause" required> No liability clause</label>
+</div>
+</section>
+
+<!-- Payment Info -->
+<section>
+<h2>Payment Responsibility</h2>
+
+<label>Who will pay?
+<select name="payment_by" required>
+<option value="">Select</option>
+<option value="Personal">Personal</option>
+<option value="Sponsor">Sponsor</option>
+<option value="Church Sponsor">Church Sponsor</option>
+</select>
+</label>
+
+<label>Sponsor Name (if applicable)
+<input type="text" name="sponsor_name">
+</label>
+</section>
+
+<button type="submit">✅ Submit Registration</button>
+</form>
 </div>
 
 <footer>
@@ -167,30 +180,24 @@ footer{
 </footer>
 
 <script>
-document.getElementById('payment-form').addEventListener('submit', async function(e){
-  e.preventDefault();
+document.getElementById("ylc-form").addEventListener("submit", async function(e){
+e.preventDefault();
 
-  const url = "https://script.google.com/macros/s/AKfycbyDwSfJ1uqRWUETfsKyRB-bWBl1JEId5adTIKlmbj_jupnGJq30fjmMg14u1DznIm3RSA/exec"; // replace with your latest Apps Script Web App URL
-  const formData = new FormData(this);
+const url = "YOUR_WEB_APP_URL_HERE";
+const formData = new FormData(this);
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: formData
-    });
+try{
+const res = await fetch(url,{method:"POST",body:formData});
+const result = await res.json();
 
-    const result = await res.json();
-
-    if(result.result === "success"){
-      alert("Payment type saved successfully! Please screenshot your confirmation for onsite verification.");
-      window.location.href = "attendance.html"; // redirect properly
-    } else {
-      alert("Submission failed: " + result.error);
-    }
-
-  } catch(err) {
-    alert("Error submitting payment: " + err);
-  }
+if(result.result === "success"){
+window.location.href = "payment.html";
+}else{
+alert("Submission failed: "+result.error);
+}
+}catch(err){
+alert("Network error. Please try again.");
+}
 });
 </script>
 
