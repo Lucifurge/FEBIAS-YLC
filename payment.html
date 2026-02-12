@@ -6,160 +6,46 @@
 <title>YLC 2026 Payment | FEBIAS College of Bible</title>
 
 <link rel="icon" href="logo.ico">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family: "Segoe UI", system-ui, sans-serif; }
-
-body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
-
-.container {
-  max-width:900px;
-  margin:2rem auto;
-  padding:2rem;
-  background:#fff;
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.12);
-}
-
-h1,h2 {
-  text-align:center;
-  color:#0b3d2e;
-  margin-bottom:1rem;
-}
-
-h2 { margin-top:2rem; }
-
-label {
-  display:block;
-  font-weight:600;
-  margin-top:1rem;
-  color:#0b3d2e;
-  font-size:1.1rem;
-}
-
-input[type="radio"] {
-  margin-right:10px;
-}
-
-button {
-  display:block;
-  width:100%;
-  padding:1.2rem;
-  margin-top:2rem;
-  font-size:1.2rem;
-  font-weight:700;
-  background:#0b3d2e;
-  color:#fff;
-  border:none;
-  border-radius:12px;
-  cursor:pointer;
-}
-
-button:hover { background:#1f7a4d; }
-
-.instructions {
-  background:#f9fafb;
-  padding:1.5rem;
-  border-left:6px solid #d4af37;
-  border-radius:10px;
-  margin-top:1.5rem;
-}
-
-.payment-images {
-  display:flex;
-  justify-content:space-around;
-  flex-wrap:wrap;
-  margin-top:1rem;
-  gap:1rem;
-}
-
-.payment-images img {
-  max-width:150px;
-  border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.1);
-}
-
-.big-warning {
-  margin-top:2rem;
-  padding:1.5rem;
-  background:#fff4e5;
-  border:3px solid #d97706;
-  border-radius:12px;
-  text-align:center;
-  font-size:1.3rem;
-  font-weight:800;
-  color:#b45309;
-}
-footer{
-  text-align:center;
-  padding:2rem;
-  font-size:0.9rem;
-  color:#555;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
+body{background:#f8f8f8;color:#1f2937;line-height:1.6;}
+.container{max-width:800px;margin:2rem auto;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.12);}
+h1,h2{text-align:center;color:#0b3d2e;margin-bottom:1rem;}
+label{display:block;margin-top:1rem;font-weight:600;}
+button{width:100%;padding:1.2rem;margin-top:2rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:12px;cursor:pointer;}
+button:hover{background:#1f7a4d;}
+.notice{margin-top:1.5rem;padding:1rem;background:#fff4e5;border-left:5px solid #d97706;border-radius:8px;text-align:center;font-weight:700;color:#b45309;}
+footer{text-align:center;padding:2rem;color:#555;}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <h1>YLC 2026 Payment</h1>
+<h1>YLC 2026 Payment Confirmation</h1>
 
-  <p style="text-align:center; font-size:1.1rem;">
-    Please select your payment method below to confirm your registration.
-  </p>
+<form id="payment-form">
 
-  <form id="payment-form">
+<h2>Select Payment Type</h2>
 
-    <h2>Select Payment Type</h2>
+<label>
+<input type="radio" name="payment_by" value="Onsite" required>
+Onsite Payment
+</label>
 
-    <label>
-      <input type="radio" name="payment_by" value="Onsite" required>
-      Onsite Payment (Pay at FEBIAS Campus)
-    </label>
+<label>
+<input type="radio" name="payment_by" value="Online">
+Online Payment
+</label>
 
-    <label>
-      <input type="radio" name="payment_by" value="Online">
-      Online Payment (Transfer before arrival)
-    </label>
+<div class="notice">
+⚠️ Please screenshot your registration confirmation and present it onsite.
+</div>
 
-    <div class="instructions">
-      <h2>Payment Instructions</h2>
+<button type="submit">✅ Confirm Payment</button>
 
-      <p><strong>Onsite Payment:</strong><br>
-      Pay directly at FEBIAS College of Bible during the event registration day.</p>
-
-      <p><strong>Online Payment:</strong><br>
-      Transfer through any method below. Present proof of transfer during onsite confirmation.</p>
-
-      <div class="payment-images">
-        <div>
-          <p style="text-align:center;">FEBIAS QR</p>
-          <img src="febias_qr.jpg" alt="FEBIAS QR Code">
-        </div>
-
-        <div>
-          <p style="text-align:center;">GCash</p>
-          <img src="gcash_qr.jpg" alt="GCash QR">
-        </div>
-
-        <div>
-          <p style="text-align:center;">Bank Transfer</p>
-          <img src="bank_qr.jpg" alt="Bank QR">
-        </div>
-      </div>
-    </div>
-
-    <!-- BIG INSTRUCTION -->
-    <div class="big-warning">
-      ⚠️ IMPORTANT: PLEASE SCREENSHOT OR SAVE YOUR REGISTRATION CONFIRMATION.
-      <br>
-      You must present it onsite for payment verification.
-    </div>
-
-    <button type="submit">✅ Confirm Payment Type</button>
-
-  </form>
+</form>
 </div>
 
 <footer>
@@ -167,30 +53,42 @@ footer{
 </footer>
 
 <script>
-document.getElementById('payment-form').addEventListener('submit', async function(e){
-  e.preventDefault();
+document.getElementById("payment-form").addEventListener("submit", async function(e){
+e.preventDefault();
 
-  const url = "https://script.google.com/macros/s/AKfycbyDwSfJ1uqRWUETfsKyRB-bWBl1JEId5adTIKlmbj_jupnGJq30fjmMg14u1DznIm3RSA/exec"; // replace with your latest Apps Script Web App URL
-  const formData = new FormData(this);
+const email = localStorage.getItem("ylc_email");
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: formData
-    });
+if(!email){
+alert("Session expired. Please register again.");
+window.location.href = "register.html";
+return;
+}
 
-    const result = await res.json();
+const formData = new FormData(this);
+formData.append("email", email);
+formData.append("payment_only", "true");
 
-    if(result.result === "success"){
-      alert("Payment type saved successfully! Please screenshot your confirmation for onsite verification.");
-      window.location.href = "attendance.html"; // redirect properly
-    } else {
-      alert("Submission failed: " + result.error);
-    }
+const url = "https://script.google.com/macros/s/AKfycbyV1CUF4e5Kr3ZR5D9kdeHnTfrkk8Tpv3CIYK7A3kcOoI_VUOhXfj_ySEwhOo9SSH07ag/exec"; // same Apps Script URL
 
-  } catch(err) {
-    alert("Error submitting payment: " + err);
-  }
+try{
+const res = await fetch(url,{
+method:"POST",
+body:formData
+});
+
+const result = await res.json();
+
+if(result.result === "updated"){
+alert("Payment updated successfully!");
+localStorage.removeItem("ylc_email");
+window.location.href = "thankyou.html"; // or attendance.html
+}else{
+alert("Update failed: " + result.error);
+}
+
+}catch(err){
+alert("Network error. Please try again.");
+}
 });
 </script>
 
