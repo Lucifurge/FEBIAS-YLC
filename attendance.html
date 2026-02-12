@@ -46,7 +46,7 @@ th {
 <body>
 
 <h1>YLC 2026 Attendance</h1>
-<p>Click on the attendance indicator to mark campers. Payment status is shown with symbols.</p>
+<p>Click on the attendance indicator to mark campers. Payment status updates automatically if attended.</p>
 
 <table id="attendance-table">
   <thead>
@@ -70,7 +70,7 @@ async function loadAttendance() {
   tbody.innerHTML = "";
 
   try {
-    const res = await fetch(sheetUrl + "?action=getAll"); 
+    const res = await fetch(sheetUrl + "?action=getAll");
     const data = await res.json();
 
     if(!Array.isArray(data) || data.length === 0){
@@ -78,8 +78,11 @@ async function loadAttendance() {
       return;
     }
 
-    data.forEach(person => {
+    data.forEach((person, index) => {
       const tr = document.createElement("tr");
+
+      // Save rowIndex for updates
+      person.rowIndex = person.rowIndex || (index + 2); // Default to row number if Apps Script doesn't provide
 
       // First Name
       const tdFirst = document.createElement("td");
@@ -93,7 +96,7 @@ async function loadAttendance() {
 
       // Payment Status
       const tdPayment = document.createElement("td");
-      if(person.payment_status?.toLowerCase().includes("online") || person.payment_status?.toLowerCase().includes("confirmed")){
+      if(person.payment_status?.toLowerCase().includes("paid") || person.payment_status?.toLowerCase().includes("confirmed")){
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
       } else if(person.payment_status?.toLowerCase().includes("onsite")){
@@ -124,7 +127,7 @@ async function loadAttendance() {
           tdAttend.textContent = "✅";
           newAttendance = "Attended";
 
-          // Auto-update payment to Paid if attendance is Attended
+          // Auto-update payment to Paid
           tdPayment.textContent = "✅ Paid";
           tdPayment.className = "status-paid";
         }
@@ -136,18 +139,18 @@ async function loadAttendance() {
           formData.append("rowIndex", person.rowIndex);
           formData.append("attendance_status", newAttendance);
 
-          // If marking as attended, also update payment to confirmed
+          // Update payment status if attended
           if(newAttendance === "Attended"){
-            formData.append("payment_by", "Confirmed"); 
+            formData.append("payment_by", "Paid");
           }
 
           const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
           const result = await updateRes.json();
-
           if(result.result !== "success"){
             alert("Error updating attendance: " + result.error);
           }
         } catch(err){
+          console.error("Network error:", err);
           alert("Network error. Please try again.");
         }
       });
@@ -157,7 +160,7 @@ async function loadAttendance() {
     });
   } catch (err) {
     console.error("Failed to load attendance:", err);
-    tbody.innerHTML = "<tr><td colspan='4'>Failed to load data.</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4'>No data available.</td></tr>";
   }
 }
 
