@@ -67,23 +67,25 @@ const sheetUrl = "https://script.google.com/macros/s/AKfycbzEMOPQOPhDKRpSSNZx8iN
 const tbody = document.querySelector("#attendance-table tbody");
 let rowMap = {}; // Map rowIndex -> <tr>
 
+// Function to render/update rows
 async function loadAttendance() {
   try {
     const res = await fetch(`${sheetUrl}?action=getAll`);
     const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) return;
+    if (!Array.isArray(data)) return;
 
-    data.forEach((person) => {
+    data.forEach(person => {
       const rowIndex = person.rowIndex;
       let tr = rowMap[rowIndex];
+
       if (!tr) {
         tr = document.createElement("tr");
-        // Create 4 td cells
+        // Create 4 <td>
         for (let i = 0; i < 4; i++) tr.appendChild(document.createElement("td"));
         tbody.appendChild(tr);
         rowMap[rowIndex] = tr;
 
-        // Add click handler for attendance
+        // Add click listener for attendance
         tr.children[3].className = "attendance-check";
         tr.children[3].addEventListener("click", async () => {
           let tdAttend = tr.children[3];
@@ -108,6 +110,7 @@ async function loadAttendance() {
             formData.append("action", "attendance");
             formData.append("rowIndex", rowIndex);
             formData.append("attendance_status", newAttendance);
+
             const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
             const result = await updateRes.json();
             if(result.result !== "success") alert("Error updating attendance: " + result.error);
@@ -118,13 +121,13 @@ async function loadAttendance() {
         });
       }
 
-      // Update First Name / Last Name
+      // First Name & Last Name
       tr.children[0].textContent = person.first_name || "";
       tr.children[1].textContent = person.last_name || "";
 
-      // Update Payment
-      const payment = (person.payment_status || "").toLowerCase();
+      // Payment Status
       const tdPayment = tr.children[2];
+      const payment = (person.payment_status || "").toLowerCase();
       if(payment.includes("paid") || payment.includes("confirmed")) {
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
@@ -136,9 +139,9 @@ async function loadAttendance() {
         tdPayment.className = "status-not";
       }
 
-      // Update Attendance
-      const attendance = person.attendance_status || "";
+      // Attendance Status
       const tdAttend = tr.children[3];
+      const attendance = person.attendance_status || "";
       tdAttend.textContent = attendance === "Attended" ? "✅" :
                              attendance === "ON-waiting" ? "🟠" :
                              attendance === "Cancelled" ? "❌" : "⚠️";
@@ -152,7 +155,7 @@ async function loadAttendance() {
 // Initial load
 loadAttendance();
 
-// Auto-refresh every 5 seconds
+// Refresh every 5 seconds
 setInterval(loadAttendance, 5000);
 </script>
 
