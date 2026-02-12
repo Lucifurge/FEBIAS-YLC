@@ -63,7 +63,7 @@ th {
 </table>
 
 <script>
-const sheetUrl = "https://script.google.com/macros/s/AKfycbyJKrLSO0RLx3nJBdN53z718pxoGSG4RVwV7vlqhHLvZ8okHz1FdEJvrbyOI5eUCGCo/exec";
+const sheetUrl = "https://script.google.com/macros/s/AKfycbywpczbUUXqiW5HvU7qotL_EfTciqVL6MYHXxwgxTV80meFz8kS4J6lBPtx60FOdpSKqw/exec";
 
 async function loadAttendance() {
   const tbody = document.querySelector("#attendance-table tbody");
@@ -82,7 +82,7 @@ async function loadAttendance() {
       const tr = document.createElement("tr");
 
       // Save rowIndex for updates
-      person.rowIndex = person.rowIndex || (index + 2); // Default to row number if Apps Script doesn't provide
+      person.rowIndex = person.rowIndex || (index + 2);
 
       // First Name
       const tdFirst = document.createElement("td");
@@ -117,9 +117,10 @@ async function loadAttendance() {
 
       tdAttend.addEventListener("click", async () => {
         let newAttendance;
+
         if(tdAttend.textContent === "✅"){
           tdAttend.textContent = "🟠";
-          newAttendance = "ON-waiting";
+          newAttendance = "Waiting";
         } else if(tdAttend.textContent === "🟠"){
           tdAttend.textContent = "❌";
           newAttendance = "Cancelled";
@@ -127,25 +128,20 @@ async function loadAttendance() {
           tdAttend.textContent = "✅";
           newAttendance = "Attended";
 
-          // Auto-update payment to Paid
+          // Auto-update payment in UI
           tdPayment.textContent = "✅ Paid";
           tdPayment.className = "status-paid";
         }
 
-        // Send update to Apps Script
         try {
           const formData = new FormData();
           formData.append("action", "attendance");
           formData.append("rowIndex", person.rowIndex);
           formData.append("attendance_status", newAttendance);
 
-          // Update payment status if attended
-          if(newAttendance === "Attended"){
-            formData.append("payment_by", "Paid");
-          }
-
           const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
           const result = await updateRes.json();
+
           if(result.result !== "success"){
             alert("Error updating attendance: " + result.error);
           }
@@ -158,9 +154,10 @@ async function loadAttendance() {
       tr.appendChild(tdAttend);
       tbody.appendChild(tr);
     });
+
   } catch (err) {
     console.error("Failed to load attendance:", err);
-    tbody.innerHTML = "<tr><td colspan='4'>No data available.</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4'>Unable to load data. Check Apps Script permissions or network.</td></tr>";
   }
 }
 
