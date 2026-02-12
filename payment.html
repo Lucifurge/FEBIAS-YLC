@@ -54,35 +54,44 @@ Online Payment
 document.getElementById("payment-form").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  // Get the selected payment type
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   if(!paymentBy){
     alert("Please select a payment type.");
     return;
   }
 
-  // Send the payment type to Apps Script
+  // Get row index from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const rowIndex = urlParams.get("row");
+
+  if(!rowIndex){
+    alert("Missing registration reference.");
+    return;
+  }
+
   const formData = new FormData();
+  formData.append("action", "payment");
+  formData.append("rowIndex", rowIndex);
+  formData.append("sheet", "ylc"); // change to ylc2 if needed
   formData.append("payment_by", paymentBy);
 
-  // Set this so Apps Script knows this is a payment update
-  formData.append("payment_only", "true");
-
-  const url = "https://script.google.com/macros/s/AKfycbybAYOrHmxKl8McpRk_vXqIlEOQGJJkUnFkt-iusF0HRYSaGyL4TLo22QXzrWkRj1Safg/exec"; // Replace with your Apps Script
+  const url = "https://script.google.com/macros/s/AKfycbybAYOrHmxKl8McpRk_vXqIlEOQGJJkUnFkt-iusF0HRYSaGyL4TLo22QXzrWkRj1Safg/exec";
 
   try {
     const res = await fetch(url, {
       method: "POST",
       body: formData
     });
+
     const result = await res.json();
 
     if(result.result === "success"){
-      alert("Payment option submitted successfully! Please save or screenshot your receipt for onsite confirmation.");
-      window.location.href = "thankyou.html"; // Redirect after submission
+      alert("Payment updated successfully.");
+      window.location.href = "thankyou.html";
     } else {
-      alert("Submission failed: " + result.error);
+      alert("Error: " + result.error);
     }
+
   } catch(err){
     alert("Network error. Please try again.");
   }
