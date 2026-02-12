@@ -10,82 +10,184 @@
 
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family: "Segoe UI", system-ui, sans-serif; }
+
 body { background:#f8f8f8; color:#1f2937; line-height:1.6; }
-.container { max-width:900px; margin:2rem auto; padding:2rem; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.12);}
-h1,h2{text-align:center; color:#0b3d2e; margin-bottom:1rem;}
-h2{margin-top:2rem;}
-label{display:block; font-weight:600; margin-top:1rem; color:#0b3d2e;}
-input,select,textarea{width:100%; padding:0.9rem; margin-top:0.4rem; border-radius:8px; border:1px solid #9ca3af; font-size:1rem;}
-textarea{resize:vertical;}
-button{display:block; width:100%; padding:1.2rem; margin-top:1.5rem; font-size:1.2rem; font-weight:700; background:#0b3d2e; color:#fff; border:none; border-radius:12px; cursor:pointer;}
-button:hover{background:#1f7a4d;}
-.instructions{background:#f0f0f0; padding:1rem; border-left:5px solid #d4af37; border-radius:8px; margin-top:1rem;}
-.payment-images{display:flex; justify-content:space-around; margin-top:1rem;}
-.payment-images img{max-width:150px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.1);}
+
+.container {
+  max-width:900px;
+  margin:2rem auto;
+  padding:2rem;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);
+}
+
+h1,h2 {
+  text-align:center;
+  color:#0b3d2e;
+  margin-bottom:1rem;
+}
+
+h2 { margin-top:2rem; }
+
+label {
+  display:block;
+  font-weight:600;
+  margin-top:1rem;
+  color:#0b3d2e;
+  font-size:1.1rem;
+}
+
+input[type="radio"] {
+  margin-right:10px;
+}
+
+button {
+  display:block;
+  width:100%;
+  padding:1.2rem;
+  margin-top:2rem;
+  font-size:1.2rem;
+  font-weight:700;
+  background:#0b3d2e;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+button:hover { background:#1f7a4d; }
+
+.instructions {
+  background:#f9fafb;
+  padding:1.5rem;
+  border-left:6px solid #d4af37;
+  border-radius:10px;
+  margin-top:1.5rem;
+}
+
+.payment-images {
+  display:flex;
+  justify-content:space-around;
+  flex-wrap:wrap;
+  margin-top:1rem;
+  gap:1rem;
+}
+
+.payment-images img {
+  max-width:150px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+}
+
+.big-warning {
+  margin-top:2rem;
+  padding:1.5rem;
+  background:#fff4e5;
+  border:3px solid #d97706;
+  border-radius:12px;
+  text-align:center;
+  font-size:1.3rem;
+  font-weight:800;
+  color:#b45309;
+}
+footer{
+  text-align:center;
+  padding:2rem;
+  font-size:0.9rem;
+  color:#555;
+}
 </style>
 </head>
+
 <body>
 
 <div class="container">
   <h1>YLC 2026 Payment</h1>
 
-  <p>Please complete your payment to secure your registration. Follow the instructions below for each payment type. Save or screenshot your receipt for onsite confirmation.</p>
+  <p style="text-align:center; font-size:1.1rem;">
+    Please select your payment method below to confirm your registration.
+  </p>
 
-  <!-- Payment Form -->
   <form id="payment-form">
-    <section>
-      <h2>Select Payment Type</h2>
-      <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment (Pay at FEBIAS)</label>
-      <label><input type="radio" name="payment_by" value="Online"> Online Payment (Transfer and show receipt)</label>
-    </section>
 
-    <section class="instructions">
+    <h2>Select Payment Type</h2>
+
+    <label>
+      <input type="radio" name="payment_by" value="Onsite" required>
+      Onsite Payment (Pay at FEBIAS Campus)
+    </label>
+
+    <label>
+      <input type="radio" name="payment_by" value="Online">
+      Online Payment (Transfer before arrival)
+    </label>
+
+    <div class="instructions">
       <h2>Payment Instructions</h2>
-      <p><strong>Onsite Payment:</strong> You can pay directly at FEBIAS College of Bible during registration. Bring a printed copy or screenshot of your registration.</p>
-      <p><strong>Online Payment:</strong> Transfer via any of the following methods and save/screenshot your receipt. Present it onsite for confirmation:</p>
+
+      <p><strong>Onsite Payment:</strong><br>
+      Pay directly at FEBIAS College of Bible during the event registration day.</p>
+
+      <p><strong>Online Payment:</strong><br>
+      Transfer through any method below. Present proof of transfer during onsite confirmation.</p>
+
       <div class="payment-images">
         <div>
-          <p>FEBIAS QR Code</p>
+          <p style="text-align:center;">FEBIAS QR</p>
           <img src="febias_qr.jpg" alt="FEBIAS QR Code">
         </div>
+
         <div>
-          <p>GCash</p>
-          <img src="gcash_qr.jpg" alt="GCash QR Code">
+          <p style="text-align:center;">GCash</p>
+          <img src="gcash_qr.jpg" alt="GCash QR">
         </div>
+
         <div>
-          <p>Bank Transfer</p>
-          <img src="bank_qr.jpg" alt="Bank Payment QR">
+          <p style="text-align:center;">Bank Transfer</p>
+          <img src="bank_qr.jpg" alt="Bank QR">
         </div>
       </div>
-    </section>
+    </div>
 
-    <button type="submit">✅ Submit Payment</button>
+    <!-- BIG INSTRUCTION -->
+    <div class="big-warning">
+      ⚠️ IMPORTANT: PLEASE SCREENSHOT OR SAVE YOUR REGISTRATION CONFIRMATION.
+      <br>
+      You must present it onsite for payment verification.
+    </div>
+
+    <button type="submit">✅ Confirm Payment Type</button>
+
   </form>
 </div>
 
-<footer>© 2026 FEBIAS College of Bible — Youth Leaders Camp</footer>
+<footer>
+© 2026 FEBIAS College of Bible — Youth Leaders Camp
+</footer>
 
 <script>
-// Submit Payment Form
 document.getElementById('payment-form').addEventListener('submit', async function(e){
   e.preventDefault();
-  const url = "https://script.google.com/macros/s/AKfycbz6LxN00Az00c3VfsGDDrXDu2m4cJmZjcjMGKGnIHQtMaWbS-9ZbAniI8K1xyZFgkB8/exec"; // Replace with your Apps Script URL
+
+  const url = "https://script.google.com/macros/s/AKfycbyDwSfJ1uqRWUETfsKyRB-bWBl1JEId5adTIKlmbj_jupnGJq30fjmMg14u1DznIm3RSA/exec"; // replace with your latest Apps Script Web App URL
   const formData = new FormData(this);
 
   try {
     const res = await fetch(url, {
-      method:'POST',
+      method: 'POST',
       body: formData
     });
 
     const result = await res.json();
+
     if(result.result === "success"){
-      alert("Payment submitted successfully! Please save or screenshot your receipt for onsite confirmation.");
-      // Redirect to attendance page or confirmation page
-      window.location.href = "";
+      alert("Payment type saved successfully! Please screenshot your confirmation for onsite verification.");
+      window.location.href = "attendance.html"; // redirect properly
     } else {
       alert("Submission failed: " + result.error);
     }
+
   } catch(err) {
     alert("Error submitting payment: " + err);
   }
