@@ -60,24 +60,17 @@ document.getElementById("payment-form").addEventListener("submit", async functio
     return;
   }
 
-  // Get row index from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const rowIndex = urlParams.get("row");
-
-  if(!rowIndex){
-    alert("Missing registration reference.");
-    return;
-  }
-
+  // Prepare form data for Apps Script
   const formData = new FormData();
   formData.append("action", "payment");
-  formData.append("rowIndex", rowIndex);
-  formData.append("sheet", "ylc"); // change to ylc2 if needed
   formData.append("payment_by", paymentBy);
+  formData.append("sheet", "ylc"); // change to "ylc2" for walk-ins
 
-  const url = "https://script.google.com/macros/s/AKfycbybAYOrHmxKl8McpRk_vXqIlEOQGJJkUnFkt-iusF0HRYSaGyL4TLo22QXzrWkRj1Safg/exec";
+  const url = "https://script.google.com/macros/s/AKfycbyyjhb3BeyQbgj7VA2ZlLxmwD3Ve8gvmRzrLeYd4el0r6Q1Bkr71uFeQkzoS4QL3lP69Q/exec"; // Replace with your Apps Script URL
 
   try {
+    // Fetch the last row index from Apps Script
+    // This will update the payment in the last registered row automatically
     const res = await fetch(url, {
       method: "POST",
       body: formData
@@ -86,7 +79,7 @@ document.getElementById("payment-form").addEventListener("submit", async functio
     const result = await res.json();
 
     if(result.result === "success"){
-      alert("Payment updated successfully.");
+      alert("Payment updated successfully. Please save or screenshot your receipt for onsite confirmation.");
       window.location.href = "thankyou.html";
     } else {
       alert("Error: " + result.error);
