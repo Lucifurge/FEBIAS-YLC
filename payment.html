@@ -53,36 +53,49 @@ Online Payment
 </footer>
 
 <script>
+// You need to know which sheet and which row to update
+const sheetName = "ylc";        // For main YLC registration
+const rowIndex = localStorage.getItem("ylc_rowIndex"); // Store the rowIndex when registration completes
+
 document.getElementById("payment-form").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  // Get selected payment type
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   if(!paymentBy){
     alert("Please select a payment type.");
     return;
   }
 
-  // Send to Apps Script
+  if(!rowIndex){
+    alert("Session expired or invalid registration. Please register again.");
+    window.location.href = "register.html";
+    return;
+  }
+
   const formData = new FormData();
   formData.append("payment_by", paymentBy);
   formData.append("payment_only", "true");
+  formData.append("sheet", sheetName);
+  formData.append("rowIndex", rowIndex);
 
-  const url = "https://script.google.com/macros/s/AKfycbyO_QKgRW2xwRLH051n7yIFQHOR1bw5lrXV4eobqj7cs9iRU59pp5cjKrZ40H_vuvrDzw/exec"; // Your Apps Script
+  const url = "https://script.google.com/macros/s/AKfycbziZZ04A-8VaSwNFDxZLNjJgyKgrTzburPHSwwgHya1lnHhSUOUZV6aUEDHSyQc48_9FA/exec";
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch(url,{
       method: "POST",
       body: formData
     });
+
     const result = await res.json();
 
-    if(result.result === "updated" || result.result === "success"){
+    if(result.result === "success"){
       alert("Payment submitted successfully! Please save or screenshot your receipt for onsite confirmation.");
+      localStorage.removeItem("ylc_rowIndex");
       window.location.href = "thankyou.html"; // or attendance.html
     } else {
       alert("Submission failed: " + result.error);
     }
+
   } catch(err){
     alert("Network error. Please try again.");
   }
