@@ -65,73 +65,41 @@ th {
 <script>
 const sheetUrl = "https://script.google.com/macros/s/AKfycbzEMOPQOPhDKRpSSNZx8iNMo2J-8xxW0c9tREHLi40-5c1idUoq69g5LYVRSjl5QGi_BQ/exec";
 const tbody = document.querySelector("#attendance-table tbody");
-let rowMap = {}; // Map rowIndex -> <tr>
 
-// Function to render/update rows
 async function loadAttendance() {
   try {
-    const res = await fetch(`${sheetUrl}?action=getAll`);
+    const res = await fetch(sheetUrl);
     const data = await res.json();
-    if (!Array.isArray(data)) return;
+
+    if (!Array.isArray(data)) {
+      console.error("Invalid data:", data);
+      return;
+    }
+
+    tbody.innerHTML = ""; // Clear table each refresh
 
     data.forEach(person => {
-      const rowIndex = person.rowIndex;
-      let tr = rowMap[rowIndex];
+      const tr = document.createElement("tr");
 
-      if (!tr) {
-        tr = document.createElement("tr");
-        // Create 4 <td>
-        for (let i = 0; i < 4; i++) tr.appendChild(document.createElement("td"));
-        tbody.appendChild(tr);
-        rowMap[rowIndex] = tr;
+      const firstName = person["First Name"] || person["first_name"] || "";
+      const lastName = person["Last Name"] || person["last_name"] || "";
+      const paymentStatus = person["Payment Status"] || "";
+      const attendanceStatus = person["ON-waiting"] || person["Attendance Status"] || person["attendance_status"] || "";
 
-        // Add click listener for attendance
-        tr.children[3].className = "attendance-check";
-        tr.children[3].addEventListener("click", async () => {
-          let tdAttend = tr.children[3];
-          let tdPayment = tr.children[2];
-          let newAttendance;
+      // First Name
+      const tdFirst = document.createElement("td");
+      tdFirst.textContent = firstName;
 
-          if(tdAttend.textContent === "✅") {
-            tdAttend.textContent = "🟠";
-            newAttendance = "Waiting";
-          } else if(tdAttend.textContent === "🟠") {
-            tdAttend.textContent = "❌";
-            newAttendance = "Cancelled";
-          } else {
-            tdAttend.textContent = "✅";
-            newAttendance = "Attended";
-            tdPayment.textContent = "✅ Paid";
-            tdPayment.className = "status-paid";
-          }
+      // Last Name
+      const tdLast = document.createElement("td");
+      tdLast.textContent = lastName;
 
-          try {
-            const formData = new FormData();
-            formData.append("action", "attendance");
-            formData.append("rowIndex", rowIndex);
-            formData.append("attendance_status", newAttendance);
-
-            const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
-            const result = await updateRes.json();
-            if(result.result !== "success") alert("Error updating attendance: " + result.error);
-          } catch(err) {
-            console.error("Network error:", err);
-            alert("Network error. Please try again.");
-          }
-        });
-      }
-
-      // First Name & Last Name
-      tr.children[0].textContent = person.first_name || "";
-      tr.children[1].textContent = person.last_name || "";
-
-      // Payment Status
-      const tdPayment = tr.children[2];
-      const payment = (person.payment_status || "").toLowerCase();
-      if(payment.includes("paid") || payment.includes("confirmed")) {
+      // Payment
+      const tdPayment = document.createElement("td");
+      if (paymentStatus.toLowerCase().includes("online")) {
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
-      } else if(payment.includes("onsite")) {
+      } else if (paymentStatus.toLowerCase().includes("onsite")) {
         tdPayment.textContent = "⚠️ Onsite";
         tdPayment.className = "status-onsite";
       } else {
@@ -139,23 +107,61 @@ async function loadAttendance() {
         tdPayment.className = "status-not";
       }
 
-      // Attendance Status
-      const tdAttend = tr.children[3];
-      const attendance = person.attendance_status || "";
-      tdAttend.textContent = attendance === "Attended" ? "✅" :
-                             attendance === "ON-waiting" ? "🟠" :
-                             attendance === "Cancelled" ? "❌" : "⚠️";
+      // Attendance
+      const tdAttend = document.createElement("td");
+      tdAttend.className = "attendance-check";
+
+      if (attendanceStatus === "Attended") {
+        tdAttend.textContent = "✅";
+      } else if (attendanceStatus === "Cancelled") {
+        tdAttend.textContent = "❌";
+      } else {
+        tdAttend.textContent = "🟠";
+      }
+
+      tdAttend.addEventListener("click", async () => {
+        let newStatus;
+
+        if (tdAttend.textContent === "✅") {
+          newStatus = "Waiting";
+        } else if (tdAttend.textContent === "🟠") {
+          newStatus = "Cancelled";
+        } else {
+          newStatus = "Attended";
+        }
+
+        const formData = new FormData();
+        formData.append("action", "attendance");
+        formData.append("rowIndex", person.rowIndex);
+        formData.append("attendance_status", newStatus);
+
+        const update = await fetch(sheetUrl, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await update.json();
+        if (result.result !== "success") {
+          alert("Update failed: " + result.error);
+        } else {
+          loadAttendance(); // refresh after update
+        }
+      });
+
+      tr.appendChild(tdFirst);
+      tr.appendChild(tdLast);
+      tr.appendChild(tdPayment);
+      tr.appendChild(tdAttend);
+
+      tbody.appendChild(tr);
     });
 
-  } catch(err) {
-    console.error("Failed to load attendance:", err);
+  } catch (err) {
+    console.error("Load error:", err);
   }
 }
 
-// Initial load
 loadAttendance();
-
-// Refresh every 5 seconds
 setInterval(loadAttendance, 5000);
 </script>
 
