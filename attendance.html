@@ -118,10 +118,7 @@ async function loadAttendance() {
                              attendanceStatus === "Cancelled" ? "❌" : "⚠️";
 
       tdAttend.addEventListener("click", async () => {
-        if (!person.rowIndex) {
-          alert("Row index not found. Cannot update attendance.");
-          return;
-        }
+        if (!person.rowIndex) return alert("Row index not found.");
 
         let newAttendance;
         if(tdAttend.textContent === "✅") {
@@ -146,9 +143,7 @@ async function loadAttendance() {
           const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
           const result = await updateRes.json();
 
-          if(result.result !== "success") {
-            alert("Error updating attendance: " + result.error);
-          }
+          if(result.result !== "success") alert("Error updating attendance: " + result.error);
         } catch(err) {
           console.error("Network error:", err);
           alert("Network error. Please try again.");
@@ -167,6 +162,12 @@ async function loadAttendance() {
 
 // Load on page open
 loadAttendance();
+
+// ==============================
+// Auto-refresh every 30 seconds
+// ==============================
+setInterval(loadAttendance, 5000); // 30000ms = 30s
+
 </script>
 
 </body>
