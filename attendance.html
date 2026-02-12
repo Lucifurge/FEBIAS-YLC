@@ -63,7 +63,7 @@ th {
 </table>
 
 <script>
-const sheetUrl = "https://script.google.com/macros/s/AKfycbzEMOPQOPhDKRpSSNZx8iNMo2J-8xxW0c9tREHLi40-5c1idUoq69g5LYVRSjl5QGi_BQ/exec";
+const sheetUrl = "https://script.google.com/macros/s/AKfycbzEMOPQOPhDKRpSSNZx8iNMo2J-8xxW0c9tREHLi40-5c1idUoq69g5LYVRSjl5QGi_BQ/exec?sheet=ylc";
 const tbody = document.querySelector("#attendance-table tbody");
 
 async function loadAttendance() {
@@ -76,26 +76,27 @@ async function loadAttendance() {
       return;
     }
 
-    tbody.innerHTML = ""; // Clear table each refresh
+    tbody.innerHTML = "";
 
     data.forEach(person => {
       const tr = document.createElement("tr");
 
-      const firstName = person["First Name"] || person["first_name"] || "";
-      const lastName = person["Last Name"] || person["last_name"] || "";
+      const firstName = person["First Name"] || "";
+      const lastName = person["Last Name"] || "";
       const paymentStatus = person["Payment Status"] || "";
-      const attendanceStatus = person["ON-waiting"] || person["Attendance Status"] || person["attendance_status"] || "";
+      const attendanceStatus = person["Attendance Status"] || "";
 
-      // First Name
+      // FIRST NAME
       const tdFirst = document.createElement("td");
       tdFirst.textContent = firstName;
 
-      // Last Name
+      // LAST NAME
       const tdLast = document.createElement("td");
       tdLast.textContent = lastName;
 
-      // Payment
+      // PAYMENT
       const tdPayment = document.createElement("td");
+
       if (paymentStatus.toLowerCase().includes("online")) {
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
@@ -107,24 +108,30 @@ async function loadAttendance() {
         tdPayment.className = "status-not";
       }
 
-      // Attendance
+      // ATTENDANCE
       const tdAttend = document.createElement("td");
       tdAttend.className = "attendance-check";
 
-      if (attendanceStatus === "Attended") {
-        tdAttend.textContent = "✅";
-      } else if (attendanceStatus === "Cancelled") {
-        tdAttend.textContent = "❌";
-      } else {
-        tdAttend.textContent = "🟠";
+      let currentStatus = attendanceStatus;
+
+      function updateEmoji(status) {
+        if (status === "Attended") {
+          tdAttend.textContent = "✅";
+        } else if (status === "Cancelled") {
+          tdAttend.textContent = "❌";
+        } else {
+          tdAttend.textContent = "🟠";
+        }
       }
+
+      updateEmoji(currentStatus);
 
       tdAttend.addEventListener("click", async () => {
         let newStatus;
 
-        if (tdAttend.textContent === "✅") {
+        if (currentStatus === "Attended") {
           newStatus = "Waiting";
-        } else if (tdAttend.textContent === "🟠") {
+        } else if (currentStatus === "ON-waiting" || currentStatus === "Waiting") {
           newStatus = "Cancelled";
         } else {
           newStatus = "Attended";
@@ -134,17 +141,26 @@ async function loadAttendance() {
         formData.append("action", "attendance");
         formData.append("rowIndex", person.rowIndex);
         formData.append("attendance_status", newStatus);
+        formData.append("sheet", "ylc"); // IMPORTANT
 
-        const update = await fetch(sheetUrl, {
-          method: "POST",
-          body: formData
-        });
+        try {
+          const update = await fetch(sheetUrl, {
+            method: "POST",
+            body: formData
+          });
 
-        const result = await update.json();
-        if (result.result !== "success") {
-          alert("Update failed: " + result.error);
-        } else {
-          loadAttendance(); // refresh after update
+          const result = await update.json();
+
+          if (result.result === "success") {
+            currentStatus = newStatus;
+            updateEmoji(newStatus);
+          } else {
+            alert("Update failed: " + result.error);
+          }
+
+        } catch (err) {
+          console.error("Update error:", err);
+          alert("Network error.");
         }
       });
 
@@ -162,7 +178,7 @@ async function loadAttendance() {
 }
 
 loadAttendance();
-setInterval(loadAttendance, 5000);
+setInterval(loadAttendance, 8000);
 </script>
 
 </body>
