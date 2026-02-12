@@ -70,7 +70,7 @@ async function loadAttendance() {
   tbody.innerHTML = "";
 
   try {
-    const res = await fetch(sheetUrl + "?action=getAll");
+    const res = await fetch(`${sheetUrl}?action=getAll`);
     const data = await res.json();
 
     if (!Array.isArray(data) || data.length === 0) {
@@ -81,7 +81,7 @@ async function loadAttendance() {
     data.forEach((person, index) => {
       const tr = document.createElement("tr");
 
-      // Save rowIndex for updates
+      // Ensure rowIndex exists
       person.rowIndex = person.rowIndex || (index + 2);
 
       // First Name
@@ -96,10 +96,11 @@ async function loadAttendance() {
 
       // Payment Status
       const tdPayment = document.createElement("td");
-      if (person.payment_status?.toLowerCase().includes("paid") || person.payment_status?.toLowerCase().includes("confirmed")) {
+      const paymentLower = (person.payment_status || "").toLowerCase();
+      if (paymentLower.includes("paid") || paymentLower.includes("confirmed")) {
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
-      } else if (person.payment_status?.toLowerCase().includes("onsite")) {
+      } else if (paymentLower.includes("onsite")) {
         tdPayment.textContent = "⚠️ Onsite";
         tdPayment.className = "status-onsite";
       } else {
@@ -122,18 +123,15 @@ async function loadAttendance() {
         }
 
         let newAttendance;
-
         if (tdAttend.textContent === "✅") {
           tdAttend.textContent = "🟠";
-          newAttendance = "ON-waiting";
+          newAttendance = "Waiting";
         } else if (tdAttend.textContent === "🟠") {
           tdAttend.textContent = "❌";
           newAttendance = "Cancelled";
         } else {
           tdAttend.textContent = "✅";
           newAttendance = "Attended";
-
-          // Auto-update payment in UI
           tdPayment.textContent = "✅ Paid";
           tdPayment.className = "status-paid";
         }
@@ -145,7 +143,7 @@ async function loadAttendance() {
           formData.append("attendance_status", newAttendance);
 
           const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
-          const result = await updateRes.json(); // fixed variable name
+          const result = await updateRes.json();
 
           if (result.result !== "success") {
             alert("Error updating attendance: " + result.error);
@@ -162,11 +160,11 @@ async function loadAttendance() {
 
   } catch (err) {
     console.error("Failed to load attendance:", err);
-    tbody.innerHTML = "<tr><td colspan='4'>Unable to load data. Check Apps Script permissions or network.</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4'>Unable to load data. Check Apps Script deployment, permissions, or network.</td></tr>";
   }
 }
 
-// Initial load
+// Load on page open
 loadAttendance();
 </script>
 
