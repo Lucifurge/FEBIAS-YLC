@@ -68,7 +68,7 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   // Set this so Apps Script knows this is a payment update
   formData.append("payment_only", "true");
 
-  const url = "https://script.google.com/macros/s/AKfycbziZZ04A-8VaSwNFDxZLNjJgyKgrTzburPHSwwgHya1lnHhSUOUZV6aUEDHSyQc48_9FA/exec"; // Replace with your Apps Script
+  const url = "https://script.google.com/macros/s/AKfycbybAYOrHmxKl8McpRk_vXqIlEOQGJJkUnFkt-iusF0HRYSaGyL4TLo22QXzrWkRj1Safg/exec"; // Replace with your Apps Script
 
   try {
     const res = await fetch(url, {
