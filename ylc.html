@@ -41,27 +41,14 @@ footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#55
 <!-- Minor Consent -->
 <section>
 <h2>Minor Consent</h2>
-
-<label>
-<input type="radio" name="minor_consent" value="18+ No Consent Required" required>
-I am 18+ and do not require parental consent
-</label>
-
-<label>
-<input type="radio" name="minor_consent" value="Minor with Parental Consent">
-I am a minor with parental consent
-</label>
-
-<label>
-<input type="radio" name="minor_consent" value="Parent/Guardian Consent Given">
-I am a parent/guardian giving consent
-</label>
+<label><input type="radio" name="minor_consent" value="18+ No Consent Required" required>I am 18+ and do not require parental consent</label>
+<label><input type="radio" name="minor_consent" value="Minor with Parental Consent">I am a minor with parental consent</label>
+<label><input type="radio" name="minor_consent" value="Parent/Guardian Consent Given">I am a parent/guardian giving consent</label>
 </section>
 
 <!-- Personal Info -->
 <section>
 <h2>Personal Information</h2>
-
 <label>Last Name<input type="text" name="last_name" required></label>
 <label>First Name<input type="text" name="first_name" required></label>
 <label>Middle Name<input type="text" name="middle_name"></label>
@@ -86,7 +73,6 @@ I am a parent/guardian giving consent
 <!-- Christian Info -->
 <section>
 <h2>Christian Service Information</h2>
-
 <label>Church Name<input type="text" name="church_name"></label>
 <label>Church Location<input type="text" name="church_location"></label>
 <label>Pastor Name<input type="text" name="pastor_name"></label>
@@ -140,7 +126,6 @@ I am a parent/guardian giving consent
 <!-- Health -->
 <section>
 <h2>Health Information</h2>
-
 <label>Allergies<textarea name="allergies"></textarea></label>
 <label>Dietary Restrictions<textarea name="dietary_restrictions"></textarea></label>
 <label>Health Conditions<textarea name="health_conditions"></textarea></label>
@@ -156,7 +141,6 @@ I am a parent/guardian giving consent
 <!-- Payment Info -->
 <section>
 <h2>Payment Responsibility</h2>
-
 <label>Who will pay?
 <select name="payment_by" required>
 <option value="">Select</option>
@@ -181,23 +165,25 @@ I am a parent/guardian giving consent
 
 <script>
 document.getElementById("ylc-form").addEventListener("submit", async function(e){
-e.preventDefault();
+  e.preventDefault();
 
-const url = "https://script.google.com/macros/s/AKfycbzLcmoK6I5_lZBxHo4dUqdI5wecFCr4QegcZ2QWFssLwBEQNjuhsQTsROVYP5ITivhn_A/exec";
-const formData = new FormData(this);
+  const url = "https://script.google.com/macros/s/AKfycbzLcmoK6I5_lZBxHo4dUqdI5wecFCr4QegcZ2QWFssLwBEQNjuhsQTsROVYP5ITivhn_A/exec";
+  const formData = new FormData(this);
 
-try{
-const res = await fetch(url,{method:"POST",body:formData});
-const result = await res.json();
+  try {
+    const res = await fetch(url, { method: "POST", body: formData });
+    const result = await res.json();
 
-if(result.result === "success"){
-window.location.href = "payment.html";
-}else{
-alert("Submission failed: "+result.error);
-}
-}catch(err){
-alert("Network error. Please try again.");
-}
+    if(result.result === "success"){
+        // ✅ Pass rowIndex to payment.html
+        window.location.href = "payment.html?row=" + result.rowIndex;
+    } else {
+        alert("Submission failed: " + result.error);
+    }
+
+  } catch(err){
+    alert("Network error. Please try again.");
+  }
 });
 </script>
 
