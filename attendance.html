@@ -86,17 +86,17 @@ async function loadAttendance() {
 
       // First Name
       const tdFirst = document.createElement("td");
-      tdFirst.textContent = person.first_name || "";
+      tdFirst.textContent = person["First Name"] || "";
       tr.appendChild(tdFirst);
 
       // Last Name
       const tdLast = document.createElement("td");
-      tdLast.textContent = person.last_name || "";
+      tdLast.textContent = person["Last Name"] || "";
       tr.appendChild(tdLast);
 
       // Payment Status
       const tdPayment = document.createElement("td");
-      const paymentLower = (person.payment_status || "").toLowerCase();
+      const paymentLower = (person["Payment Status"] || "").toLowerCase();
       if (paymentLower.includes("paid") || paymentLower.includes("confirmed")) {
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
@@ -112,9 +112,10 @@ async function loadAttendance() {
       // Attendance
       const tdAttend = document.createElement("td");
       tdAttend.className = "attendance-check";
-      tdAttend.textContent = person.attendance_status === "Attended" ? "✅" :
-                             person.attendance_status === "ON-waiting" ? "🟠" :
-                             person.attendance_status === "Cancelled" ? "❌" : "⚠️";
+      const attendanceStatus = person["Attendance Status"];
+      tdAttend.textContent = attendanceStatus === "Attended" ? "✅" :
+                             attendanceStatus === "ON-waiting" ? "🟠" :
+                             attendanceStatus === "Cancelled" ? "❌" : "⚠️";
 
       tdAttend.addEventListener("click", async () => {
         if (!person.rowIndex) {
@@ -123,10 +124,10 @@ async function loadAttendance() {
         }
 
         let newAttendance;
-        if (tdAttend.textContent === "✅") {
+        if(tdAttend.textContent === "✅") {
           tdAttend.textContent = "🟠";
           newAttendance = "Waiting";
-        } else if (tdAttend.textContent === "🟠") {
+        } else if(tdAttend.textContent === "🟠") {
           tdAttend.textContent = "❌";
           newAttendance = "Cancelled";
         } else {
@@ -145,10 +146,10 @@ async function loadAttendance() {
           const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
           const result = await updateRes.json();
 
-          if (result.result !== "success") {
+          if(result.result !== "success") {
             alert("Error updating attendance: " + result.error);
           }
-        } catch (err) {
+        } catch(err) {
           console.error("Network error:", err);
           alert("Network error. Please try again.");
         }
