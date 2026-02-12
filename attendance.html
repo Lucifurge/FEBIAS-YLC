@@ -47,7 +47,7 @@ th {
 <body>
 
 <h1>YLC 2026 Attendance</h1>
-<p>Click the emoji to update attendance.</p>
+<p>Click the emoji to update attendance (✅ = Attended, 🟠 = Waiting, ❌ = Cancelled).</p>
 
 <button onclick="loadAttendance()">🔄 Refresh Now</button>
 
@@ -95,17 +95,20 @@ function renderRow(person) {
   const attendanceCell = tr.querySelector(".attendance-check");
 
   // Payment display
-  const payment = (person.paymentStatus || "").toLowerCase();
-  if (payment.includes("online")) {
-    paymentCell.textContent = "✅ Paid";
-    paymentCell.className = "payment status-paid";
-  } else if (payment.includes("onsite")) {
-    paymentCell.textContent = "⚠️ Onsite";
-    paymentCell.className = "payment status-onsite";
-  } else {
-    paymentCell.textContent = "❌ Not Paid";
-    paymentCell.className = "payment status-not";
+  function updatePaymentUI(status) {
+    const lower = (status || "").toLowerCase();
+    if (lower.includes("online")) {
+      paymentCell.textContent = "✅ Paid";
+      paymentCell.className = "payment status-paid";
+    } else if (lower.includes("onsite")) {
+      paymentCell.textContent = "⚠️ Onsite";
+      paymentCell.className = "payment status-onsite";
+    } else {
+      paymentCell.textContent = "❌ Not Paid";
+      paymentCell.className = "payment status-not";
+    }
   }
+  updatePaymentUI(person.paymentStatus);
 
   // Attendance emoji
   function setEmoji(status) {
@@ -120,18 +123,21 @@ function renderRow(person) {
     if (idx === -1) idx = 0;
     let newStatus = statusCycle[(idx + 1) % statusCycle.length];
 
-    // Instant UI update
+    // 🔥 INSTANT UI UPDATE
     person.attendanceStatus = newStatus;
     setEmoji(newStatus);
 
-    // Update payment if necessary
+    // 🔥 INSTANT PAYMENT UPDATE in UI
     if (newStatus === "Attended") {
       person.paymentStatus = "Online Payment";
-      paymentCell.textContent = "✅ Paid";
-      paymentCell.className = "payment status-paid";
+    } else if (newStatus === "ON-waiting") {
+      person.paymentStatus = "Onsite Payment";
+    } else {
+      person.paymentStatus = "Not Paid";
     }
+    updatePaymentUI(person.paymentStatus);
 
-    // Background sync
+    // Background sync (no await, no delay)
     const formData = new FormData();
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
