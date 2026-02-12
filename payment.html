@@ -54,41 +54,38 @@ Online Payment
 
 <script>
 document.getElementById("payment-form").addEventListener("submit", async function(e){
-e.preventDefault();
+  e.preventDefault();
 
-const email = localStorage.getItem("ylc_email");
+  // Get selected payment type
+  const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
+  if(!paymentBy){
+    alert("Please select a payment type.");
+    return;
+  }
 
-if(!email){
-alert("Session expired. Please register again.");
-window.location.href = "register.html";
-return;
-}
+  // Send to Apps Script
+  const formData = new FormData();
+  formData.append("payment_by", paymentBy);
+  formData.append("payment_only", "true");
 
-const formData = new FormData(this);
-formData.append("email", email);
-formData.append("payment_only", "true");
+  const url = "https://script.google.com/macros/s/AKfycbyO_QKgRW2xwRLH051n7yIFQHOR1bw5lrXV4eobqj7cs9iRU59pp5cjKrZ40H_vuvrDzw/exec"; // Your Apps Script
 
-const url = "https://script.google.com/macros/s/AKfycbyO_QKgRW2xwRLH051n7yIFQHOR1bw5lrXV4eobqj7cs9iRU59pp5cjKrZ40H_vuvrDzw/exec"; // same Apps Script URL
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      body: formData
+    });
+    const result = await res.json();
 
-try{
-const res = await fetch(url,{
-method:"POST",
-body:formData
-});
-
-const result = await res.json();
-
-if(result.result === "updated"){
-alert("Payment updated successfully!");
-localStorage.removeItem("ylc_email");
-window.location.href = "thankyou.html"; // or attendance.html
-}else{
-alert("Update failed: " + result.error);
-}
-
-}catch(err){
-alert("Network error. Please try again.");
-}
+    if(result.result === "updated" || result.result === "success"){
+      alert("Payment submitted successfully! Please save or screenshot your receipt for onsite confirmation.");
+      window.location.href = "thankyou.html"; // or attendance.html
+    } else {
+      alert("Submission failed: " + result.error);
+    }
+  } catch(err){
+    alert("Network error. Please try again.");
+  }
 });
 </script>
 
