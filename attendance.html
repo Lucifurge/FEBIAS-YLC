@@ -66,109 +66,101 @@ th {
 const sheetUrl = "https://script.google.com/macros/s/AKfycbzEMOPQOPhDKRpSSNZx8iNMo2J-8xxW0c9tREHLi40-5c1idUoq69g5LYVRSjl5QGi_BQ/exec";
 
 async function loadAttendance() {
-  const tbody = document.querySelector("#attendance-table tbody");
-  tbody.innerHTML = "";
-
   try {
     const res = await fetch(`${sheetUrl}?action=getAll`);
     const data = await res.json();
+    const tbody = document.querySelector("#attendance-table tbody");
 
     if (!Array.isArray(data) || data.length === 0) {
       tbody.innerHTML = "<tr><td colspan='4'>No data available.</td></tr>";
       return;
     }
 
+    // Reuse existing rows if possible
     data.forEach((person, index) => {
-      const tr = document.createElement("tr");
+      let tr = tbody.children[index];
+      if (!tr) {
+        tr = document.createElement("tr");
+        tbody.appendChild(tr);
+      }
 
-      // Ensure rowIndex exists
       person.rowIndex = person.rowIndex || (index + 2);
 
       // First Name
-      const tdFirst = document.createElement("td");
-      tdFirst.textContent = person["First Name"] || "";
-      tr.appendChild(tdFirst);
+      tr.children[0] ? tr.children[0].textContent = person["First Name"] || person["first_name"] || "" 
+                      : tr.appendChild(document.createElement("td")).textContent = person["First Name"] || person["first_name"] || "";
 
       // Last Name
-      const tdLast = document.createElement("td");
-      tdLast.textContent = person["Last Name"] || "";
-      tr.appendChild(tdLast);
+      tr.children[1] ? tr.children[1].textContent = person["Last Name"] || person["last_name"] || "" 
+                      : tr.appendChild(document.createElement("td")).textContent = person["Last Name"] || person["last_name"] || "";
 
       // Payment Status
-      const tdPayment = document.createElement("td");
-      const paymentLower = (person["Payment Status"] || "").toLowerCase();
-      if (paymentLower.includes("paid") || paymentLower.includes("confirmed")) {
+      const paymentText = person["Payment Status"] || person["payment_status"] || "";
+      let tdPayment = tr.children[2] || document.createElement("td");
+      if (!tr.children[2]) tr.appendChild(tdPayment);
+      if (paymentText.toLowerCase().includes("paid") || paymentText.toLowerCase().includes("confirmed")) {
         tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
-      } else if (paymentLower.includes("onsite")) {
+      } else if (paymentText.toLowerCase().includes("onsite")) {
         tdPayment.textContent = "⚠️ Onsite";
         tdPayment.className = "status-onsite";
       } else {
         tdPayment.textContent = "❌ Not Paid";
         tdPayment.className = "status-not";
       }
-      tr.appendChild(tdPayment);
 
       // Attendance
-      const tdAttend = document.createElement("td");
-      tdAttend.className = "attendance-check";
-      const attendanceStatus = person["Attendance Status"];
+      let tdAttend = tr.children[3] || document.createElement("td");
+      if (!tr.children[3]) {
+        tdAttend.className = "attendance-check";
+        tr.appendChild(tdAttend);
+        tdAttend.addEventListener("click", async () => {
+          let newAttendance;
+          if(tdAttend.textContent === "✅") {
+            tdAttend.textContent = "🟠";
+            newAttendance = "Waiting";
+          } else if(tdAttend.textContent === "🟠") {
+            tdAttend.textContent = "❌";
+            newAttendance = "Cancelled";
+          } else {
+            tdAttend.textContent = "✅";
+            newAttendance = "Attended";
+            tdPayment.textContent = "✅ Paid";
+            tdPayment.className = "status-paid";
+          }
+
+          try {
+            const formData = new FormData();
+            formData.append("action", "attendance");
+            formData.append("rowIndex", person.rowIndex);
+            formData.append("attendance_status", newAttendance);
+            const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
+            const result = await updateRes.json();
+            if(result.result !== "success") alert("Error updating attendance: " + result.error);
+          } catch(err) {
+            console.error("Network error:", err);
+            alert("Network error. Please try again.");
+          }
+        });
+      }
+
+      const attendanceStatus = person["Attendance Status"] || person["attendance_status"] || "";
       tdAttend.textContent = attendanceStatus === "Attended" ? "✅" :
                              attendanceStatus === "ON-waiting" ? "🟠" :
                              attendanceStatus === "Cancelled" ? "❌" : "⚠️";
-
-      tdAttend.addEventListener("click", async () => {
-        if (!person.rowIndex) return alert("Row index not found.");
-
-        let newAttendance;
-        if(tdAttend.textContent === "✅") {
-          tdAttend.textContent = "🟠";
-          newAttendance = "Waiting";
-        } else if(tdAttend.textContent === "🟠") {
-          tdAttend.textContent = "❌";
-          newAttendance = "Cancelled";
-        } else {
-          tdAttend.textContent = "✅";
-          newAttendance = "Attended";
-          tdPayment.textContent = "✅ Paid";
-          tdPayment.className = "status-paid";
-        }
-
-        try {
-          const formData = new FormData();
-          formData.append("action", "attendance");
-          formData.append("rowIndex", person.rowIndex);
-          formData.append("attendance_status", newAttendance);
-
-          const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
-          const result = await updateRes.json();
-
-          if(result.result !== "success") alert("Error updating attendance: " + result.error);
-        } catch(err) {
-          console.error("Network error:", err);
-          alert("Network error. Please try again.");
-        }
-      });
-
-      tr.appendChild(tdAttend);
-      tbody.appendChild(tr);
     });
 
-  } catch (err) {
+  } catch(err) {
     console.error("Failed to load attendance:", err);
-    tbody.innerHTML = "<tr><td colspan='4'>Unable to load data. Check Apps Script deployment, permissions, or network.</td></tr>";
   }
 }
 
-// Load on page open
+// Initial load
 loadAttendance();
 
-// ==============================
-// Auto-refresh every 30 seconds
-// ==============================
-setInterval(loadAttendance, 5000); // 30000ms = 30s
+// Auto-refresh every 5 seconds
+setInterval(loadAttendance, 5000);
 
 </script>
-
 </body>
 </html>
