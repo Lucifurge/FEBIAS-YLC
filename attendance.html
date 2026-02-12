@@ -40,13 +40,13 @@ th {
 .status-onsite { color: orange; font-weight: bold; }
 .status-not { color: red; font-weight: bold; }
 
-.attendance-check { cursor: pointer; text-align: center; }
+.attendance-check { cursor: pointer; text-align: center; font-size: 1.2rem; }
 </style>
 </head>
 <body>
 
 <h1>YLC 2026 Attendance</h1>
-<p>Check the boxes to confirm camper attendance. Payment status is shown with symbols.</p>
+<p>Click on the attendance indicator to mark campers. Payment status is shown with symbols.</p>
 
 <table id="attendance-table">
   <thead>
@@ -63,16 +63,20 @@ th {
 </table>
 
 <script>
-// Load data from Google Sheets Web App JSON endpoint
-const sheetUrl = "https://script.google.com/macros/s/AKfycbz6LxN00Az00c3VfsGDDrXDu2m4cJmZjcjMGKGnIHQtMaWbS-9ZbAniI8K1xyZFgkB8/exec"; // replace with your endpoint
+const sheetUrl = "https://script.google.com/macros/s/AKfycbzLcmoK6I5_lZBxHo4dUqdI5wecFCr4QegcZ2QWFssLwBEQNjuhsQTsROVYP5ITivhn_A/exec";
 
 async function loadAttendance() {
   const tbody = document.querySelector("#attendance-table tbody");
   tbody.innerHTML = "";
 
   try {
-    const res = await fetch(sheetUrl);
-    const data = await res.json(); // Expect array of objects: {first_name, last_name, payment_status, attended_status}
+    const res = await fetch(sheetUrl + "?action=getAll"); 
+    const data = await res.json();
+
+    if(!Array.isArray(data) || data.length === 0){
+      tbody.innerHTML = "<tr><td colspan='4'>No data available.</td></tr>";
+      return;
+    }
 
     data.forEach(person => {
       const tr = document.createElement("tr");
@@ -87,12 +91,12 @@ async function loadAttendance() {
       tdLast.textContent = person.last_name || "";
       tr.appendChild(tdLast);
 
-      // Payment Status with symbol
+      // Payment Status
       const tdPayment = document.createElement("td");
-      if(person.payment_status.toLowerCase() === "online payment") {
-        tdPayment.textContent = "✅ Online";
+      if(person.payment_status?.toLowerCase().includes("online") || person.payment_status?.toLowerCase().includes("confirmed")){
+        tdPayment.textContent = "✅ Paid";
         tdPayment.className = "status-paid";
-      } else if(person.payment_status.toLowerCase() === "onsite payment") {
+      } else if(person.payment_status?.toLowerCase().includes("onsite")){
         tdPayment.textContent = "⚠️ Onsite";
         tdPayment.className = "status-onsite";
       } else {
@@ -101,19 +105,54 @@ async function loadAttendance() {
       }
       tr.appendChild(tdPayment);
 
-      // Attendance checkbox
+      // Attendance
       const tdAttend = document.createElement("td");
       tdAttend.className = "attendance-check";
-      tdAttend.textContent = person.attended_status === "Arrived" ? "✅" : "⚠️";
+      tdAttend.textContent = person.attendance_status === "Attended" ? "✅" :
+                             person.attendance_status === "ON-waiting" ? "🟠" :
+                             person.attendance_status === "Cancelled" ? "❌" : "⚠️";
+
       tdAttend.addEventListener("click", async () => {
-        // Toggle attendance
-        tdAttend.textContent = tdAttend.textContent === "✅" ? "⚠️" : "✅";
+        let newAttendance;
+        if(tdAttend.textContent === "✅"){
+          tdAttend.textContent = "🟠";
+          newAttendance = "ON-waiting";
+        } else if(tdAttend.textContent === "🟠"){
+          tdAttend.textContent = "❌";
+          newAttendance = "Cancelled";
+        } else {
+          tdAttend.textContent = "✅";
+          newAttendance = "Attended";
 
-        // Optional: Send update to Apps Script
-        await fetch(sheetUrl + "?action=markAttendance&id=" + person.rowId + "&status=" + (tdAttend.textContent === "✅" ? "Arrived" : "Not Arrived"));
+          // Auto-update payment to Paid if attendance is Attended
+          tdPayment.textContent = "✅ Paid";
+          tdPayment.className = "status-paid";
+        }
+
+        // Send update to Apps Script
+        try {
+          const formData = new FormData();
+          formData.append("action", "attendance");
+          formData.append("rowIndex", person.rowIndex);
+          formData.append("attendance_status", newAttendance);
+
+          // If marking as attended, also update payment to confirmed
+          if(newAttendance === "Attended"){
+            formData.append("payment_by", "Confirmed"); 
+          }
+
+          const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
+          const result = await updateRes.json();
+
+          if(result.result !== "success"){
+            alert("Error updating attendance: " + result.error);
+          }
+        } catch(err){
+          alert("Network error. Please try again.");
+        }
       });
-      tr.appendChild(tdAttend);
 
+      tr.appendChild(tdAttend);
       tbody.appendChild(tr);
     });
   } catch (err) {
