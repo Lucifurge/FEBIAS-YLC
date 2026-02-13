@@ -169,6 +169,9 @@ document.getElementById("ylc2-form").addEventListener("submit", async function(e
 
   const url = "https://script.google.com/macros/s/AKfycbyL2XS7nPe_72Uy0Hns7s3gHt-YiCIJSuQtkApZrC5VBPMabJcciAQyX6CGRS8HGvI_/exec";
   const formData = new FormData(this);
+
+  // 🔹 IMPORTANT: tell Apps Script this is a registration
+  formData.append("action", "register");
   formData.append("sheet","ylc2"); // ✅ Post to ylc2 sheet
 
   try {
@@ -187,6 +190,7 @@ document.getElementById("ylc2-form").addEventListener("submit", async function(e
   }
 });
 </script>
+
 
 </body>
 </html>
