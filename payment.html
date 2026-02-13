@@ -10,11 +10,44 @@
 body{background:#f8f8f8;color:#1f2937;line-height:1.6;}
 .container{max-width:800px;margin:2rem auto;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.12);}
 h1,h2{text-align:center;color:#0b3d2e;margin-bottom:1rem;}
-label{display:block;margin-top:1rem;font-weight:600;}
+label{display:block;margin-top:1rem;font-weight:600;cursor:pointer;}
 button{width:100%;padding:1.2rem;margin-top:2rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:12px;cursor:pointer;}
 button:hover{background:#1f7a4d;}
 .notice{margin-top:1.5rem;padding:1rem;background:#fff4e5;border-left:5px solid #d97706;border-radius:8px;text-align:center;font-weight:700;color:#b45309;}
-footer{text-align:center;padding:2rem;color:#555;}
+
+/* Payment methods container */
+.payment-methods {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.payment-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 1rem;
+  width: 150px;
+  margin: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.3s, transform 0.2s;
+}
+
+.payment-box img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.payment-box.selected {
+  border-color: #0b3d2e;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
 </style>
 </head>
 
@@ -41,6 +74,22 @@ Online Payment
 ⚠️ Please screenshot your registration confirmation and present it onsite if online.
 </div>
 
+<h2>Payment Methods</h2>
+<div class="payment-methods">
+  <div class="payment-box" data-method="Bank Transfer">
+    <img src="bank.png" alt="Bank Transfer">
+    <span>Bank</span>
+  </div>
+  <div class="payment-box" data-method="GCash QR">
+    <img src="gcash.png" alt="GCash QR">
+    <span>GCash QR</span>
+  </div>
+  <div class="payment-box" data-method="PayMaya QR">
+    <img src="paymaya.png" alt="PayMaya QR">
+    <span>PayMaya QR</span>
+  </div>
+</div>
+
 <button type="submit">✅ Confirm Payment</button>
 
 </form>
@@ -51,12 +100,28 @@ Online Payment
 </footer>
 
 <script>
+// Highlight selected payment box
+const boxes = document.querySelectorAll(".payment-box");
+boxes.forEach(box => {
+  box.addEventListener("click", () => {
+    boxes.forEach(b => b.classList.remove("selected"));
+    box.classList.add("selected");
+  });
+});
+
 document.getElementById("payment-form").addEventListener("submit", async function(e){
   e.preventDefault();
 
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   if(!paymentBy){
     alert("Please select a payment type.");
+    return;
+  }
+
+  const selectedBox = document.querySelector(".payment-box.selected");
+  let method = selectedBox ? selectedBox.dataset.method : "";
+  if(!method){
+    alert("Please select a payment method.");
     return;
   }
 
@@ -71,17 +136,13 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   const formData = new FormData();
   formData.append("action", "payment");
   formData.append("rowIndex", rowIndex);
-  formData.append("sheet", "ylc"); // change to "ylc2" for walk-ins
-  formData.append("payment_by", paymentBy);
+  formData.append("sheet", "ylc");
+  formData.append("payment_by", paymentBy + " (" + method + ")");
 
-  const url = "https://script.google.com/macros/s/AKfycbyL2XS7nPe_72Uy0Hns7s3gHt-YiCIJSuQtkApZrC5VBPMabJcciAQyX6CGRS8HGvI_/exec;"// Your Apps Script URL
+  const url = "https://script.google.com/macros/s/AKfycbyL2XS7nPe_72Uy0Hns7s3gHt-YiCIJSuQtkApZrC5VBPMabJcciAQyX6CGRS8HGvI_/exec";
 
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      body: formData
-    });
-
+    const res = await fetch(url, { method: "POST", body: formData });
     const result = await res.json();
 
     if(result.result === "success"){
@@ -90,7 +151,6 @@ document.getElementById("payment-form").addEventListener("submit", async functio
     } else {
       alert("Error: " + result.error);
     }
-
   } catch(err){
     alert("Network error. Please try again.");
   }
