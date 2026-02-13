@@ -38,6 +38,10 @@ footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#55
 
 <form id="ylc-form">
 
+<!-- Hidden inputs for Apps Script -->
+<input type="hidden" name="action" value="register">
+<input type="hidden" name="sheet" value="ylc"> <!-- change to "ylc2" if needed -->
+
 <!-- Minor Consent -->
 <section>
 <h2>Minor Consent</h2>
@@ -112,14 +116,14 @@ footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#55
 
 <label>Ministries (Check all that apply)</label>
 <div class="checkbox-group">
-<label><input type="checkbox" name="ministries" value="Pastoral"> Pastoral</label>
-<label><input type="checkbox" name="ministries" value="Christian Education"> Christian Education</label>
-<label><input type="checkbox" name="ministries" value="Music"> Music</label>
-<label><input type="checkbox" name="ministries" value="Evangelism & Discipleship"> Evangelism & Discipleship</label>
-<label><input type="checkbox" name="ministries" value="Multimedia & Technical"> Multimedia & Technical</label>
-<label><input type="checkbox" name="ministries" value="Church Administration"> Church Administration</label>
-<label><input type="checkbox" name="ministries" value="Events & Worship"> Events & Worship</label>
-<label><input type="checkbox" name="ministries" value="Others"> Others</label>
+<label><input type="checkbox" name="ministries[]" value="Pastoral"> Pastoral</label>
+<label><input type="checkbox" name="ministries[]" value="Christian Education"> Christian Education</label>
+<label><input type="checkbox" name="ministries[]" value="Music"> Music</label>
+<label><input type="checkbox" name="ministries[]" value="Evangelism & Discipleship"> Evangelism & Discipleship</label>
+<label><input type="checkbox" name="ministries[]" value="Multimedia & Technical"> Multimedia & Technical</label>
+<label><input type="checkbox" name="ministries[]" value="Church Administration"> Church Administration</label>
+<label><input type="checkbox" name="ministries[]" value="Events & Worship"> Events & Worship</label>
+<label><input type="checkbox" name="ministries[]" value="Others"> Others</label>
 </div>
 </section>
 
@@ -131,10 +135,10 @@ footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#55
 <label>Health Conditions<textarea name="health_conditions"></textarea></label>
 
 <div class="checkbox-group">
-<label><input type="checkbox" name="health_declaration" value="Answers True" required> Answers are true</label>
-<label><input type="checkbox" name="health_declaration" value="Physically Fit" required> Physically fit</label>
-<label><input type="checkbox" name="health_declaration" value="Responsible for Health" required> Responsible for health</label>
-<label><input type="checkbox" name="health_declaration" value="No Liability Clause" required> No liability clause</label>
+<label><input type="checkbox" name="health_declaration[]" value="Answers True" required> Answers are true</label>
+<label><input type="checkbox" name="health_declaration[]" value="Physically Fit" required> Physically fit</label>
+<label><input type="checkbox" name="health_declaration[]" value="Responsible for Health" required> Responsible for health</label>
+<label><input type="checkbox" name="health_declaration[]" value="No Liability Clause" required> No liability clause</label>
 </div>
 </section>
 
@@ -169,6 +173,15 @@ document.getElementById("ylc-form").addEventListener("submit", async function(e)
 
   const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
   const formData = new FormData(this);
+
+  // Convert checkbox arrays into comma-separated strings for Apps Script
+  const ministries = [];
+  document.querySelectorAll('input[name="ministries[]"]:checked').forEach(cb => ministries.push(cb.value));
+  formData.set("ministries", ministries.join(", "));
+
+  const health = [];
+  document.querySelectorAll('input[name="health_declaration[]"]:checked').forEach(cb => health.push(cb.value));
+  formData.set("health_conditions", health.join(", "));
 
   try {
     const res = await fetch(url, { method: "POST", body: formData });
