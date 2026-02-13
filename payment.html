@@ -139,7 +139,7 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   formData.append("sheet", "ylc");
   formData.append("payment_by", paymentBy + " (" + method + ")");
 
-  const url = "https://script.google.com/macros/s/AKfycbyovMom8ZrwVCGz1Xiz-1th0gyFAVHn11y_j6ZSmt_NVE1XQtG1jJ36PHlmVLA01ZBFRQ/exec";
+  const url = "https://script.google.com/macros/s/AKfycbyK2gGuYngBzt-ahEEtz0M8cVRGiGincsqnsvHO7X5KGih9QbCWqCg4wvt2REUX2wagCQ/exec";
 
   try {
     const res = await fetch(url, { method: "POST", body: formData });
