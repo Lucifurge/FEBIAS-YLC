@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YLC 2026 Attendance 2 | FEBIAS College of Bible</title>
+
+<link rel="icon" href="logo.ico">
+
+<style>
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f8f8f8;
+  color: #1f2937;
+  padding: 2rem;
+}
+
+h1 { text-align: center; color: #0b3d2e; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.8rem;
+}
+
+th {
+  background: #0b3d2e;
+  color: white;
+}
+
+.status-paid { color: green; font-weight: bold; }
+.status-onsite { color: orange; font-weight: bold; }
+.status-not { color: red; font-weight: bold; }
+
+.attendance-check {
+  cursor: pointer;
+  text-align: center;
+  font-size: 1.4rem;
+}
+</style>
+</head>
+<body>
+
+<h1>YLC 2026 Attendance 2</h1>
+<p>Click the emoji to update attendance (✅ = Attended, 🟠 = Waiting, ❌ = Cancelled).</p>
+
+<button onclick="loadAttendance()">🔄 Refresh Now</button>
+
+<table id="attendance-table">
+<thead>
+<tr>
+<th>First Name</th>
+<th>Last Name</th>
+<th>Payment Status</th>
+<th>Attendance</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyL2XS7nPe_72Uy0Hns7s3gHt-YiCIJSuQtkApZrC5VBPMabJcciAQyX6CGRS8HGvI_/exec";
+const SHEET_NAME = "ylc2"; // ✅ Load from YLC2 sheet
+const tbody = document.querySelector("#attendance-table tbody");
+
+let peopleMap = new Map();
+const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
+
+// Render or update a row
+function renderRow(person) {
+  let tr = peopleMap.get(person.rowIndex);
+
+  if (!tr) {
+    tr = document.createElement("tr");
+    tr.dataset.row = person.rowIndex;
+
+    tr.innerHTML = `
+      <td class="first"></td>
+      <td class="last"></td>
+      <td class="payment"></td>
+      <td class="attendance-check"></td>
+    `;
+    tbody.appendChild(tr);
+    peopleMap.set(person.rowIndex, tr);
+  }
+
+  tr.querySelector(".first").textContent = person.firstName || "";
+  tr.querySelector(".last").textContent = person.lastName || "";
+
+  const paymentCell = tr.querySelector(".payment");
+  const attendanceCell = tr.querySelector(".attendance-check");
+
+  // Payment display
+  function updatePaymentUI(status) {
+    const lower = (status || "").toLowerCase();
+    if (lower.includes("online")) {
+      paymentCell.textContent = "✅ Paid";
+      paymentCell.className = "payment status-paid";
+    } else if (lower.includes("onsite")) {
+      paymentCell.textContent = "⚠️ Onsite";
+      paymentCell.className = "payment status-onsite";
+    } else {
+      paymentCell.textContent = "❌ Not Paid";
+      paymentCell.className = "payment status-not";
+    }
+  }
+  updatePaymentUI(person.paymentStatus);
+
+  // Attendance emoji
+  function setEmoji(status) {
+    attendanceCell.textContent = status === "Attended" ? "✅"
+                             : status === "Cancelled" ? "❌" : "🟠";
+  }
+  setEmoji(person.attendanceStatus);
+
+  // Fast click handler
+  attendanceCell.onclick = () => {
+    let idx = statusCycle.indexOf(person.attendanceStatus);
+    if (idx === -1) idx = 0;
+    let newStatus = statusCycle[(idx + 1) % statusCycle.length];
+
+    // 🔥 INSTANT UI UPDATE
+    person.attendanceStatus = newStatus;
+    setEmoji(newStatus);
+
+    // 🔥 INSTANT PAYMENT UPDATE in UI
+    if (newStatus === "Attended") {
+      person.paymentStatus = "Online Payment";
+    } else if (newStatus === "ON-waiting") {
+      person.paymentStatus = "Onsite Payment";
+    } else {
+      person.paymentStatus = "Not Paid";
+    }
+    updatePaymentUI(person.paymentStatus);
+
+    // Background sync
+    const formData = new FormData();
+    formData.append("action", "attendance");
+    formData.append("rowIndex", person.rowIndex);
+    formData.append("attendance_status", newStatus);
+    formData.append("sheet", SHEET_NAME);
+
+    fetch(BASE_URL, { method: "POST", body: formData })
+      .catch(err => console.error("Sync error:", err));
+  };
+}
+
+// Load data without wiping table
+async function loadAttendance() {
+  try {
+    const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
+    const data = await res.json();
+    if (!Array.isArray(data)) return;
+
+    data.forEach(person => renderRow(person));
+  } catch (err) {
+    console.error("Load error:", err);
+  }
+}
+
+// Initial load + silent refresh every 15s
+loadAttendance();
+setInterval(loadAttendance, 15000);
+</script>
+
+</body>
+</html>
