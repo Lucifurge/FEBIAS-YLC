@@ -168,21 +168,33 @@ document.getElementById("ylc2-form").addEventListener("submit", async function(e
   e.preventDefault();
 
   const url = "https://script.google.com/macros/s/AKfycbyL2XS7nPe_72Uy0Hns7s3gHt-YiCIJSuQtkApZrC5VBPMabJcciAQyX6CGRS8HGvI_/exec";
-  const formData = new FormData(this);
 
-  // 🔹 IMPORTANT: tell Apps Script this is a registration
+  // Create FormData manually
+  const formData = new FormData();
+
+  // Collect all inputs, selects, textareas
+  const fields = this.querySelectorAll("input, select, textarea");
+  fields.forEach(field => {
+    if(field.type === "checkbox") {
+      if(field.checked) formData.append(field.name, field.value);
+    } else {
+      formData.append(field.name, field.value);
+    }
+  });
+
+  // Append required registration action and sheet
   formData.append("action", "register");
-  formData.append("sheet","ylc2"); // ✅ Post to ylc2 sheet
+  formData.append("sheet", "ylc2");
 
   try {
     const res = await fetch(url, { method: "POST", body: formData });
     const result = await res.json();
 
     if(result.result === "success"){
-        // ✅ Redirect to payment2.html with rowIndex
-        window.location.href = "payment2.html?row=" + result.rowIndex;
+      // Redirect to walk-in payment page
+      window.location.href = "payment2.html?row=" + result.rowIndex;
     } else {
-        alert("Submission failed: " + result.error);
+      alert("Submission failed: " + result.error);
     }
 
   } catch(err){
@@ -190,6 +202,7 @@ document.getElementById("ylc2-form").addEventListener("submit", async function(e
   }
 });
 </script>
+
 
 
 </body>
