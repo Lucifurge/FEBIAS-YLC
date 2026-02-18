@@ -6,14 +6,116 @@
 <title>YLC 2026 Payment | FEBIAS College of Bible</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
-body{background:#f8f8f8;color:#1f2937;line-height:1.6;}
-.container{max-width:800px;margin:2rem auto;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.12);}
-h1,h2{text-align:center;color:#0b3d2e;margin-bottom:1rem;}
-label{display:block;margin-top:1rem;font-weight:600;}
-button{width:100%;padding:1.2rem;margin-top:2rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:12px;cursor:pointer;}
-button:hover{background:#1f7a4d;}
-.notice{margin-top:1.5rem;padding:1rem;background:#fff4e5;border-left:5px solid #d97706;border-radius:8px;text-align:center;font-weight:700;color:#b45309;}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI",system-ui,sans-serif;
+}
+
+body{
+  background:linear-gradient(135deg,#f8f8f8,#e6f0ec);
+  color:#1f2937;
+  line-height:1.6;
+}
+
+.container{
+  max-width:850px;
+  margin:3rem auto;
+  padding:2.5rem;
+  background:#fff;
+  border-radius:20px;
+  box-shadow:0 15px 40px rgba(0,0,0,.15);
+}
+
+h1{
+  text-align:center;
+  color:#0b3d2e;
+  margin-bottom:1rem;
+  font-size:2rem;
+}
+
+h2{
+  text-align:center;
+  margin-top:2rem;
+  margin-bottom:1rem;
+  color:#14532d;
+}
+
+label{
+  display:block;
+  margin-top:1rem;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.notice{
+  margin-top:1.5rem;
+  padding:1rem;
+  background:#fff4e5;
+  border-left:6px solid #d97706;
+  border-radius:10px;
+  text-align:center;
+  font-weight:600;
+  color:#b45309;
+}
+
+/* QR container */
+.qr-container{
+  display:flex;
+  justify-content:center;
+  margin-top:2rem;
+}
+
+.qr-box{
+  border:3px solid #d1d5db;
+  border-radius:18px;
+  padding:2rem;
+  background:#f9fafb;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  box-shadow:0 8px 25px rgba(0,0,0,.1);
+}
+
+.qr-box img{
+  width:250px;  /* BIG QR CODE */
+  height:250px;
+  object-fit:contain;
+  margin-bottom:1rem;
+}
+
+.qr-box span{
+  font-weight:700;
+  font-size:1.2rem;
+  color:#0b3d2e;
+}
+
+button{
+  width:100%;
+  padding:1.3rem;
+  margin-top:2.5rem;
+  font-size:1.2rem;
+  font-weight:700;
+  background:#0b3d2e;
+  color:#fff;
+  border:none;
+  border-radius:14px;
+  cursor:pointer;
+  transition:all .3s;
+}
+
+button:hover{
+  background:#1f7a4d;
+  transform:scale(1.02);
+}
+
+footer{
+  text-align:center;
+  padding:2rem;
+  font-size:.9rem;
+  color:#555;
+}
 </style>
 </head>
 
@@ -28,7 +130,7 @@ button:hover{background:#1f7a4d;}
 
 <label>
 <input type="radio" name="payment_by" value="Onsite" required>
-Onsite Payment
+Walk-in Payment
 </label>
 
 <label>
@@ -40,61 +142,22 @@ Online Payment
 ⚠️ Please screenshot your registration confirmation and present it onsite if online.
 </div>
 
+<!-- Only GCash QR -->
+<div class="qr-container">
+  <div class="qr-box">
+    <img src="gcash.png" alt="GCash QR">
+    <span>GCash QR</span>
+  </div>
+</div>
+
 <button type="submit">✅ Confirm Payment</button>
 
 </form>
 </div>
 
-<footer style="text-align:center;padding:2rem;color:#555;">
+<footer>
 © 2026 FEBIAS College of Bible — Youth Leaders Camp
 </footer>
-
-<script>
-document.getElementById("payment-form").addEventListener("submit", async function(e){
-  e.preventDefault();
-
-  const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
-  if(!paymentBy){
-    alert("Please select a payment type.");
-    return;
-  }
-
-  // Get rowIndex from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const rowIndex = urlParams.get("row");
-  if(!rowIndex){
-    alert("Missing registration reference. Please register first.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("action", "payment");
-  formData.append("rowIndex", rowIndex);
-  formData.append("sheet", "ylc2"); // ✅ ylc2 sheet
-  formData.append("payment_by", paymentBy);
-
-  const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec"; // Apps Script URL
-
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      body: formData
-    });
-
-    const result = await res.json();
-
-    if(result.result === "success"){
-      alert("Payment updated successfully. Please save or screenshot your receipt for onsite confirmation.");
-      window.location.href = "thankyou2.html";
-    } else {
-      alert("Error: " + result.error);
-    }
-
-  } catch(err){
-    alert("Network error. Please try again.");
-  }
-});
-</script>
 
 </body>
 </html>
