@@ -68,6 +68,7 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9
 const tbody = document.querySelector("#attendance-table tbody");
 
 let peopleMap = new Map();
+let localOverrides = new Map(); // 🔥 prevents reverting
 const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
 
 // Render or update a row
@@ -88,13 +89,17 @@ function renderRow(person) {
     peopleMap.set(person.rowIndex, tr);
   }
 
+  // 🔥 If we have a local override, use it instead of sheet value
+  if (localOverrides.has(person.rowIndex)) {
+    person.attendanceStatus = localOverrides.get(person.rowIndex);
+  }
+
   tr.querySelector(".first").textContent = person.firstName || "";
   tr.querySelector(".last").textContent = person.lastName || "";
 
   const paymentCell = tr.querySelector(".payment");
   const attendanceCell = tr.querySelector(".attendance-check");
 
-  // Payment display
   function updatePaymentUI(status) {
     const lower = (status || "").toLowerCase();
     if (lower.includes("online")) {
@@ -108,36 +113,36 @@ function renderRow(person) {
       paymentCell.className = "payment status-not";
     }
   }
-  updatePaymentUI(person.paymentStatus);
 
-  // Attendance emoji
   function setEmoji(status) {
-    attendanceCell.textContent = status === "Attended" ? "✅"
-                             : status === "Cancelled" ? "❌" : "🟠";
+    attendanceCell.textContent =
+      status === "Attended" ? "✅" :
+      status === "Cancelled" ? "❌" : "🟠";
   }
+
+  updatePaymentUI(person.paymentStatus);
   setEmoji(person.attendanceStatus);
 
-  // Fast click handler
   attendanceCell.onclick = () => {
-    let idx = statusCycle.indexOf(person.attendanceStatus);
+    let current = localOverrides.get(person.rowIndex) || person.attendanceStatus;
+    let idx = statusCycle.indexOf(current);
     if (idx === -1) idx = 0;
     let newStatus = statusCycle[(idx + 1) % statusCycle.length];
 
-    // 🔥 INSTANT UI UPDATE
-    person.attendanceStatus = newStatus;
+    // 🔥 SAVE LOCALLY FIRST (prevents reverting)
+    localOverrides.set(person.rowIndex, newStatus);
+
     setEmoji(newStatus);
 
-    // 🔥 INSTANT PAYMENT UPDATE in UI
     if (newStatus === "Attended") {
-      person.paymentStatus = "Online Payment";
+      updatePaymentUI("Online Payment");
     } else if (newStatus === "ON-waiting") {
-      person.paymentStatus = "Onsite Payment";
+      updatePaymentUI("Onsite Payment");
     } else {
-      person.paymentStatus = "Not Paid";
+      updatePaymentUI("Not Paid");
     }
-    updatePaymentUI(person.paymentStatus);
 
-    // Background sync (no await, no delay)
+    // Background sync
     const formData = new FormData();
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
@@ -145,6 +150,12 @@ function renderRow(person) {
     formData.append("sheet", "ylc");
 
     fetch(BASE_URL, { method: "POST", body: formData })
+      .then(() => {
+        // 🔥 After 5 seconds remove override (sheet likely updated)
+        setTimeout(() => {
+          localOverrides.delete(person.rowIndex);
+        }, 5000);
+      })
       .catch(err => console.error("Sync error:", err));
   };
 }
@@ -163,7 +174,6 @@ async function loadAttendance() {
   }
 }
 
-// Initial load + silent refresh every 15s
 loadAttendance();
 setInterval(loadAttendance, 15000);
 </script>
