@@ -3,121 +3,61 @@
 <head> 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Walk-in Payment | FEBIAS College of Bible</title>
+<title>YLC 2026 Payment | FEBIAS College of Bible</title>
 <link rel="icon" href="logo.ico">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
-
-body{
-  background:linear-gradient(135deg,#f8f8f8,#e6f0ec);
-  color:#1f2937;
-  line-height:1.6;
-}
-
-.container{
-  max-width:850px;
-  margin:3rem auto;
-  padding:2.5rem;
-  background:#fff;
-  border-radius:20px;
-  box-shadow:0 15px 40px rgba(0,0,0,.15);
-}
-
-h1{
-  text-align:center;
-  color:#0b3d2e;
-  margin-bottom:1rem;
-  font-size:2rem;
-}
-
-.notice{
-  margin-top:1.5rem;
-  padding:1rem;
-  background:#fff4e5;
-  border-left:6px solid #d97706;
-  border-radius:10px;
-  text-align:center;
-  font-weight:600;
-  color:#b45309;
-}
-
-.qr-container{
-  display:flex;
-  justify-content:center;
-  margin-top:2rem;
-}
-
-.qr-box{
-  border:3px solid #d1d5db;
-  border-radius:18px;
-  padding:2rem;
-  background:#f9fafb;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  box-shadow:0 8px 25px rgba(0,0,0,.1);
-}
-
-.qr-box img{
-  width:250px;
-  height:250px;
-  object-fit:contain;
-  margin-bottom:1rem;
-}
-
-.qr-box span{
-  font-weight:700;
-  font-size:1.2rem;
-  color:#0b3d2e;
-}
-
-button{
-  width:100%;
-  padding:1.3rem;
-  margin-top:2.5rem;
-  font-size:1.2rem;
-  font-weight:700;
-  background:#0b3d2e;
-  color:#fff;
-  border:none;
-  border-radius:14px;
-  cursor:pointer;
-  transition:all .3s;
-}
-
-button:hover{
-  background:#1f7a4d;
-  transform:scale(1.02);
-}
-
-footer{
-  text-align:center;
-  padding:2rem;
-  font-size:.9rem;
-  color:#555;
-}
+body{background:linear-gradient(135deg,#f8f8f8,#e6f0ec);color:#1f2937;line-height:1.6;}
+.container{max-width:850px;margin:3rem auto;padding:2.5rem;background:#fff;border-radius:20px;box-shadow:0 15px 40px rgba(0,0,0,.15);}
+h1{text-align:center;color:#0b3d2e;margin-bottom:1rem;font-size:2rem;}
+h2{text-align:center;margin-top:2rem;margin-bottom:1rem;color:#14532d;}
+label{display:block;margin-top:1rem;font-weight:600;cursor:pointer;}
+.notice{margin-top:1.5rem;padding:1rem;background:#fff4e5;border-left:6px solid #d97706;border-radius:10px;text-align:center;font-weight:600;color:#b45309;}
+.qr-container{display:flex;justify-content:center;margin-top:2rem;}
+.qr-box{border:3px solid #d1d5db;border-radius:18px;padding:2rem;background:#f9fafb;display:flex;flex-direction:column;align-items:center;box-shadow:0 8px 25px rgba(0,0,0,.1);}
+.qr-box img{width:250px;height:250px;object-fit:contain;margin-bottom:1rem;}
+.qr-box span{font-weight:700;font-size:1.2rem;color:#0b3d2e;}
+button{width:100%;padding:1.3rem;margin-top:2.5rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:14px;cursor:pointer;transition:all .3s;}
+button:hover{background:#1f7a4d;transform:scale(1.02);}
+footer{text-align:center;padding:2rem;font-size:.9rem;color:#555;}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h1>YLC 2026 Walk-in Payment</h1>
+<h1>YLC 2026 Payment Confirmation (Walk-in)</h1>
+
+<form id="payment-form">
+
+<h2>Select Payment Type</h2>
+
+<label>
+<input type="radio" name="payment_by_radio" value="Walk-in" required>
+Walk-in Payment
+</label>
+
+<label>
+<input type="radio" name="payment_by_radio" value="Online">
+Online Payment
+</label>
 
 <div class="notice">
-Please scan the GCash QR and confirm payment after transaction.
+⚠️ Please screenshot your registration confirmation and present it onsite if online.
 </div>
 
+<!-- Only GCash QR -->
 <div class="qr-container">
   <div class="qr-box">
     <img src="gcash.png" alt="GCash QR">
-    <span>GCash QR Payment</span>
+    <span>GCash QR</span>
   </div>
 </div>
 
-<button id="confirmBtn">✅ Confirm Walk-in Payment</button>
+<button type="submit">✅ Confirm Payment</button>
 
+</form>
 </div>
 
 <footer>
@@ -125,39 +65,43 @@ Please scan the GCash QR and confirm payment after transaction.
 </footer>
 
 <script>
-document.getElementById("confirmBtn").addEventListener("click", async function(){
+document.getElementById("payment-form").addEventListener("submit", async function(e){
+  e.preventDefault();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const rowIndex = urlParams.get("row");
-
-  if(!rowIndex){
-    alert("Missing registration reference.");
+  const paymentRadio = document.querySelector('input[name="payment_by_radio"]:checked')?.value;
+  if(!paymentRadio){
+    alert("Please select a payment type.");
     return;
   }
+
+  // Auto-generate row reference for walk-in
+  const rowIndex = Date.now();
 
   const formData = new FormData();
   formData.append("action", "payment");
   formData.append("rowIndex", rowIndex);
   formData.append("sheet", "ylc2");
-  formData.append("payment_by", "Walk-in (GCash QR)");
+
+  // For sheet display
+  formData.append("payment_by", paymentRadio + " (GCash QR)"); 
+  formData.append("payment_method", "GCash QR");
+  formData.append("counter", "1"); // placeholder counter
 
   const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
 
-  try{
-    const res = await fetch(url,{method:"POST",body:formData});
+  try {
+    const res = await fetch(url, { method: "POST", body: formData });
     const result = await res.json();
 
     if(result.result === "success"){
-      alert("Walk-in payment recorded successfully.");
+      alert("Payment recorded successfully. Please show the receipt to the registration desk.");
       window.location.href = "thankyou2.html";
-    }else{
+    } else {
       alert("Error: " + result.error);
     }
-
-  }catch(err){
+  } catch(err){
     alert("Network error. Please try again.");
   }
-
 });
 </script>
 
