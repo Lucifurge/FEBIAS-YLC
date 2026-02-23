@@ -18,21 +18,30 @@ body{
 }
 
 .container{
-  max-width:900px;
+  max-width:950px;
   margin:2rem auto;
   padding:2rem;
   background:#fff;
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.12);
+  border-radius:18px;
+  box-shadow:0 12px 35px rgba(0,0,0,.12);
 }
 
-h1,h2{
+h1{
   text-align:center;
+  font-size:2rem;
   color:#0b3d2e;
   margin-bottom:1rem;
 }
 
-section{margin-top:2rem;}
+h2{
+  margin-top:2rem;
+  margin-bottom:1rem;
+  color:#0b3d2e;
+  border-bottom:2px solid #eee;
+  padding-bottom:.4rem;
+}
+
+section{margin-top:1.5rem;}
 
 label{
   display:block;
@@ -43,9 +52,9 @@ label{
 
 input,select,textarea{
   width:100%;
-  padding:.9rem;
+  padding:.85rem;
   margin-top:.4rem;
-  border-radius:8px;
+  border-radius:10px;
   border:1px solid #9ca3af;
   font-size:1rem;
 }
@@ -55,14 +64,15 @@ textarea{resize:vertical;}
 button{
   width:100%;
   padding:1.2rem;
-  margin-top:1.5rem;
+  margin-top:2rem;
   font-size:1.1rem;
   font-weight:700;
   background:#0b3d2e;
   color:#fff;
   border:none;
-  border-radius:12px;
+  border-radius:14px;
   cursor:pointer;
+  transition:.2s ease;
 }
 
 button:hover{background:#1f7a4d;}
@@ -83,8 +93,8 @@ button:hover{background:#1f7a4d;}
   background:#f4f4f4;
   padding:1.2rem;
   border-left:5px solid #d4af37;
-  border-radius:10px;
-  max-height:300px;
+  border-radius:12px;
+  max-height:320px;
   overflow-y:auto;
   font-size:.9rem;
 }
@@ -95,8 +105,8 @@ footer{
   text-align:center;
   padding:2rem;
   margin-top:2rem;
-  font-size:.95rem;
-  color:#555;
+  font-size:.9rem;
+  color:#666;
 }
 </style>
 </head>
@@ -104,7 +114,7 @@ footer{
 <body>
 <div class="container">
 
-<h1>YLC 2026 Registration</h1>
+<h1>Youth Leadership Camp 2026 Registration</h1>
 
 <!-- ================= PRIVACY PAGE ================= -->
 <section id="privacy-section">
@@ -112,33 +122,27 @@ footer{
 <h2>Privacy Statement</h2>
 
 <div class="privacy-box">
-<p><strong>Youth Leadership Camp 2026 – Privacy Statement</strong></p>
-<br>
-<p><strong>Commitment:</strong> We are committed to protecting the personal information provided in this registration form.</p>
-<br>
-<p><strong>Data Use (for camp administration):</strong></p>
+<p><strong>Commitment:</strong> We are committed to protecting your personal information.</p>
+
+<p><strong>Data Use:</strong></p>
 <ul>
-<li>Verifying identity and registration status</li>
-<li>Communicating camp details and updates</li>
-<li>Assigning accommodations, meals, and workshop sessions</li>
-<li>Addressing health and safety concerns</li>
-<li>Processing payments and documentation</li>
+<li>Verify registration and identity</li>
+<li>Communicate camp updates</li>
+<li>Assign accommodations, meals, sessions</li>
+<li>Address health and safety concerns</li>
+<li>Process payments and documentation</li>
 </ul>
-<br>
+
 <p><strong>Confidentiality:</strong></p>
 <ul>
-<li>Information is accessed only by authorized camp organizers</li>
-<li>No sharing or selling of information to third parties</li>
-<li>Exceptions apply only for legal obligations or emergencies</li>
+<li>Access limited to authorized organizers</li>
+<li>No selling or sharing to third parties</li>
+<li>Exceptions: legal obligations or emergencies</li>
 </ul>
-<br>
-<p><strong>For Minors (Under 18):</strong></p>
-<ul>
-<li>Minor Consent Form required from parent/guardian</li>
-<li>Health details used only for safety and accommodation purposes</li>
-</ul>
-<br>
-<p><strong>Acknowledgment:</strong> By proceeding, you confirm you have read and understood this Privacy Statement and consent to the collection and processing of your data for YLC 2026 purposes.</p>
+
+<p><strong>For Minors:</strong> Parent/Guardian consent required. Health data used only for safety.</p>
+
+<p><strong>Acknowledgment:</strong> By proceeding, you consent to data processing for YLC 2026 purposes.</p>
 </div>
 
 <div class="checkbox-row">
@@ -150,13 +154,13 @@ footer{
 
 </section>
 
-<!-- ================= REGISTRATION FORM ================= -->
-
+<!-- ================= FULL REGISTRATION FORM ================= -->
 <form id="ylc-form" class="hidden">
 
 <input type="hidden" name="action" value="register">
 <input type="hidden" name="sheet" value="ylc">
 
+<!-- Minor Consent -->
 <section>
 <h2>Minor Consent</h2>
 
@@ -174,10 +178,9 @@ footer{
 <input type="radio" name="minor_consent" value="Parent/Guardian Consent Given">
 <label>I am a parent/guardian giving consent</label>
 </div>
-
 </section>
 
-<!-- PERSONAL INFO -->
+<!-- Personal Info -->
 <section>
 <h2>Personal Information</h2>
 
@@ -199,8 +202,38 @@ footer{
 <label>Contact Number<input type="text" name="contact_number" required></label>
 <label>Home Address<textarea name="home_address" required></textarea></label>
 <label>Email<input type="email" name="email" required></label>
-<label>Facebook<input type="text" name="facebook"></label>
+<label>Facebook Link<input type="text" name="facebook"></label>
 
+<label>Camp T-Shirt Size
+<select name="tshirt_size">
+<option value="">Select Size</option>
+<option value="XS">XS</option>
+<option value="S">S</option>
+<option value="M">M</option>
+<option value="L">L</option>
+<option value="XL">XL</option>
+<option value="XXL">XXL</option>
+</select>
+</label>
+
+</section>
+
+<!-- Payment -->
+<section>
+<h2>Payment Responsibility</h2>
+
+<label>Who will pay?
+<select name="payment_by" id="payment_by" required>
+<option value="">Select</option>
+<option value="Personal">Personal</option>
+<option value="Sponsor">Sponsor</option>
+<option value="Church Sponsor">Church Sponsor</option>
+</select>
+</label>
+
+<label>Sponsor Name
+<input type="text" name="sponsor_name" id="sponsor_name">
+</label>
 </section>
 
 <button type="submit">✅ Submit Registration</button>
@@ -210,17 +243,15 @@ footer{
 </div>
 
 <footer>
-© 2026 FEBIAS College of Bible — Youth Leaders Camp
+© 2026 FEBIAS College of Bible — Youth Leadership Camp
 </footer>
 
 <script>
 function proceedRegistration(){
-  const agree = document.getElementById("agreePrivacy").checked;
-  if(!agree){
-    alert("You must agree to the Privacy Statement before proceeding.");
+  if(!document.getElementById("agreePrivacy").checked){
+    alert("You must agree to the Privacy Statement first.");
     return;
   }
-
   document.getElementById("privacy-section").classList.add("hidden");
   document.getElementById("ylc-form").classList.remove("hidden");
   window.scrollTo(0,0);
@@ -233,15 +264,14 @@ document.getElementById("ylc-form").addEventListener("submit", async function(e)
   const formData = new FormData(this);
 
   try{
-    const res = await fetch(url, { method:"POST", body:formData });
+    const res = await fetch(url,{method:"POST",body:formData});
     const result = await res.json();
 
     if(result.result === "success"){
       window.location.href = "payment.html?row=" + result.rowIndex;
-    } else {
+    }else{
       alert("Submission failed: " + result.error);
     }
-
   }catch(err){
     alert("Network error. Please try again.");
   }
