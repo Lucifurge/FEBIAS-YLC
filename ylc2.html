@@ -11,41 +11,67 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
 body{background:#f8f8f8;color:#1f2937;line-height:1.6;}
-.container{max-width:900px;margin:2rem auto;padding:2rem;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.12);}
-h1,h2{text-align:center;color:#0b3d2e;margin-bottom:1rem;}
-h2{margin-top:2rem;}
+.container{max-width:950px;margin:2rem auto;padding:2rem;background:#fff;border-radius:18px;box-shadow:0 12px 35px rgba(0,0,0,.12);}
+h1{text-align:center;color:#0b3d2e;margin-bottom:1rem;}
+h2{margin-top:2rem;margin-bottom:1rem;color:#0b3d2e;}
 label{display:block;font-weight:600;margin-top:1rem;color:#0b3d2e;}
-input,select,textarea{width:100%;padding:.9rem;margin-top:.4rem;border-radius:8px;border:1px solid #9ca3af;font-size:1rem;}
+input,select,textarea{width:100%;padding:.85rem;margin-top:.4rem;border-radius:10px;border:1px solid #9ca3af;font-size:1rem;}
 textarea{resize:vertical;}
-button{display:block;width:100%;padding:1.2rem;margin-top:1.5rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:12px;cursor:pointer;}
+button{width:100%;padding:1.2rem;margin-top:2rem;font-size:1.1rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:14px;cursor:pointer;}
 button:hover{background:#1f7a4d;}
-section{margin-top:2rem;}
-.checkbox-group{margin-top:.5rem;}
-.checkbox-item{display:flex;align-items:flex-start;gap:8px;margin-top:.5rem;font-weight:500;}
-.checkbox-item input{width:auto;margin-top:4px;}
-.privacy{font-size:.95rem;background:#f0f0f0;padding:1rem;border-left:5px solid #d4af37;border-radius:8px;}
-footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#555;}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-top:.6rem;}
+.checkbox-row input{width:auto;margin-top:4px;}
+.privacy-box{background:#f4f4f4;padding:1.2rem;border-left:5px solid #d4af37;border-radius:12px;max-height:320px;overflow-y:auto;font-size:.9rem;}
+.hidden{display:none;}
+footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.9rem;color:#666;}
 </style>
 </head>
 
 <body>
 <div class="container">
+
 <h1>YLC 2026 Walk-in Registration</h1>
 
-<section class="privacy">
+<!-- ================= PRIVACY FIRST ================= -->
+<section id="privacy-section">
+
 <h2>Privacy Statement</h2>
-<p>Your information will be used solely for YLC 2026 administration, communication, health safety, and documentation purposes.</p>
+<div class="privacy-box">
+<p><strong>Commitment:</strong> Protecting your personal information.</p>
+<ul>
+<li>Verify identity and registration</li>
+<li>Communicate camp updates</li>
+<li>Assign accommodations & meals</li>
+<li>Address health and safety concerns</li>
+<li>Process payments & documentation</li>
+</ul>
+<p><strong>Confidentiality:</strong> No sharing with third parties except legal/emergency cases.</p>
+<p><strong>For Minors:</strong> Parent/Guardian consent required.</p>
+<p><strong>Acknowledgment:</strong> By proceeding, you consent to data processing for YLC 2026.</p>
+</div>
+
+<div class="checkbox-row">
+<input type="checkbox" id="agreePrivacy">
+<label for="agreePrivacy">I have read and understood the privacy statement</label>
+</div>
+
+<button type="button" onclick="proceedRegistration()">Proceed to Registration</button>
 </section>
 
-<form id="ylc2-form">
+<!-- ================= FULL FORM ================= -->
+<form id="ylc2-form" class="hidden">
+<input type="hidden" name="action" value="register">
+<input type="hidden" name="sheet" value="ylc2">
 
+<!-- Minor Consent -->
 <section>
 <h2>Minor Consent</h2>
-<div class="checkbox-item"><input type="radio" name="minor_consent" value="18+ No Consent Required" required><label>I am 18+ and do not require parental consent</label></div>
-<div class="checkbox-item"><input type="radio" name="minor_consent" value="Minor with Parental Consent"><label>I am a minor with parental consent</label></div>
-<div class="checkbox-item"><input type="radio" name="minor_consent" value="Parent/Guardian Consent Given"><label>I am a parent/guardian giving consent</label></div>
+<div class="checkbox-row"><input type="radio" name="minor_consent" value="18+ No Consent Required" required><label>I am 18+ and do not require parental consent</label></div>
+<div class="checkbox-row"><input type="radio" name="minor_consent" value="Minor with Parental Consent"><label>I am a minor with parental consent</label></div>
+<div class="checkbox-row"><input type="radio" name="minor_consent" value="Parent/Guardian Consent Given"><label>I am a parent/guardian giving consent</label></div>
 </section>
 
+<!-- Personal Info -->
 <section>
 <h2>Personal Information</h2>
 <label>Last Name<input type="text" name="last_name" required></label>
@@ -54,105 +80,81 @@ footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#55
 <label>Nickname<input type="text" name="nickname"></label>
 <label>Age<input type="number" name="age" required></label>
 <label>Date of Birth<input type="date" name="dob" required></label>
-
-<label>Gender
-<select name="gender" required>
+<label>Gender<select name="gender" required>
 <option value="">Select</option>
 <option value="Male">Male</option>
 <option value="Female">Female</option>
-</select>
-</label>
-
+</select></label>
 <label>Contact Number<input type="text" name="contact_number" required></label>
-<label>Home Address<textarea name="home_address" rows="2" required></textarea></label>
+<label>Home Address<textarea name="home_address" required></textarea></label>
 <label>Email<input type="email" name="email" required></label>
 <label>Facebook<input type="text" name="facebook"></label>
 </section>
 
+<!-- Christian Info -->
 <section>
 <h2>Christian Service Information</h2>
 <label>Church Name<input type="text" name="church_name"></label>
 <label>Church Location<input type="text" name="church_location"></label>
 <label>Pastor Name<input type="text" name="pastor_name"></label>
-
-<label>Accepted Christ?
-<select name="accepted_christ" required>
+<label>Accepted Christ?<select name="accepted_christ" required>
 <option value="">Select</option>
 <option value="Yes">Yes</option>
 <option value="No">No</option>
-</select>
-</label>
-
-<label>Water Baptized?
-<select name="water_baptized" required>
+</select></label>
+<label>Water Baptized?<select name="water_baptized" required>
 <option value="">Select</option>
 <option value="Yes">Yes</option>
 <option value="No">No</option>
-</select>
-</label>
-
-<label>Church Ministries?
-<select name="church_ministries" required>
+</select></label>
+<label>Church Ministries?<select name="church_ministries" required>
 <option value="">Select</option>
 <option value="Yes">Yes</option>
 <option value="No">No</option>
-</select>
-</label>
-
-<label>Youth Leader Status
-<select name="youth_leader" required>
+</select></label>
+<label>Youth Leader Status<select name="youth_leader" required>
 <option value="">Select</option>
 <option value="More than 2 years">More than 2 years</option>
 <option value="Less than 2 years">Less than 2 years</option>
 <option value="Training">Training to become one</option>
-</select>
-</label>
-
+</select></label>
 <label>Ministries (Check all that apply)</label>
-<div class="checkbox-group">
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Pastoral"><label>Pastoral</label></div>
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Christian Education"><label>Christian Education</label></div>
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Music"><label>Music</label></div>
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Evangelism & Discipleship"><label>Evangelism & Discipleship</label></div>
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Multimedia & Technical"><label>Multimedia & Technical</label></div>
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Church Administration"><label>Church Administration</label></div>
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Events & Worship"><label>Events & Worship</label></div>
-<div class="checkbox-item"><input type="checkbox" name="ministries" value="Others"><label>Others</label></div>
-</div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Pastoral"><label>Pastoral</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Christian Education"><label>Christian Education</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Music"><label>Music</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Evangelism & Discipleship"><label>Evangelism & Discipleship</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Multimedia & Technical"><label>Multimedia & Technical</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Church Administration"><label>Church Administration</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Events & Worship"><label>Events & Worship</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Others"><label>Others</label></div>
 </section>
 
+<!-- Health -->
 <section>
 <h2>Health Information</h2>
 <label>Allergies<textarea name="allergies"></textarea></label>
 <label>Dietary Restrictions<textarea name="dietary_restrictions"></textarea></label>
 <label>Health Conditions<textarea name="health_conditions"></textarea></label>
-
-<div class="checkbox-group">
-<div class="checkbox-item"><input type="checkbox" name="health_declaration" value="Answers True" required><label>Answers are true</label></div>
-<div class="checkbox-item"><input type="checkbox" name="health_declaration" value="Physically Fit" required><label>Physically fit</label></div>
-<div class="checkbox-item"><input type="checkbox" name="health_declaration" value="Responsible for Health" required><label>Responsible for health</label></div>
-<div class="checkbox-item"><input type="checkbox" name="health_declaration" value="No Liability Clause" required><label>No liability clause</label></div>
-</div>
+<label>Health Declaration</label>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="Answers True" required><label>Answers are true</label></div>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="Physically Fit" required><label>Physically fit</label></div>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="Responsible for Health" required><label>Responsible for health</label></div>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="No Liability Clause" required><label>No liability clause</label></div>
 </section>
 
+<!-- Payment -->
 <section>
 <h2>Payment Responsibility</h2>
-<label>Who will pay?
-<select name="payment_by" required>
+<label>Who will pay?<select name="payment_by" required>
 <option value="">Select</option>
 <option value="Personal">Personal</option>
 <option value="Sponsor">Sponsor</option>
 <option value="Church Sponsor">Church Sponsor</option>
-</select>
-</label>
-
-<label>Sponsor Name (if applicable)
-<input type="text" name="sponsor_name">
-</label>
+</select></label>
+<label>Sponsor Name (if applicable)<input type="text" name="sponsor_name"></label>
 </section>
 
 <button type="submit">✅ Submit Registration</button>
-
 </form>
 </div>
 
@@ -161,39 +163,41 @@ footer{text-align:center;padding:2rem;margin-top:2rem;font-size:.95rem;color:#55
 </footer>
 
 <script>
+function proceedRegistration(){
+  if(!document.getElementById("agreePrivacy").checked){
+    alert("You must agree before proceeding.");
+    return;
+  }
+  document.getElementById("privacy-section").classList.add("hidden");
+  document.getElementById("ylc2-form").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
 document.getElementById("ylc2-form").addEventListener("submit", async function(e){
   e.preventDefault();
-
   const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
-
   const formData = new FormData(this);
 
-  // Combine ministries
   const ministries = [];
-  document.querySelectorAll('input[name="ministries"]:checked')
-    .forEach(cb => ministries.push(cb.value));
+  document.querySelectorAll('input[name="ministries[]"]:checked').forEach(cb=>ministries.push(cb.value));
   formData.set("ministries", ministries.join(", "));
 
-  // Combine health declaration
   const health = [];
-  document.querySelectorAll('input[name="health_declaration"]:checked')
-    .forEach(cb => health.push(cb.value));
+  document.querySelectorAll('input[name="health_declaration[]"]:checked').forEach(cb=>health.push(cb.value));
   formData.set("health_declaration", health.join(", "));
 
-  formData.append("action", "register");
-  formData.append("sheet", "ylc2");
+  formData.append("action","register");
+  formData.append("sheet","ylc2");
 
-  try {
-    const res = await fetch(url, { method: "POST", body: formData });
+  try{
+    const res = await fetch(url,{method:"POST",body:formData});
     const result = await res.json();
-
-    if(result.result === "success"){
-      window.location.href = "payment2.html?row=" + result.rowIndex;
+    if(result.result==="success"){
+      window.location.href="payment2.html?row="+result.rowIndex;
     } else {
-      alert("Submission failed: " + result.error);
+      alert("Submission failed: "+result.error);
     }
-
-  } catch(err){
+  }catch(err){
     alert("Network error. Please try again.");
   }
 });
