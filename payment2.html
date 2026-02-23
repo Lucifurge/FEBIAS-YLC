@@ -3,16 +3,11 @@
 <head> 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Payment | FEBIAS College of Bible</title>
-  <link rel="icon" href="logo.ico">
+<title>YLC 2026 Walk-in Payment | FEBIAS College of Bible</title>
+<link rel="icon" href="logo.ico">
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:"Segoe UI",system-ui,sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
 
 body{
   background:linear-gradient(135deg,#f8f8f8,#e6f0ec);
@@ -36,20 +31,6 @@ h1{
   font-size:2rem;
 }
 
-h2{
-  text-align:center;
-  margin-top:2rem;
-  margin-bottom:1rem;
-  color:#14532d;
-}
-
-label{
-  display:block;
-  margin-top:1rem;
-  font-weight:600;
-  cursor:pointer;
-}
-
 .notice{
   margin-top:1.5rem;
   padding:1rem;
@@ -61,7 +42,6 @@ label{
   color:#b45309;
 }
 
-/* QR container */
 .qr-container{
   display:flex;
   justify-content:center;
@@ -80,7 +60,7 @@ label{
 }
 
 .qr-box img{
-  width:250px;  /* BIG QR CODE */
+  width:250px;
   height:250px;
   object-fit:contain;
   margin-bottom:1rem;
@@ -123,42 +103,63 @@ footer{
 <body>
 
 <div class="container">
-<h1>YLC 2026 Payment Confirmation (Walk-in)</h1>
-
-<form id="payment-form">
-
-<h2>Select Payment Type</h2>
-
-<label>
-<input type="radio" name="payment_by" value="Onsite" required>
-Walk-in Payment
-</label>
-
-<label>
-<input type="radio" name="payment_by" value="Online">
-Online Payment
-</label>
+<h1>YLC 2026 Walk-in Payment</h1>
 
 <div class="notice">
-⚠️ Please screenshot your registration confirmation and present it onsite if online.
+Please scan the GCash QR and confirm payment after transaction.
 </div>
 
-<!-- Only GCash QR -->
 <div class="qr-container">
   <div class="qr-box">
     <img src="gcash.png" alt="GCash QR">
-    <span>GCash QR</span>
+    <span>GCash QR Payment</span>
   </div>
 </div>
 
-<button type="submit">✅ Confirm Payment</button>
+<button id="confirmBtn">✅ Confirm Walk-in Payment</button>
 
-</form>
 </div>
 
 <footer>
 © 2026 FEBIAS College of Bible — Youth Leaders Camp
 </footer>
+
+<script>
+document.getElementById("confirmBtn").addEventListener("click", async function(){
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const rowIndex = urlParams.get("row");
+
+  if(!rowIndex){
+    alert("Missing registration reference.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("action", "payment");
+  formData.append("rowIndex", rowIndex);
+  formData.append("sheet", "ylc2");
+  formData.append("payment_by", "Walk-in (GCash QR)");
+
+  const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
+
+  try{
+    const res = await fetch(url,{method:"POST",body:formData});
+    const result = await res.json();
+
+    if(result.result === "success"){
+      alert("Walk-in payment recorded successfully.");
+      window.location.href = "thankyou2.html";
+    }else{
+      alert("Error: " + result.error);
+    }
+
+  }catch(err){
+    alert("Network error. Please try again.");
+  }
+
+});
+</script>
 
 </body>
 </html>
