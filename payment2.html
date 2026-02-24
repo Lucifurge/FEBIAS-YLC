@@ -65,27 +65,36 @@ Online Payment
 </footer>
 
 <script>
+// Highlight QR box selection (visual only)
+const qrBox = document.querySelector(".qr-box");
+qrBox.addEventListener("click", () => {
+  qrBox.style.borderColor = "#0b3d2e";
+});
+
+// Handle form submission
 document.getElementById("payment-form").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  const paymentRadio = document.querySelector('input[name="payment_by_radio"]:checked')?.value;
-  if(!paymentRadio){
+  const paymentBy = document.querySelector('input[name="payment_by_radio"]:checked')?.value;
+  if(!paymentBy){
     alert("Please select a payment type.");
     return;
   }
 
-  // Auto-generate row reference for walk-in
-  const rowIndex = Date.now();
+  // ✅ GET REAL ROW FROM URL (same as payment.html)
+  const urlParams = new URLSearchParams(window.location.search);
+  const rowIndex = urlParams.get("row");
+
+  if(!rowIndex){
+    alert("Missing registration reference. Please register first.");
+    return;
+  }
 
   const formData = new FormData();
   formData.append("action", "payment");
   formData.append("rowIndex", rowIndex);
-  formData.append("sheet", "ylc2");
-
-  // For sheet display
-  formData.append("payment_by", paymentRadio + " (GCash QR)"); 
-  formData.append("payment_method", "GCash QR");
-  formData.append("counter", "1"); // placeholder counter
+  formData.append("sheet", "ylc2"); // 🔥 THIS is the only difference from payment.html
+  formData.append("payment_by", paymentBy + " (GCash QR)");
 
   const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
 
@@ -94,7 +103,7 @@ document.getElementById("payment-form").addEventListener("submit", async functio
     const result = await res.json();
 
     if(result.result === "success"){
-      alert("Payment recorded successfully. Please show the receipt to the registration desk.");
+      alert("Payment updated successfully. Please show receipt to registration desk.");
       window.location.href = "thankyou2.html";
     } else {
       alert("Error: " + result.error);
