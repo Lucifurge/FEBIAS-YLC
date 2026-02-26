@@ -50,28 +50,14 @@ ul{margin-left:20px;color:#0b3d2e;}
 
 <h1>YLC 2026 Campers' Registration Form</h1>
 
+<form id="ylcForm" onsubmit="event.preventDefault(); submitRegistration('ylcForm');">
+
 <!-- PRIVACY STATEMENT -->
 <div class="section">
 <h2>Privacy Statement</h2>
-
-<p>Your privacy is important to us. The Youth Leadership Camp 2026 Team is committed to protecting the personal information you provide in this registration form. Your data will be collected, stored, and processed solely for camp administration, including but not limited to:</p>
-
-<ul>
-<li>Verifying your identity and registration status</li>
-<li>Communicating important camp details and updates</li>
-<li>Assigning accommodations, meals, and workshop sessions</li>
-<li>Addressing health and safety concerns</li>
-<li>Processing payments and ensuring proper documentation</li>
-</ul>
-
-<p>Your information will be handled with the highest level of confidentiality and will only be accessed by authorized camp organizers. We will not share, sell, or distribute your personal details to third parties without your explicit consent, except in cases where legal obligations or emergency situations require disclosure (e.g., medical emergencies).</p>
-
-<p>For participants under 18 years old, a Minor Consent Form must be completed by a parent or guardian to authorize the collection and use of personal data. Any health-related details you provide will be used exclusively to ensure appropriate medical attention and accommodations when necessary.</p>
-
-<p>By proceeding with this registration, you acknowledge that you have read and understood this Privacy Statement and consent to the collection and processing of your personal information for YLC 2026 purposes. If you have any concerns or wish to request modifications to your data, you may contact the YLC 2026 Registration Team.</p>
-
+<p>Your privacy is important...</p>
 <div class="checkbox-row">
-<input type="checkbox" id="privacy" required>
+<input type="checkbox" id="privacy" name="privacy" required>
 <label for="privacy">I have read and understood the privacy statement.</label>
 </div>
 </div>
@@ -79,205 +65,210 @@ ul{margin-left:20px;color:#0b3d2e;}
 <!-- MINOR CONSENT -->
 <div class="section">
 <h2>Minor Consent Form*</h2>
-
 <div class="radio-row">
-<input type="radio" id="minor1" name="minor" required>
-<label for="minor1">I am no longer a minor and I do not require parental consent. (18 years old and above)</label>
+<input type="radio" id="minor1" name="minor_consent" value="18+ adult" required>
+<label for="minor1">I am no longer a minor...</label>
 </div>
-
 <div class="radio-row">
-<input type="radio" id="minor2" name="minor">
-<label for="minor2">I am a minor and my parent/s or guardian/s have agreed to allow me to participate in YLC 2026.</label>
+<input type="radio" id="minor2" name="minor_consent" value="minor with consent">
+<label for="minor2">I am a minor...</label>
 </div>
-
 <div class="radio-row">
-<input type="radio" id="minor3" name="minor">
-<label for="minor3">I am a parent/guardian of a minor child and I give full consent to have him/her participate in YLC 2026.</label>
+<input type="radio" id="minor3" name="minor_consent" value="parent/guardian consent">
+<label for="minor3">I am a parent/guardian...</label>
 </div>
 </div>
 
 <!-- PERSONAL INFO -->
 <div class="section">
 <h2>Camper's Personal Information</h2>
-<p>Please provide accurate and complete details. The information you submit will be used for identification, communication, and camp-related arrangements. Ensure that all details are correct to avoid any registration issues.</p>
-
 <label>Last Name</label>
-<input type="text" class="caps" required>
+<input type="text" class="caps" name="last_name" required>
 
 <label>First Name</label>
-<input type="text" class="caps" required>
+<input type="text" class="caps" name="first_name" required>
 
 <label>Middle Name</label>
-<input type="text">
+<input type="text" name="middle_name">
 
 <label>Nickname</label>
-<input type="text" class="caps">
+<input type="text" class="caps" name="nickname">
 
 <label>Date of Birth</label>
-<input type="date" required>
+<input type="date" name="dob" required>
 
 <label>Age</label>
-<input type="number" required>
+<input type="number" name="age" required>
 
 <label>Gender</label>
-<select required>
+<select name="gender" required>
 <option value="">Select</option>
-<option>Male</option>
-<option>Female</option>
+<option value="Male">Male</option>
+<option value="Female">Female</option>
 </select>
 
 <label>Contact Number</label>
-<input type="text" required>
+<input type="text" name="contact_number" required>
 
 <label>Home Address</label>
-<textarea required></textarea>
+<textarea name="home_address" required></textarea>
 
 <label>Email Address</label>
-<input type="email" required>
+<input type="email" name="email" required>
 
 <label>Facebook / Messenger Account ID or Name</label>
-<input type="text">
+<input type="text" name="facebook">
 </div>
 
 <!-- FIRST TIME HEARD -->
 <div class="section">
 <h3>Is this the first time you have heard about the Febias Youth Leaders' Camp?</h3>
-
-<div class="radio-row"><input type="radio" name="first_time" required> <label>Yes.</label></div>
-<div class="radio-row"><input type="radio" name="first_time"> <label>No, I have attended the YLC in the past year/s.</label></div>
-<div class="radio-row"><input type="radio" name="first_time"> <label>No, but I have never attended any YLC before.</label></div>
+<div class="radio-row"><input type="radio" name="first_time" value="yes" required> <label>Yes.</label></div>
+<div class="radio-row"><input type="radio" name="first_time" value="attended before"> <label>No, I have attended...</label></div>
+<div class="radio-row"><input type="radio" name="first_time" value="never attended"> <label>No, but I have never attended...</label></div>
 </div>
 
 <!-- HOW LEARNED -->
 <div class="section">
 <h3>How did you learn about the YLC 2026?</h3>
-
-<div class="radio-row"><input type="radio" name="learned" required> <label>I was invited or referred by a Febias Student, Faculty & Staff, or Alumni.</label></div>
-<div class="radio-row"><input type="radio" name="learned"> <label>I was invited or referred by my Church Pastor, Leader, or Friend.</label></div>
-<div class="radio-row"><input type="radio" name="learned"> <label>I learned about YLC 2026 through other means. (social media, posts, etc.)</label></div>
+<div class="radio-row"><input type="radio" name="learned" value="Febias referral" required> <label>I was invited or referred...</label></div>
+<div class="radio-row"><input type="radio" name="learned" value="Church referral"> <label>I was invited or referred by my Church...</label></div>
+<div class="radio-row"><input type="radio" name="learned" value="other"> <label>I learned about YLC 2026 through other means...</label></div>
 </div>
 
 <!-- CHRISTIAN SERVICE -->
 <div class="section">
 <h2>Christian Service Information (ASSESSMENT)</h2>
-
 <label>Name of Church</label>
-<input type="text">
-
+<input type="text" name="church_name">
 <label>Church Location (City, Province)</label>
-<input type="text">
-
+<input type="text" name="church_location">
 <label>Name of Pastor</label>
-<input type="text">
+<input type="text" name="pastor_name">
 
-<h3>Was there a time that you accepted Jesus Christ as your Lord and Savior?*</h3>
-<div class="radio-row"><input type="radio" name="accepted" required> <label>Yes</label></div>
-<div class="radio-row"><input type="radio" name="accepted"> <label>No</label></div>
+<h3>Accepted Jesus Christ as Lord & Savior?</h3>
+<div class="radio-row"><input type="radio" name="accepted_christ" value="yes" required> <label>Yes</label></div>
+<div class="radio-row"><input type="radio" name="accepted_christ" value="no"> <label>No</label></div>
 
-<h3>Are you already water baptized?</h3>
-<div class="radio-row"><input type="radio" name="baptized" required> <label>Yes</label></div>
-<div class="radio-row"><input type="radio" name="baptized"> <label>No</label></div>
+<h3>Already water baptized?</h3>
+<div class="radio-row"><input type="radio" name="water_baptized" value="yes" required> <label>Yes</label></div>
+<div class="radio-row"><input type="radio" name="water_baptized" value="no"> <label>No</label></div>
 
-<h3>Do you have church ministries in the church?</h3>
-<div class="radio-row"><input type="radio" name="ministries_exist" required> <label>Yes</label></div>
-<div class="radio-row"><input type="radio" name="ministries_exist"> <label>No</label></div>
+<h3>Church ministries exist?</h3>
+<div class="radio-row"><input type="radio" name="ministries_exist" value="yes" required> <label>Yes</label></div>
+<div class="radio-row"><input type="radio" name="ministries_exist" value="no"> <label>No</label></div>
 
-<h3>Are you currently serving as a youth leader in your church?</h3>
-<div class="radio-row"><input type="radio" name="youth_leader" required> <label>Yes, I have been serving as a youth leader in my church for more than 2 years.</label></div>
-<div class="radio-row"><input type="radio" name="youth_leader"> <label>Yes, I have been serving as a youth leader in my church for less than 2 years.</label></div>
-<div class="radio-row"><input type="radio" name="youth_leader"> <label>No, but I am training to become a youth leader in my church.</label></div>
+<h3>Currently a youth leader?</h3>
+<div class="radio-row"><input type="radio" name="youth_leader" value="more than 2 yrs" required> <label>Yes, more than 2 yrs</label></div>
+<div class="radio-row"><input type="radio" name="youth_leader" value="less than 2 yrs"> <label>Yes, less than 2 yrs</label></div>
+<div class="radio-row"><input type="radio" name="youth_leader" value="training"> <label>No, training</label></div>
 
-<h3>Which ministry/ministries are you currently a part of? (Check all that apply)</h3>
-<div class="checkbox-row"><input type="checkbox"> <label>Pastoral</label></div>
-<div class="checkbox-row"><input type="checkbox"> <label>Christian Education (Sunday School, Kids, Youth, Adult Ministry)</label></div>
-<div class="checkbox-row"><input type="checkbox"> <label>Music</label></div>
-<div class="checkbox-row"><input type="checkbox"> <label>Evangelism & Discipleship (Small Groups, Visitation, Follow-up, Distribution of Gospel Tracts)</label></div>
-<div class="checkbox-row"><input type="checkbox"> <label>Multimedia & Technical (Audio, Lights, Digital Media, etc.)</label></div>
-<div class="checkbox-row"><input type="checkbox"> <label>Church Administration (Finance, Secretariat, Church Keeping, Ushering, Staff Management)</label></div>
-<div class="checkbox-row"><input type="checkbox"> <label>Events & Worship (Emceeing, Program Management, Logistics, etc.)</label></div>
-<div class="checkbox-row"><input type="checkbox"> <label>Others:</label></div>
+<h3>Which ministries are you part of? (Check all that apply)</h3>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Pastoral"> <label>Pastoral</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Christian Education"> <label>Christian Education</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Music"> <label>Music</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Evangelism & Discipleship"> <label>Evangelism & Discipleship</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Multimedia & Technical"> <label>Multimedia & Technical</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Church Administration"> <label>Church Administration</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Events & Worship"> <label>Events & Worship</label></div>
+<div class="checkbox-row"><input type="checkbox" name="ministries[]" value="Others"> <label>Others</label></div>
 
-<label>What OTHER Ministries are you part of?</label>
-<textarea></textarea>
+<label>Other ministries</label>
+<textarea name="other_ministries"></textarea>
 
-<h3>How often do you read the Bible in a week? *</h3>
-<div>Never &nbsp; 0 1 2 3 4 5 &nbsp; Always</div>
+<h3>Are you attending a discipleship/Bible study group?</h3>
+<div class="radio-row"><input type="radio" name="discipleship" value="yes" required> <label>Yes</label></div>
+<div class="radio-row"><input type="radio" name="discipleship" value="no"> <label>No</label></div>
 
-<h3>How often do you attend church service in a month?</h3>
-<div>Never &nbsp; 0 1 2 3 4 5 &nbsp; Always</div>
+<h3>How many books in the Bible?</h3>
+<div class="radio-row"><input type="radio" name="books" value="65" required> <label>65</label></div>
+<div class="radio-row"><input type="radio" name="books" value="66"> <label>66</label></div>
+<div class="radio-row"><input type="radio" name="books" value="67"> <label>67</label></div>
 
-<h3>Are you attending a regular discipleship or Bible study group?</h3>
-<div class="radio-row"><input type="radio" name="discipleship" required> <label>Yes</label></div>
-<div class="radio-row"><input type="radio" name="discipleship"> <label>No</label></div>
-
-<h3>How many books are there in the Bible?*</h3>
-<div class="radio-row"><input type="radio" name="books" required> <label>65</label></div>
-<div class="radio-row"><input type="radio" name="books"> <label>66</label></div>
-<div class="radio-row"><input type="radio" name="books"> <label>67</label></div>
-
-<h3>How long have you been a member of a Christian church?</h3>
-<div class="radio-row"><input type="radio" name="member_duration" required> <label>0-1 yr</label></div>
-<div class="radio-row"><input type="radio" name="member_duration"> <label>1-2 yr</label></div>
-<div class="radio-row"><input type="radio" name="member_duration"> <label>2 yr above</label></div>
+<h3>Member duration</h3>
+<div class="radio-row"><input type="radio" name="member_duration" value="0-1" required> <label>0-1 yr</label></div>
+<div class="radio-row"><input type="radio" name="member_duration" value="1-2"> <label>1-2 yr</label></div>
+<div class="radio-row"><input type="radio" name="member_duration" value="2+"> <label>2 yr above</label></div>
 </div>
 
 <!-- CAMP T-SHIRT -->
 <div class="section">
 <h2>CAMP T-SHIRT</h2>
-<p>Kindly check your preferred shirt size. Please refer to Size Chart.*</p>
-<div class="radio-row"><input type="radio" name="shirt" required> <label>XS</label></div>
-<div class="radio-row"><input type="radio" name="shirt"> <label>S</label></div>
-<div class="radio-row"><input type="radio" name="shirt"> <label>M</label></div>
-<div class="radio-row"><input type="radio" name="shirt"> <label>L</label></div>
-<div class="radio-row"><input type="radio" name="shirt"> <label>XL</label></div>
-<div class="radio-row"><input type="radio" name="shirt"> <label>XXL</label></div>
-<div class="radio-row"><input type="radio" name="shirt"> <label>3XL</label></div>
+<div class="radio-row"><input type="radio" name="shirt" value="XS" required> <label>XS</label></div>
+<div class="radio-row"><input type="radio" name="shirt" value="S"> <label>S</label></div>
+<div class="radio-row"><input type="radio" name="shirt" value="M"> <label>M</label></div>
+<div class="radio-row"><input type="radio" name="shirt" value="L"> <label>L</label></div>
+<div class="radio-row"><input type="radio" name="shirt" value="XL"> <label>XL</label></div>
+<div class="radio-row"><input type="radio" name="shirt" value="XXL"> <label>XXL</label></div>
+<div class="radio-row"><input type="radio" name="shirt" value="3XL"> <label>3XL</label></div>
 </div>
 
 <!-- HEALTH -->
 <div class="section">
 <h2>Health Information</h2>
-<p>For your safety, please provide health details that may affect your participation in camp activities.</p>
+<h3>Allergies?</h3>
+<div class="radio-row"><input type="radio" name="allergies" value="No"> <label>No</label></div>
+<div class="radio-row"><input type="radio" name="allergies" value="Yes"> <label>Yes</label></div>
+<label>Specify allergies</label>
+<textarea name="allergies_spec"></textarea>
 
-<h3>Do you have any allergies? (food, substances, dust, smoke, ant bites, etc.)</h3>
-<div class="radio-row"><input type="radio" name="allergies"> <label>No</label></div>
-<div class="radio-row"><input type="radio" name="allergies"> <label>Yes (please indicate):</label></div>
-<textarea></textarea>
+<h3>Dietary restrictions?</h3>
+<div class="radio-row"><input type="radio" name="diet" value="No"> <label>No</label></div>
+<div class="radio-row"><input type="radio" name="diet" value="Yes"> <label>Yes</label></div>
+<textarea name="diet_spec"></textarea>
 
-<h3>Specify the food, substances, or items which may trigger an allergic reaction.</h3>
-<textarea></textarea>
+<h3>Existing health conditions?</h3>
+<div class="radio-row"><input type="radio" name="health" value="No"> <label>No</label></div>
+<div class="radio-row"><input type="radio" name="health" value="Yes"> <label>Yes</label></div>
+<textarea name="health_spec"></textarea>
 
-<h3>Do you have any dietary restrictions? (low sodium, vegetarian, no added sugar, no rice, low fat, lactose intolerant, etc.)</h3>
-<div class="radio-row"><input type="radio" name="diet"> <label>No</label></div>
-<div class="radio-row"><input type="radio" name="diet"> <label>Yes (please indicate):</label></div>
-<textarea></textarea>
-
-<h3>Do you have any existing health conditions that may limit your involvement in certain activities? (asthma, injuries, surgeries, physical ailments or limitations)</h3>
-<div class="radio-row"><input type="radio" name="health"> <label>No</label></div>
-<div class="radio-row"><input type="radio" name="health"> <label>Yes (please indicate):</label></div>
-<textarea></textarea>
-
-<h3>Health Declaration (Must select exactly 4 options)</h3>
-<div class="checkbox-row"><input type="checkbox" required> <label>I declare that my answers to the questions above are true and accurate to the best of my knowledge.</label></div>
-<div class="checkbox-row"><input type="checkbox" required> <label>I declare that I am physically fit and able to participate in YLC 2026.</label></div>
-<div class="checkbox-row"><input type="checkbox" required> <label>I am responsible for my own health and safety. In case of existing health conditions, I will bring my own personal medication or treatment. (ex.: inhaler, allergy creams, allergy meds, etc.)</label></div>
-<div class="checkbox-row"><input type="checkbox" required> <label>I will not hold FEBIAS College of Bible liable in case of any health issues or concerns during the YLC 2026 as I have declared myself physically fit and able to participate.</label></div>
+<h3>Health Declaration (select exactly 4)</h3>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="declare_true" required> <label>I declare my answers are true</label></div>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="physically_fit" required> <label>I am physically fit</label></div>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="responsible" required> <label>I am responsible for my health</label></div>
+<div class="checkbox-row"><input type="checkbox" name="health_declaration[]" value="not_hold_febias" required> <label>I will not hold FEBIAS liable</label></div>
 </div>
 
 <!-- PAYMENT -->
 <div class="section">
 <h2>Payment Information</h2>
-
-<h3>Who made the payment?*</h3>
-<div class="radio-row"><input type="radio" name="payment" required> <label>Personal</label></div>
-<div class="radio-row"><input type="radio" name="payment"> <label>Sponsor</label></div>
-<div class="radio-row"><input type="radio" name="payment"> <label>Church Sponsor</label></div>
-
-<label>If the payment was made by a Sponsor, please provide the name of Sponsor or name of the Church.</label>
-<textarea></textarea>
+<div class="radio-row"><input type="radio" name="payment_by" value="Personal" required> <label>Personal</label></div>
+<div class="radio-row"><input type="radio" name="payment_by" value="Sponsor"> <label>Sponsor</label></div>
+<div class="radio-row"><input type="radio" name="payment_by" value="Church Sponsor"> <label>Church Sponsor</label></div>
+<label>Sponsor / Church Name</label>
+<textarea name="sponsor_name"></textarea>
 </div>
 
 <button type="submit">Submit Registration</button>
+</form>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEE1cHSqibsm9wX_5_4VSEJb5E9Z1UUNU-5TIh0jb7hfKYoYNdLDTsDXTTNckPRcbHDw/exec";
+const SHEET_NAME = "ylc";
+
+async function submitRegistration(formId) {
+  try {
+    const form = document.getElementById(formId);
+    const formData = new FormData(form);
+    const params = {};
+    formData.forEach((v,k)=>{
+      if(params[k]){
+        params[k] = [].concat(params[k],v);
+      }else{params[k]=v;}
+    });
+    params.sheet=SHEET_NAME;
+    params.action="register";
+
+    const res = await fetch(SCRIPT_URL,{
+      method:"POST",
+      body:new URLSearchParams(params)
+    });
+    const data = await res.json();
+    if(data.result==="success"){ window.location.href="payment.html"; }
+    else{ alert("Error submitting registration: "+data.error);}
+  } catch(err){ console.error(err);}
+}
+</script>
 
 </div>
 </body>
