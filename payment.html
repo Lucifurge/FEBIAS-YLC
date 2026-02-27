@@ -5,132 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YLC 2026 Payment | FEBIAS College of Bible</title>
 <link rel="icon" href="logo.ico">
-
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:"Segoe UI",system-ui,sans-serif;
-}
-
-body{
-  background:linear-gradient(135deg,#f8f8f8,#e6f0ec);
-  color:#1f2937;
-  line-height:1.6;
-}
-
-.container{
-  max-width:850px;
-  margin:3rem auto;
-  padding:2.5rem;
-  background:#fff;
-  border-radius:20px;
-  box-shadow:0 15px 40px rgba(0,0,0,.15);
-}
-
-h1{
-  text-align:center;
-  color:#0b3d2e;
-  margin-bottom:1rem;
-  font-size:2rem;
-}
-
-h2{
-  text-align:center;
-  margin-top:2rem;
-  margin-bottom:1rem;
-  color:#14532d;
-}
-
-label{
-  display:block;
-  margin-top:1rem;
-  font-weight:600;
-  cursor:pointer;
-}
-
-.notice{
-  margin-top:1.5rem;
-  padding:1rem;
-  background:#fff4e5;
-  border-left:6px solid #d97706;
-  border-radius:10px;
-  text-align:center;
-  font-weight:600;
-  color:#b45309;
-}
-
-/* Payment methods container */
-.payment-methods {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.payment-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 2px solid #ccc;
-  border-radius: 16px;
-  padding: 2rem;
-  width: 200px;
-  cursor: pointer;
-  transition: border-color 0.3s, transform 0.2s, box-shadow 0.2s;
-  background:#f9fafb;
-}
-
-.payment-box img {
-  width: 160px;   /* BIGGER image */
-  height: 160px;
-  object-fit: contain;
-  margin-bottom: 1rem;
-}
-
-.payment-box span{
-  font-weight:700;
-  font-size:1.2rem;
-  color:#0b3d2e;
-  text-align:center;
-}
-
-.payment-box.selected {
-  border-color: #0b3d2e;
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
-
-button{
-  width:100%;
-  padding:1.3rem;
-  margin-top:2.5rem;
-  font-size:1.2rem;
-  font-weight:700;
-  background:#0b3d2e;
-  color:#fff;
-  border:none;
-  border-radius:14px;
-  cursor:pointer;
-  transition:all .3s;
-}
-
-button:hover{
-  background:#1f7a4d;
-  transform:scale(1.02);
-}
-
-footer{
-  text-align:center;
-  padding:2rem;
-  font-size:.9rem;
-  color:#555;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
+body{background:linear-gradient(135deg,#f8f8f8,#e6f0ec);color:#1f2937;line-height:1.6;}
+.container{max-width:850px;margin:3rem auto;padding:2.5rem;background:#fff;border-radius:20px;box-shadow:0 15px 40px rgba(0,0,0,.15);}
+h1{text-align:center;color:#0b3d2e;margin-bottom:1rem;font-size:2rem;}
+h2{text-align:center;margin-top:2rem;margin-bottom:1rem;color:#14532d;}
+label{display:block;margin-top:1rem;font-weight:600;cursor:pointer;}
+.notice{margin-top:1.5rem;padding:1rem;background:#fff4e5;border-left:6px solid #d97706;border-radius:10px;text-align:center;font-weight:600;color:#b45309;}
+.payment-methods{display:flex;justify-content:center;margin-top:2rem;flex-wrap:wrap;gap:2rem;}
+.payment-box{display:flex;flex-direction:column;align-items:center;border:2px solid #ccc;border-radius:16px;padding:2rem;width:200px;cursor:pointer;transition:border-color 0.3s,transform 0.2s,box-shadow 0.2s;background:#f9fafb;}
+.payment-box img{width:160px;height:160px;object-fit:contain;margin-bottom:1rem;}
+.payment-box span{font-weight:700;font-size:1.2rem;color:#0b3d2e;text-align:center;}
+.payment-box.selected{border-color:#0b3d2e;transform:scale(1.05);box-shadow:0 8px 20px rgba(0,0,0,0.2);}
+button{width:100%;padding:1.3rem;margin-top:2.5rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:14px;cursor:pointer;transition:all .3s;}
+button:hover{background:#1f7a4d;transform:scale(1.02);}
+footer{text-align:center;padding:2rem;font-size:.9rem;color:#555;}
+input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #c9a227;}
 </style>
 </head>
-
 <body>
 
 <div class="container">
@@ -139,16 +32,8 @@ footer{
 <form id="payment-form">
 
 <h2>Select Payment Type</h2>
-
-<label>
-<input type="radio" name="payment_by" value="Onsite" required>
-Onsite Payment
-</label>
-
-<label>
-<input type="radio" name="payment_by" value="Online">
-Online Payment
-</label>
+<label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment</label>
+<label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
 
 <div class="notice">
 ⚠️ Please screenshot your registration confirmation and present it onsite if online.
@@ -157,25 +42,38 @@ Online Payment
 <h2>Payment Methods</h2>
 <div class="payment-methods">
   <div class="payment-box" data-method="Bank Numbers">
-    <img src="bank.png" alt="Bank Numbers">
-    <span>Bank Numbers</span>
+    <img src="bank.png" alt="Bank Numbers"><span>Bank Numbers</span>
   </div>
   <div class="payment-box" data-method="GCash QR">
-    <img src="gcash.png" alt="GCash QR">
-    <span>GCash QR</span>
+    <img src="gcash.png" alt="GCash QR"><span>GCash QR</span>
   </div>
+</div>
+
+<!-- Online Payment Upload -->
+<div id="online-upload" style="display:none;">
+  <label for="fileName">Enter your receipt name:</label>
+  <input type="text" id="fileName" required>
+  <label for="receipt">Upload receipt photo:</label>
+  <input type="file" id="receipt" accept="image/*" required>
+  <div class="notice">⚠️ Make sure the filename matches your registration name.</div>
 </div>
 
 <button type="submit">✅ Confirm Payment</button>
-
 </form>
 </div>
 
-<footer>
-© 2026 FEBIAS College of Bible — Youth Leaders Camp
-</footer>
+<footer>© 2026 FEBIAS College of Bible — Youth Leaders Camp</footer>
 
 <script>
+// Show/hide upload fields for online payment
+const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+const onlineUpload = document.getElementById("online-upload");
+paymentRadios.forEach(r => {
+  r.addEventListener("change", () => {
+    onlineUpload.style.display = r.value==="Online" ? "block" : "none";
+  });
+});
+
 // Highlight selected payment box
 const boxes = document.querySelectorAll(".payment-box");
 boxes.forEach(box => {
@@ -189,49 +87,64 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   e.preventDefault();
 
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
-  if(!paymentBy){
-    alert("Please select a payment type.");
-    return;
-  }
+  if(!paymentBy){ alert("Please select a payment type."); return; }
 
   const selectedBox = document.querySelector(".payment-box.selected");
   let method = selectedBox ? selectedBox.dataset.method : "";
-  if(!method){
-    alert("Please select a payment method.");
-    return;
-  }
+  if(!method){ alert("Please select a payment method."); return; }
 
-  // Get rowIndex from URL
   const urlParams = new URLSearchParams(window.location.search);
   const rowIndex = urlParams.get("row");
-  if(!rowIndex){
-    alert("Missing registration reference. Please register first.");
-    return;
-  }
+  if(!rowIndex){ alert("Missing registration reference. Please register first."); return; }
 
-  const formData = new FormData();
-  formData.append("action", "payment");
-  formData.append("rowIndex", rowIndex);
-  formData.append("sheet", "ylc");
-  formData.append("payment_by", paymentBy + " (" + method + ")");
+  // 1️⃣ Update payment in Google Sheet
+  const sheetForm = new FormData();
+  sheetForm.append("action","payment");
+  sheetForm.append("rowIndex",rowIndex);
+  sheetForm.append("sheet","ylc");
+  sheetForm.append("payment_by", paymentBy + " (" + method + ")");
 
-  const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
+  const sheetUrl = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec";
 
-  try {
-    const res = await fetch(url, { method: "POST", body: formData });
-    const result = await res.json();
+  try{
+    const sheetRes = await fetch(sheetUrl, { method:"POST", body:sheetForm });
+    const sheetResult = await sheetRes.json();
+    if(sheetResult.result !== "success"){ alert("Sheet error: "+sheetResult.error); return; }
+  } catch(err){ alert("Sheet update failed. "+err); return; }
 
-    if(result.result === "success"){
-      alert("Payment updated successfully. Please save or screenshot your receipt for onsite confirmation.");
-      window.location.href = "thankyou.html";
-    } else {
-      alert("Error: " + result.error);
-    }
-  } catch(err){
-    alert("Network error. Please try again.");
+  // 2️⃣ If online, upload receipt to Drive
+  if(paymentBy==="Online"){
+    const fileInput = document.getElementById("receipt");
+    const fileNameInput = document.getElementById("fileName");
+    const file = fileInput.files[0];
+    const fileName = fileNameInput.value.trim();
+    if(!file || !fileName){ alert("Please enter filename and select a file."); return; }
+
+    const reader = new FileReader();
+    reader.onload = async function() {
+      const base64 = reader.result.split(",")[1];
+
+      const driveForm = new FormData();
+      driveForm.append("fileName", fileName);
+      driveForm.append("file", base64);
+      driveForm.append("fileType", file.type);
+
+      const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
+
+      try{
+        const driveRes = await fetch(driveUrl, { method:"POST", body:driveForm });
+        const driveResult = await driveRes.json();
+        if(driveResult.result !== "success"){ alert("Drive error: "+driveResult.error); return; }
+        alert("Payment and receipt uploaded successfully!");
+        window.location.href="thankyou.html";
+      } catch(err){ alert("Upload failed. "+err); return; }
+    };
+    reader.readAsDataURL(file);
+  } else {
+    alert("Payment updated successfully!");
+    window.location.href="thankyou.html";
   }
 });
 </script>
-
 </body>
 </html>
