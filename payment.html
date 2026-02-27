@@ -35,8 +35,8 @@ input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border
 <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment</label>
 <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
 
-<div class="notice" id="status-notice">
-Checking registration...
+<div class="notice">
+⚠️ Please screenshot your registration confirmation and present it onsite if online.
 </div>
 
 <h2>Payment Methods</h2>
@@ -83,43 +83,7 @@ boxes.forEach(box => {
   });
 });
 
-// Get rowIndex from URL
-const urlParams = new URLSearchParams(window.location.search);
-const rowIndex = urlParams.get("row");
-const statusNotice = document.getElementById("status-notice");
-const paymentForm = document.getElementById("payment-form");
-
-// Apps Script URLs
-const sheetUrl = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec";
-const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
-
-// Disable form until check is done
-paymentForm.style.display = "none";
-
-if(!rowIndex){
-  alert("Missing registration reference. Please register first.");
-  window.location.href="ylc.html";
-} else {
-  // Check registration automatically
-  fetch(sheetUrl + "?action=check_registration&rowIndex=" + rowIndex)
-  .then(res => res.json())
-  .then(data => {
-    if(data.registered){
-      statusNotice.innerText = "✅ Registration confirmed. You can proceed with payment.";
-      paymentForm.style.display = "block";
-    } else {
-      alert("You are not registered yet. Please register first.");
-      window.location.href="ylc.html";
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    statusNotice.innerText = "Error checking registration. Try again later.";
-  });
-}
-
-// Handle payment form submission
-paymentForm.addEventListener("submit", async function(e){
+document.getElementById("payment-form").addEventListener("submit", async function(e){
   e.preventDefault();
 
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
@@ -129,50 +93,69 @@ paymentForm.addEventListener("submit", async function(e){
   let method = selectedBox ? selectedBox.dataset.method : "";
   if(!method){ alert("Please select a payment method."); return; }
 
-  // 1️⃣ Update payment in Google Sheet
-  const sheetForm = new FormData();
-  sheetForm.append("action","payment");
-  sheetForm.append("rowIndex",rowIndex);
-  sheetForm.append("sheet","ylc");
-  sheetForm.append("payment_by", paymentBy + " (" + method + ")");
+  // 1️⃣ Ask user for their email to verify registration
+  let userEmail = prompt("Enter your registered email to confirm registration:");
+  if(!userEmail){ alert("Email is required to confirm registration."); return; }
 
+  // Check registration in spreadsheet
+  const sheetCheckUrl = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec"; // replace with your sheet Apps Script URL
   try{
+    const res = await fetch(sheetCheckUrl+"?action=check&email="+encodeURIComponent(userEmail));
+    const data = await res.json();
+    if(data.registered !== true){
+      alert("No registration found for this email. Please register first.");
+      window.location.href = "ylc.html";
+      return;
+    }
+    const rowIndex = data.rowIndex; // will use this for updating payment
+
+    // Update payment in Google Sheet
+    const sheetForm = new FormData();
+    sheetForm.append("action","payment");
+    sheetForm.append("rowIndex", rowIndex);
+    sheetForm.append("sheet","ylc");
+    sheetForm.append("payment_by", paymentBy + " (" + method + ")");
+    const sheetUrl = "https://script.google.com/macros/s/YOUR_SHEET_SCRIPT_ID/exec"; // same Apps Script
+
     const sheetRes = await fetch(sheetUrl, { method:"POST", body:sheetForm });
     const sheetResult = await sheetRes.json();
     if(sheetResult.result !== "success"){ alert("Sheet error: "+sheetResult.error); return; }
-  } catch(err){ alert("Sheet update failed. "+err); return; }
 
-  // 2️⃣ Online payment: upload receipt to Drive
-  if(paymentBy==="Online"){
-    const fileInput = document.getElementById("receipt");
-    const fileNameInput = document.getElementById("fileName");
-    const file = fileInput.files[0];
-    const fileName = fileNameInput.value.trim();
-    if(!file || !fileName){ alert("Please enter filename and select a file."); return; }
+    // If online, upload receipt to Drive
+    if(paymentBy==="Online"){
+      const fileInput = document.getElementById("receipt");
+      const fileNameInput = document.getElementById("fileName");
+      const file = fileInput.files[0];
+      const fileName = fileNameInput.value.trim();
+      if(!file || !fileName){ alert("Please enter filename and select a file."); return; }
 
-    const reader = new FileReader();
-    reader.onload = async function() {
-      const base64 = reader.result.split(",")[1];
+      const reader = new FileReader();
+      reader.onload = async function() {
+        const base64 = reader.result.split(",")[1];
+        const driveForm = new FormData();
+        driveForm.append("fileName", fileName);
+        driveForm.append("file", base64);
+        driveForm.append("fileType", file.type);
+        const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec"; // your Drive Apps Script URL
 
-      const driveForm = new FormData();
-      driveForm.append("fileName", fileName);
-      driveForm.append("file", base64);
-      driveForm.append("fileType", file.type);
+        try{
+          const driveRes = await fetch(driveUrl, { method:"POST", body:driveForm });
+          const driveResult = await driveRes.json();
+          if(driveResult.result !== "success"){ alert("Drive error: "+driveResult.error); return; }
+          alert("Payment and receipt uploaded successfully!");
+          window.location.href="thankyou.html";
+        } catch(err){ alert("Upload failed. "+err); return; }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      alert("Payment updated successfully!");
+      window.location.href="thankyou.html";
+    }
 
-      try{
-        const driveRes = await fetch(driveUrl, { method:"POST", body:driveForm });
-        const driveResult = await driveRes.json();
-        if(driveResult.result !== "success"){ alert("Drive error: "+driveResult.error); return; }
-        alert("Payment and receipt uploaded successfully!");
-        window.location.href="thankyou.html";
-      } catch(err){ alert("Upload failed. "+err); return; }
-    };
-    reader.readAsDataURL(file);
-  } else {
-    alert("Payment updated successfully!");
-    window.location.href="thankyou.html";
-  }
+  } catch(err){ alert("Error checking registration: "+err); return; }
+
 });
 </script>
+
 </body>
 </html>
