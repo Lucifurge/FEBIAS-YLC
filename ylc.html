@@ -1,18 +1,102 @@
-
 <!DOCTYPE html>
 <html>
 <head>
   <title>YLC 2025 Registration</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-    h1, h2, h3 { color: #2c3e50; }
-    form { max-width: 900px; margin: auto; }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-    .radio-group, .checkbox-group { margin-top: 10px; }
-    .radio-group label, .checkbox-group label { font-weight: normal; display: block; margin-top: 5px; }
-    button { margin-top: 20px; padding: 10px 20px; background: #2c3e50; color: white; border: none; cursor: pointer; }
-    button:hover { background: #34495e; }
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      line-height: 1.6; 
+      background-color: #f4fff6;
+    }
+
+    h1 { 
+      color: #0b5d2a; 
+      text-align: center;
+      border-bottom: 4px solid #c9a227;
+      padding-bottom: 10px;
+    }
+
+    h2, h3 { 
+      color: #0b5d2a; 
+      margin-top: 25px;
+    }
+
+    form { 
+      max-width: 950px; 
+      margin: auto; 
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border-top: 6px solid #0b5d2a;
+    }
+
+    label { 
+      display: block; 
+      margin-top: 10px; 
+      font-weight: bold; 
+      color: #0b5d2a;
+    }
+
+    input, select, textarea { 
+      width: 100%; 
+      padding: 8px; 
+      margin-top: 5px; 
+      border: 1px solid #c9a227;
+      border-radius: 5px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border: 2px solid #0b5d2a;
+    }
+
+    .radio-group, .checkbox-group { 
+      margin-top: 10px; 
+      padding: 12px;
+      background: #f0f9f2;
+      border-left: 4px solid #c9a227;
+      border-radius: 5px;
+    }
+
+    .radio-group label, 
+    .checkbox-group label { 
+      font-weight: normal; 
+      display: block; 
+      margin-top: 5px; 
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    td {
+      padding: 5px;
+    }
+
+    button { 
+      margin-top: 25px; 
+      padding: 12px 25px; 
+      background: #0b5d2a; 
+      color: white; 
+      border: none; 
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover { 
+      background: #c9a227; 
+      color: #0b5d2a;
+    }
+
+    ul {
+      margin-left: 20px;
+    }
   </style>
 </head>
 <body>
@@ -55,17 +139,16 @@
       communication, and camp-related arrangements. Ensure that all details are correct to avoid any registration issues.
     </p>
 
-    <table>
+   <table>
       <tr>
         <td>Last Name</td>
-        <td><input type="text" name="lastName" required></td>
+        <td><input type="text" name="lastName" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></td>
         <td>First Name</td>
-        <td><input type="text" name="firstName" required></td>
+        <td><input type="text" name="firstName" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></td>
         <td>Middle Name</td>
-        <td><input type="text" name="middleName"></td>
+        <td><input type="text" name="middleName" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()"></td>
       </tr>
     </table>
-
     <table>
       <tr>
         <td>Age</td>
@@ -275,19 +358,18 @@
     <h3>If the payment was made by a Sponsor, please provide the name of Sponsor or name of the Church.</h3>
     <textarea name="sponsorName"></textarea>
 
-    <button type="submit">Submit Registration</button>
+     <button type="submit">Submit Registration</button>
   </form>
 
   <div id="response"></div>
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec; // Replace with your Apps Script Web App URL
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec";
 
     document.getElementById("ylcForm").addEventListener("submit", function(e){
       e.preventDefault();
       const formData = {};
       [...new FormData(this).entries()].forEach(([key, value]) => {
         if (formData[key]) {
-          // handle multiple checkbox values
           if (Array.isArray(formData[key])) {
             formData[key].push(value);
           } else {
@@ -304,7 +386,6 @@
       })
       .then(res => res.text())
       .then(data => {
-        // If submission is successful, redirect to payment.html
         if (data === "Success") {
           window.location.href = "payment.html";
         } else {
