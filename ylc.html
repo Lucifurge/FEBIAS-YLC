@@ -428,26 +428,74 @@ input[name="nickname"] {
   </form>
 
   <div id="response"></div>
-  <script>
+<script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec";
 
 document.getElementById("ylcForm").addEventListener("submit", function(e){
   e.preventDefault();
 
+  const form = new FormData(this);
   const formData = {};
-  [...new FormData(this).entries()].forEach(([key, value]) => {
-    if (formData[key]) {
-      if (Array.isArray(formData[key])) {
-        formData[key].push(value);
+
+  // Map form HTML names to Apps Script parameter names
+  const nameMap = {
+    lastName: "last_name",
+    firstName: "first_name",
+    middleName: "middle_name",
+    nickname: "nickname",
+    age: "age",
+    dob: "dob",
+    gender: "gender",
+    contact: "contact_number",
+    address: "home_address",
+    email: "email",
+    facebook: "facebook",
+    churchName: "church_name",
+    churchLocation: "church_location",
+    pastorName: "pastor_name",
+    acceptedChrist: "accepted_christ",
+    baptized: "water_baptized",
+    hasMinistries: "church_ministries",
+    youthLeaderStatus: "youth_leader",
+    ministries: "ministries",
+    otherMinistries: "other_ministries",
+    bibleReading: "bible_reading_freq",
+    churchAttendance: "church_service_freq",
+    discipleship: "discipleship_group",
+    booksInBible: "books_in_bible",
+    churchMembership: "church_membership_duration",
+    allergies: "allergies",
+    allergyDetails: "allergy_items",
+    dietaryRestrictions: "dietary_restrictions",
+    dietaryDetails: "dietary_items",
+    dietarySpecify: "dietary_specify",
+    healthConditions: "health_conditions",
+    healthConditionDetails: "health_condition_details",
+    healthConditionSpecify: "health_condition_specify",
+    healthDeclaration: "health_declaration",
+    paymentMadeBy: "payment_by",
+    sponsorName: "sponsor_name",
+    minorConsent: "minor_consent",
+    firstTimeYLC: "first_time_ylc",
+    learnAboutYLC: "learn_about_ylc",
+    shirtSize: "shirt_size"
+  };
+
+  for (let [key, value] of form.entries()) {
+    const mappedKey = nameMap[key] || key;
+    // Handle multiple checkbox values
+    if (formData[mappedKey]) {
+      if (Array.isArray(formData[mappedKey])) {
+        formData[mappedKey].push(value);
       } else {
-        formData[key] = [formData[key], value];
+        formData[mappedKey] = [formData[mappedKey], value];
       }
     } else {
-      formData[key] = value;
+      formData[mappedKey] = value;
     }
-  });
+  }
 
-  // Specify the action and sheet
+  // Add required action and sheet parameters
   formData.action = "register";
   formData.sheet = "ylc";
 
