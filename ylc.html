@@ -481,8 +481,10 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     shirtSize: "shirt_size"
   };
 
+  // Build formData object
   for (let [key, value] of form.entries()) {
     const mappedKey = nameMap[key] || key;
+
     // Handle multiple checkbox values
     if (formData[mappedKey]) {
       if (Array.isArray(formData[mappedKey])) {
@@ -499,17 +501,14 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   formData.action = "register";
   formData.sheet = "ylc";
 
+  // === FIX: send as URL-encoded, not JSON ===
   fetch(scriptURL, {
     method: "POST",
-    body: JSON.stringify(formData),
-    headers: {
-      "Content-Type": "application/json"
-    }
+    body: new URLSearchParams(formData) // <-- this fixes the failed fetch
   })
   .then(res => res.json())
   .then(data => {
     if (data.result === "success") {
-      // redirect to payment page
       window.location.href = "payment.html";
     } else {
       document.getElementById("response").innerText = "Error: " + (data.error || "Something went wrong.");
