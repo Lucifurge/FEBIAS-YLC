@@ -429,39 +429,49 @@ input[name="nickname"] {
 
   <div id="response"></div>
   <script>
- const scriptURL = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec";
+const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
 
-    document.getElementById("ylcForm").addEventListener("submit", function(e){
-      e.preventDefault();
-      const formData = {};
-      [...new FormData(this).entries()].forEach(([key, value]) => {
-        if (formData[key]) {
-          if (Array.isArray(formData[key])) {
-            formData[key].push(value);
-          } else {
-            formData[key] = [formData[key], value];
-          }
-        } else {
-          formData[key] = value;
-        }
-      });
+document.getElementById("ylcForm").addEventListener("submit", function(e){
+  e.preventDefault();
 
-      fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(formData)
-      })
-      .then(res => res.text())
-      .then(data => {
-        if (data === "Success") {
-          window.location.href = "payment.html";
-        } else {
-          document.getElementById("response").innerText = "There was an error submitting your registration.";
-        }
-      })
-      .catch(err => {
-        document.getElementById("response").innerText = "Submission failed. Please try again.";
-      });
-    });
-  </script>
+  const formData = {};
+  [...new FormData(this).entries()].forEach(([key, value]) => {
+    if (formData[key]) {
+      if (Array.isArray(formData[key])) {
+        formData[key].push(value);
+      } else {
+        formData[key] = [formData[key], value];
+      }
+    } else {
+      formData[key] = value;
+    }
+  });
+
+  // Specify the action and sheet
+  formData.action = "register";
+  formData.sheet = "ylc";
+
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify(formData),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      // redirect to payment page
+      window.location.href = "payment.html";
+    } else {
+      document.getElementById("response").innerText = "Error: " + (data.error || "Something went wrong.");
+    }
+  })
+  .catch(err => {
+    document.getElementById("response").innerText = "Submission failed. Please try again.";
+    console.error(err);
+  });
+});
+</script>
 </body>
 </html>
