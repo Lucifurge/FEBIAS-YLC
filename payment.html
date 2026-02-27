@@ -35,8 +35,8 @@ input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border
 <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment</label>
 <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
 
-<div class="notice">
-⚠️ Please screenshot your registration confirmation and present it onsite if online.
+<div class="notice" id="status-notice">
+Checking registration...
 </div>
 
 <h2>Payment Methods</h2>
@@ -83,7 +83,43 @@ boxes.forEach(box => {
   });
 });
 
-document.getElementById("payment-form").addEventListener("submit", async function(e){
+// Get rowIndex from URL
+const urlParams = new URLSearchParams(window.location.search);
+const rowIndex = urlParams.get("row");
+const statusNotice = document.getElementById("status-notice");
+const paymentForm = document.getElementById("payment-form");
+
+// Apps Script URLs
+const sheetUrl = "YOUR_SHEET_SCRIPT_URL";
+const driveUrl = "YOUR_DRIVE_SCRIPT_URL";
+
+// Disable form until check is done
+paymentForm.style.display = "none";
+
+if(!rowIndex){
+  alert("Missing registration reference. Please register first.");
+  window.location.href="ylc.html";
+} else {
+  // Check registration automatically
+  fetch(sheetUrl + "?action=check_registration&rowIndex=" + rowIndex)
+  .then(res => res.json())
+  .then(data => {
+    if(data.registered){
+      statusNotice.innerText = "✅ Registration confirmed. You can proceed with payment.";
+      paymentForm.style.display = "block";
+    } else {
+      alert("You are not registered yet. Please register first.");
+      window.location.href="ylc.html";
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    statusNotice.innerText = "Error checking registration. Try again later.";
+  });
+}
+
+// Handle payment form submission
+paymentForm.addEventListener("submit", async function(e){
   e.preventDefault();
 
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
@@ -93,10 +129,6 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   let method = selectedBox ? selectedBox.dataset.method : "";
   if(!method){ alert("Please select a payment method."); return; }
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const rowIndex = urlParams.get("row");
-  if(!rowIndex){ alert("Missing registration reference. Please register first."); return; }
-
   // 1️⃣ Update payment in Google Sheet
   const sheetForm = new FormData();
   sheetForm.append("action","payment");
@@ -104,15 +136,13 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   sheetForm.append("sheet","ylc");
   sheetForm.append("payment_by", paymentBy + " (" + method + ")");
 
-  const sheetUrl = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec";
-
   try{
     const sheetRes = await fetch(sheetUrl, { method:"POST", body:sheetForm });
     const sheetResult = await sheetRes.json();
     if(sheetResult.result !== "success"){ alert("Sheet error: "+sheetResult.error); return; }
   } catch(err){ alert("Sheet update failed. "+err); return; }
 
-  // 2️⃣ If online, upload receipt to Drive
+  // 2️⃣ Online payment: upload receipt to Drive
   if(paymentBy==="Online"){
     const fileInput = document.getElementById("receipt");
     const fileNameInput = document.getElementById("fileName");
@@ -128,8 +158,6 @@ document.getElementById("payment-form").addEventListener("submit", async functio
       driveForm.append("fileName", fileName);
       driveForm.append("file", base64);
       driveForm.append("fileType", file.type);
-
-      const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
 
       try{
         const driveRes = await fetch(driveUrl, { method:"POST", body:driveForm });
