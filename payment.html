@@ -6,9 +6,12 @@
 <title>YLC 2026 Payment | FEBIAS College of Bible</title>
 <link rel="icon" href="logo.ico">
 <style>
-/* ... your previous CSS intact ... */
+/* Keep your previous CSS intact */
 input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #c9a227;}
 .payment-box.selected { border: 2px solid #c9a227; }
+.notice { margin: 10px 0; color: #c9a227; font-weight: bold; }
+.payment-box { cursor:pointer; display:inline-block; padding:10px; border:1px solid #ccc; border-radius:8px; margin:5px; text-align:center; }
+.payment-box img { width:50px; display:block; margin:0 auto 5px; }
 </style>
 </head>
 <body>
@@ -54,12 +57,14 @@ input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border
 <footer>© 2026 FEBIAS College of Bible — Youth Leaders Camp</footer>
 
 <script>
+const sheetUrl = "https://script.google.com/macros/s/AKfycbwwHV3lRXqX4ZEuRVojk39a28nu_Mx8l1cg3Zb4FQVkfA34RInL_oqUBOp3fVmRiOm7Rg/exec"; // <-- replace with your actual Web App URL
+
 // Show/hide upload fields for online payment
 const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
 const onlineUpload = document.getElementById("online-upload");
 paymentRadios.forEach(r => {
   r.addEventListener("change", () => {
-    onlineUpload.style.display = r.value === "Online" ? "block" : "none";
+    onlineUpload.style.display = r.value==="Online" ? "block" : "none";
   });
 });
 
@@ -82,39 +87,47 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   if(!paymentBy){ alert("Please select a payment type."); return; }
 
   const selectedBox = document.querySelector(".payment-box.selected");
-  let method = selectedBox ? selectedBox.dataset.method : "";
+  const method = selectedBox?.dataset.method;
   if(!method){ alert("Please select a payment method."); return; }
 
-  const sheetUrl = "https://script.google.com/macros/s/AKfycbwwHV3lRXqX4ZEuRVojk39a28nu_Mx8l1cg3Zb4FQVkfA34RInL_oqUBOp3fVmRiOm7Rg/exec"; // Your Apps Script URL
-
+  // ==========================
+  // 1️⃣ Check email
+  // ==========================
   let rowIndex;
-
   try {
-    // Step 1: Check email
-    const checkRes = await fetch(sheetUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ action: "checkEmail", email: email, sheet: "ylc" })
-    });
-    const checkResult = await checkRes.json();
-    if(checkResult.result !== "success"){ alert("Email not found. Please register first."); return; }
-    rowIndex = checkResult.rowIndex;
-  } catch(err){ alert("Failed to check registration: " + err); return; }
+    const params = new URLSearchParams({ action: "checkEmail", email, sheet:"ylc" });
+    const res = await fetch(sheetUrl + "?" + params.toString(), { method: "GET" });
+    const data = await res.json();
+    if(data.result !== "success"){ alert("Email not found. Please register first."); return; }
+    rowIndex = data.rowIndex;
+  } catch(err){
+    console.error(err);
+    alert("Failed to check registration. "+err);
+    return;
+  }
 
+  // ==========================
+  // 2️⃣ Update payment info
+  // ==========================
   try {
-    // Step 2: Update payment info
-    const formData = new FormData();
+    const formData = new URLSearchParams();
     formData.append("action", "payment");
     formData.append("rowIndex", rowIndex);
     formData.append("sheet", "ylc");
     formData.append("payment_by", paymentBy + " (" + method + ")");
 
-    const updateRes = await fetch(sheetUrl, { method: "POST", body: formData });
-    const updateResult = await updateRes.json();
-    if(updateResult.result !== "success"){ alert("Sheet update failed: " + updateResult.error); return; }
-  } catch(err){ alert("Sheet update failed: " + err); return; }
+    const res = await fetch(sheetUrl, { method:"POST", body: formData });
+    const result = await res.json();
+    if(result.result !== "success"){ alert("Sheet update failed: "+result.error); return; }
+  } catch(err){
+    console.error(err);
+    alert("Failed to update payment: "+err);
+    return;
+  }
 
-  // Step 3: Online payment upload
+  // ==========================
+  // 3️⃣ Upload online receipt
+  // ==========================
   if(paymentBy === "Online"){
     const fileInput = document.getElementById("receipt");
     const fileNameInput = document.getElementById("fileName");
@@ -125,26 +138,29 @@ document.getElementById("payment-form").addEventListener("submit", async functio
     const reader = new FileReader();
     reader.onload = async function() {
       const base64 = reader.result.split(",")[1];
-
-      const driveForm = new FormData();
+      const driveForm = new URLSearchParams();
       driveForm.append("fileName", fileName);
       driveForm.append("file", base64);
       driveForm.append("fileType", file.type);
 
-      const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
+      const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec"; // <-- update with your Drive Web App URL
 
-      try {
-        const driveRes = await fetch(driveUrl, { method: "POST", body: driveForm });
-        const driveResult = await driveRes.json();
-        if(driveResult.result !== "success"){ alert("Drive upload failed: " + driveResult.error); return; }
+      try{
+        const res = await fetch(driveUrl, { method:"POST", body: driveForm });
+        const result = await res.json();
+        if(result.result !== "success"){ alert("Drive upload failed: "+result.error); return; }
         alert("Payment and receipt uploaded successfully!");
-        window.location.href = "thankyou.html";
-      } catch(err){ alert("Drive upload failed: " + err); return; }
+        window.location.href="thankyou.html";
+      } catch(err){
+        console.error(err);
+        alert("Drive upload failed: "+err);
+        return;
+      }
     };
     reader.readAsDataURL(file);
   } else {
     alert("Payment updated successfully!");
-    window.location.href = "thankyou.html";
+    window.location.href="thankyou.html";
   }
 });
 </script>
