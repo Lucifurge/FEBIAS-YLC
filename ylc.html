@@ -154,16 +154,52 @@ input[name="nickname"] {
 }
 
 /* ---------- RESPONSIVE DESIGN ---------- */
+@media (max-width: 1024px) {
+  form {
+    padding: 30px;
+  }
+  h1 { font-size: 2.2em; }
+  h2 { font-size: 1.6em; }
+  h3 { font-size: 1.3em; }
+  input, select, textarea { font-size: 1em; padding: 10px; }
+  button { font-size: 1.1em; padding: 14px; }
+}
+
 @media (max-width: 768px) {
+  form {
+    padding: 20px;
+  }
+  h1 { font-size: 2em; }
+  h2 { font-size: 1.4em; }
+  h3 { font-size: 1.2em; }
+  input, select, textarea { font-size: 1.05em; padding: 12px; }
+  button { font-size: 1.15em; padding: 14px; }
+
+  /* Make table rows stack vertically */
   table td {
     display: block;
     width: 100%;
+    padding: 8px 0;
   }
   td:first-child, td:nth-child(3), td:nth-child(5) {
     margin-top: 10px;
+    font-weight: bold;
+  }
+  td:nth-child(2), td:nth-child(4), td:nth-child(6) {
+    width: 100%;
   }
 }
-    </style>
+
+/* For very small phones */
+@media (max-width: 480px) {
+  form { padding: 15px; }
+  h1 { font-size: 1.8em; }
+  h2 { font-size: 1.3em; }
+  h3 { font-size: 1.1em; }
+  input, select, textarea { font-size: 1em; padding: 10px; }
+  button { font-size: 1em; padding: 12px; }
+}
+</style>
 </head>
 <body>
   <h1>YLC 2025 Campers' Registration Form</h1>
