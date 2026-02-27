@@ -8,6 +8,7 @@
 <style>
 /* ... your previous CSS intact ... */
 input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #c9a227;}
+.payment-box.selected { border: 2px solid #c9a227; }
 </style>
 </head>
 <body>
@@ -84,32 +85,39 @@ document.getElementById("payment-form").addEventListener("submit", async functio
   let method = selectedBox ? selectedBox.dataset.method : "";
   if(!method){ alert("Please select a payment method."); return; }
 
+  // ==========================
   // 1️⃣ Check email in sheet
-  const sheetCheckUrl = "https://script.google.com/macros/s/AKfycbyrzex93Ouc6Zjqa8ELzF1xb1WKA1P4AoITlOJ5kygYOO-b1GDJNL71zHhPEiC8XaRRfg/exec";
+  // ==========================
+  const sheetUrl = "https://script.google.com/macros/s/AKfycbwwHV3lRXqX4ZEuRVojk39a28nu_Mx8l1cg3Zb4FQVkfA34RInL_oqUBOp3fVmRiOm7Rg/exec"; // <-- update this
+  let rowIndex;
   try {
-    const checkRes = await fetch(sheetCheckUrl, {
+    const checkRes = await fetch(sheetUrl, {
       method:"POST",
       body: new URLSearchParams({action:"checkEmail", email: email, sheet:"ylc"})
     });
     const checkResult = await checkRes.json();
     if(checkResult.result !== "success"){ alert("Email not found. Please register first."); return; }
-    var rowIndex = checkResult.rowIndex;
+    rowIndex = checkResult.rowIndex;
   } catch(err){ alert("Failed to check registration. "+err); return; }
 
-  // 2️⃣ Update payment in sheet
-  const sheetForm = new FormData();
-  sheetForm.append("action","payment");
-  sheetForm.append("rowIndex", rowIndex);
-  sheetForm.append("sheet","ylc");
-  sheetForm.append("payment_by", paymentBy + " (" + method + ")");
+  // ==========================
+  // 2️⃣ Update payment info
+  // ==========================
+  try {
+    const formData = new FormData();
+    formData.append("action", "payment");
+    formData.append("rowIndex", rowIndex);
+    formData.append("sheet", "ylc");
+    formData.append("payment_by", paymentBy + " (" + method + ")");
 
-  try{
-    const sheetRes = await fetch(sheetCheckUrl, { method:"POST", body:sheetForm });
-    const sheetResult = await sheetRes.json();
-    if(sheetResult.result !== "success"){ alert("Sheet update failed: "+sheetResult.error); return; }
-  } catch(err){ alert("Sheet update failed. "+err); return; }
+    const updateRes = await fetch(sheetUrl, { method:"POST", body: formData });
+    const updateResult = await updateRes.json();
+    if(updateResult.result !== "success"){ alert("Sheet update failed: "+updateResult.error); return; }
+  } catch(err){ alert("Sheet update failed: "+err); return; }
 
+  // ==========================
   // 3️⃣ Online payment upload
+  // ==========================
   if(paymentBy==="Online"){
     const fileInput = document.getElementById("receipt");
     const fileNameInput = document.getElementById("fileName");
@@ -125,7 +133,7 @@ document.getElementById("payment-form").addEventListener("submit", async functio
       driveForm.append("file", base64);
       driveForm.append("fileType", file.type);
 
-      const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
+      const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec"; // <-- update this
 
       try{
         const driveRes = await fetch(driveUrl, { method:"POST", body:driveForm });
