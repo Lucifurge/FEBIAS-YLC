@@ -52,83 +52,104 @@ input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border
 <footer>© 2026 FEBIAS College of Bible — Youth Leaders Camp</footer>
 
 <script>
-const sheetUrl = "https://script.google.com/macros/s/AKfycbwwHV3lRXqX4ZEuRVojk39a28nu_Mx8l1cg3Zb4FQVkfA34RInL_oqUBOp3fVmRiOm7Rg/exec"; // sheet web app
-const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec"; // drive web app
+// URLs
+const sheetUrl = "https://script.google.com/macros/s/AKfycbwQ5TzLdA6XfkUbR0OekAs4Sgk9_2mJYffy6iJJI04sfrS-CpeHhlxG9-WZ1GyKypBXoA/exec"; // sheet
+const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec"; // drive
 
-// Show/hide online upload
-document.querySelectorAll('input[name="payment_by"]').forEach(radio=>{
-  radio.addEventListener('change', ()=> {
-    document.getElementById('online-upload').style.display = radio.value==='Online' ? 'block' : 'none';
+// Elements
+const onlineUpload = document.getElementById('online-upload');
+const paymentBoxes = document.querySelectorAll('.payment-box');
+const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+
+// Show/hide payment methods based on type
+paymentRadios.forEach(radio => {
+  radio.addEventListener('change', () => {
+    if (radio.value === 'Online') {
+      onlineUpload.style.display = 'block';
+      document.querySelector('.payment-methods').style.display = 'flex';
+    } else {
+      onlineUpload.style.display = 'none';
+      document.querySelector('.payment-methods').style.display = 'none';
+      paymentBoxes.forEach(b => b.classList.remove('selected')); // deselect any method
+    }
   });
 });
 
 // Highlight payment box
-document.querySelectorAll('.payment-box').forEach(box=>{
-  box.addEventListener('click', ()=> {
-    document.querySelectorAll('.payment-box').forEach(b=>b.classList.remove('selected'));
+paymentBoxes.forEach(box => {
+  box.addEventListener('click', () => {
+    paymentBoxes.forEach(b => b.classList.remove('selected'));
     box.classList.add('selected');
   });
 });
 
-document.getElementById('payment-form').addEventListener('submit', async (e)=>{
+// Form submission
+document.getElementById('payment-form').addEventListener('submit', async e => {
   e.preventDefault();
+
   const email = document.getElementById('regEmail').value.trim();
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   const selectedBox = document.querySelector('.payment-box.selected');
   const method = selectedBox?.dataset.method;
 
-  if(!email){ alert('Please enter your email'); return; }
-  if(!paymentBy){ alert('Please select payment type'); return; }
-  if(!method){ alert('Please select payment method'); return; }
+  if (!email) { alert('Please enter your email'); return; }
+  if (!paymentBy) { alert('Please select payment type'); return; }
+  if (paymentBy === 'Online' && !method) { alert('Please select a payment method for Online Payment'); return; }
 
   // 1️⃣ Check email
   let rowIndex;
-  try{
-    const params = new URLSearchParams({action:'checkEmail', email, sheet:'ylc'});
-    const res = await fetch(sheetUrl + "?" + params.toString(), {method:'GET'});
+  try {
+    const params = new URLSearchParams({ action: 'checkEmail', email, sheet: 'ylc' });
+    const res = await fetch(sheetUrl + "?" + params.toString(), { method: 'GET' });
     const data = await res.json();
-    if(data.result!=='success'){ alert("Email not found. Please register first."); return; }
+    if (data.result !== 'success') { alert("Email not found. Please register first."); return; }
     rowIndex = data.rowIndex;
-  } catch(err){ alert('Failed to check registration: '+err); return; }
+  } catch (err) { alert('Failed to check registration: ' + err); return; }
 
   // 2️⃣ Update payment
-  try{
+  try {
     const postData = new URLSearchParams();
-    postData.append('action','payment');
+    postData.append('action', 'payment');
     postData.append('rowIndex', rowIndex);
-    postData.append('sheet','ylc');
-    postData.append('payment_by', paymentBy+' ('+method+')');
-    const res = await fetch(sheetUrl,{method:'POST', body:postData});
+    postData.append('sheet', 'ylc');
+
+    if (paymentBy === 'Online') {
+      postData.append('payment_by', 'Online (' + method + ')');
+    } else {
+      postData.append('payment_by', 'Onsite');
+    }
+
+    const res = await fetch(sheetUrl, { method: 'POST', body: postData });
     const result = await res.json();
-    if(result.result!=='success'){ alert('Sheet update failed: '+result.error); return; }
-  } catch(err){ alert('Failed to update payment: '+err); return; }
+    if (result.result !== 'success') { alert('Sheet update failed: ' + result.error); return; }
+  } catch (err) { alert('Failed to update payment: ' + err); return; }
 
   // 3️⃣ Upload file if online
-  if(paymentBy==='Online'){
+  if (paymentBy === 'Online') {
     const file = document.getElementById('receipt').files[0];
     const fileName = document.getElementById('fileName').value.trim();
-    if(!file || !fileName){ alert('Please enter file name and select file'); return; }
+    if (!file || !fileName) { alert('Please enter file name and select file'); return; }
 
     const reader = new FileReader();
-    reader.onload = async ()=>{
+    reader.onload = async () => {
       const base64 = reader.result.split(',')[1];
       const postData = new URLSearchParams();
       postData.append('fileName', fileName);
       postData.append('file', base64);
       postData.append('fileType', file.type);
 
-      try{
-        const res = await fetch(driveUrl,{method:'POST', body:postData});
+      try {
+        const res = await fetch(driveUrl, { method: 'POST', body: postData });
         const result = await res.json();
-        if(result.result!=='success'){ alert('Drive upload failed: '+result.error); return; }
+        if (result.result !== 'success') { alert('Drive upload failed: ' + result.error); return; }
         alert('Payment and receipt uploaded successfully!');
-        window.location.href='thankyou.html';
-      } catch(err){ alert('Drive upload failed: '+err); return; }
+        window.location.href = 'thankyou.html';
+      } catch (err) { alert('Drive upload failed: ' + err); return; }
     };
     reader.readAsDataURL(file);
   } else {
     alert('Payment updated successfully!');
-    window.location.href='thankyou.html';
+    window.location.href = 'thankyou.html';
   }
 });
 </script>
