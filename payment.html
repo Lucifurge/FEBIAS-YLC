@@ -56,21 +56,21 @@ input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border
 const sheetUrl = "https://script.google.com/macros/s/AKfycbwQ5TzLdA6XfkUbR0OekAs4Sgk9_2mJYffy6iJJI04sfrS-CpeHhlxG9-WZ1GyKypBXoA/exec"; // sheet
 const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec"; // drive
 
-// Elements
 const onlineUpload = document.getElementById('online-upload');
 const paymentBoxes = document.querySelectorAll('.payment-box');
 const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+const paymentMethodsDiv = document.querySelector('.payment-methods');
 
 // Show/hide payment methods based on type
 paymentRadios.forEach(radio => {
   radio.addEventListener('change', () => {
     if (radio.value === 'Online') {
       onlineUpload.style.display = 'block';
-      document.querySelector('.payment-methods').style.display = 'flex';
-    } else {
+      paymentMethodsDiv.style.display = 'flex';
+    } else { // Onsite
       onlineUpload.style.display = 'none';
-      document.querySelector('.payment-methods').style.display = 'none';
-      paymentBoxes.forEach(b => b.classList.remove('selected')); // deselect any method
+      paymentMethodsDiv.style.display = 'none';
+      paymentBoxes.forEach(b => b.classList.remove('selected')); // deselect any
     }
   });
 });
@@ -114,9 +114,9 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
     postData.append('sheet', 'ylc');
 
     if (paymentBy === 'Online') {
-      postData.append('payment_by', 'Online (' + method + ')');
+      postData.append('payment_by', 'Online (' + method + ')'); // e.g., Online (Bank)
     } else {
-      postData.append('payment_by', 'Onsite');
+      postData.append('payment_by', 'Onsite'); // Onsite ignores method
     }
 
     const res = await fetch(sheetUrl, { method: 'POST', body: postData });
