@@ -517,21 +517,26 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     shirtSize: "shirt_size"
   };
 
-  // Build formData object
-  for (let [key, value] of form.entries()) {
-    const mappedKey = nameMap[key] || key;
+// Build formData object
+for (let [key, value] of form.entries()) {
+  const mappedKey = nameMap[key] || key;
 
-    // Handle multiple checkbox values
-    if (formData[mappedKey]) {
-      if (Array.isArray(formData[mappedKey])) {
-        formData[mappedKey].push(value);
-      } else {
-        formData[mappedKey] = [formData[mappedKey], value];
-      }
-    } else {
-      formData[mappedKey] = value;
-    }
+  // === FIX: normalize email only ===
+  if (mappedKey === "email") {
+    value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
   }
+
+  // Handle multiple checkbox values
+  if (formData[mappedKey]) {
+    if (Array.isArray(formData[mappedKey])) {
+      formData[mappedKey].push(value);
+    } else {
+      formData[mappedKey] = [formData[mappedKey], value];
+    }
+  } else {
+    formData[mappedKey] = value;
+  }
+}
 
   // Add required action and sheet parameters
   formData.action = "register";
