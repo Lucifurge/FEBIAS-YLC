@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>YLC 2025 Registration</title>
+  <title>YLC 2026 Online Registration</title>
     <style>
     /* ---------- BODY & HEADINGS ---------- */
 body {
@@ -143,6 +143,7 @@ button:hover {
 /* ---------- LISTS ---------- */
 ul {
   margin-left: 25px;
+
 }
 
 /* ---------- CAPS LOCK FOR NAMES ---------- */
@@ -153,6 +154,31 @@ input[name="nickname"] {
   text-transform: uppercase;
 }
 
+      /* Loader overlay */
+#loader {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.85);
+  z-index: 9999;
+  text-align: center;
+  padding-top: 30vh;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #0b5d2a;
+  transition: opacity 0.3s ease;
+}
+.loader-content {
+  display: inline-block;
+  padding: 20px 25px;
+  background: #eaf6ef;
+  border: 2px solid #0b5d2a;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
 /* ---------- RESPONSIVE DESIGN ---------- */
 @media (max-width: 1024px) {
   form {
@@ -202,7 +228,12 @@ input[name="nickname"] {
 </style>
 </head>
 <body>
-  <h1>YLC 2025 Campers' Registration Form</h1>
+  <div id="loader">
+  <div class="loader-content">
+    ⏳ Submitting your registration, please wait...
+  </div>
+</div>
+  <h1>YLC 2026 Campers' Online Registration Form</h1>
   <form id="ylcForm">
 
     <h2>Privacy Statement</h2>
@@ -470,6 +501,14 @@ const scriptURL = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBj
 document.getElementById("ylcForm").addEventListener("submit", function(e){
   e.preventDefault();
 
+  // Show loader overlay
+  const loader = document.getElementById("loader");
+  loader.style.display = "block";
+
+  // Disable submit button to prevent double-click
+  const submitBtn = this.querySelector("button[type='submit']");
+  submitBtn.disabled = true;
+
   const form = new FormData(this);
   const formData = {};
 
@@ -516,13 +555,16 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     shirtSize: "shirt_size"
   };
 
+  // Map form values to structured object
   for (let [key, value] of form.entries()) {
     const mappedKey = nameMap[key] || key;
 
+    // Clean email
     if (mappedKey === "email") {
       value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
     }
 
+    // Handle multiple values (checkboxes)
     if (formData[mappedKey]) {
       if (Array.isArray(formData[mappedKey])) {
         formData[mappedKey].push(value);
@@ -537,26 +579,27 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   formData.action = "register";
   formData.sheet = "ylc";
 
+  // Send form data to Google Apps Script
   fetch(scriptURL, {
     method: "POST",
     body: new URLSearchParams(formData)
   })
   .then(res => res.json())
   .then(data => {
+    loader.style.display = "none"; // hide loader
 
     if (data.result === "success" && data.rowIndex) {
-
-      // 🔥 THIS IS THE FIX
-      // Redirect WITH rowIndex
+      // Redirect to payment page with rowIndex
       window.location.href = "payment.html?rowIndex=" + data.rowIndex;
-
     } else {
       document.getElementById("response").innerText =
         "Error: " + (data.error || "Something went wrong.");
+      submitBtn.disabled = false; // re-enable button
     }
-
   })
   .catch(err => {
+    loader.style.display = "none"; // hide loader
+    submitBtn.disabled = false; // re-enable button
     document.getElementById("response").innerText =
       "Submission failed. Please try again.";
     console.error(err);
