@@ -1,115 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> 
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YLC 2026 Payment | FEBIAS College of Bible</title>
 <link rel="icon" href="logo.ico">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
-body{background:linear-gradient(135deg,#f8f8f8,#e6f0ec);color:#1f2937;line-height:1.6;}
-.container{max-width:850px;margin:3rem auto;padding:2.5rem;background:#fff;border-radius:20px;box-shadow:0 15px 40px rgba(0,0,0,.15);}
-h1{text-align:center;color:#0b3d2e;margin-bottom:1rem;font-size:2rem;}
-h2{text-align:center;margin-top:2rem;margin-bottom:1rem;color:#14532d;}
-label{display:block;margin-top:1rem;font-weight:600;cursor:pointer;}
-.notice{margin-top:1.5rem;padding:1rem;background:#fff4e5;border-left:6px solid #d97706;border-radius:10px;text-align:center;font-weight:600;color:#b45309;}
-.qr-container{display:flex;justify-content:center;margin-top:2rem;}
-.qr-box{border:3px solid #d1d5db;border-radius:18px;padding:2rem;background:#f9fafb;display:flex;flex-direction:column;align-items:center;box-shadow:0 8px 25px rgba(0,0,0,.1);}
-.qr-box img{width:250px;height:250px;object-fit:contain;margin-bottom:1rem;}
-.qr-box span{font-weight:700;font-size:1.2rem;color:#0b3d2e;}
-button{width:100%;padding:1.3rem;margin-top:2.5rem;font-size:1.2rem;font-weight:700;background:#0b3d2e;color:#fff;border:none;border-radius:14px;cursor:pointer;transition:all .3s;}
-button:hover{background:#1f7a4d;transform:scale(1.02);}
-footer{text-align:center;padding:2rem;font-size:.9rem;color:#555;}
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background:#f9f9f9;
+  color:#222;
+}
+
+.container {
+  max-width:600px;
+  margin:60px auto;
+  background:#ffffff;
+  padding:35px;
+  border-radius:18px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.08);
+  border-top:6px solid #c9a227;
+}
+
+h1 {
+  text-align:center;
+  color:#1f6b3a;
+  margin-bottom:10px;
+}
+
+.subtitle {
+  text-align:center;
+  color:#777;
+  margin-bottom:30px;
+  font-size:14px;
+}
+
+h2 {
+  margin-top:25px;
+  color:#1f6b3a;
+  font-size:17px;
+}
+
+label {
+  display:block;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+input[type=text] {
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:14px;
+}
+
+input:focus {
+  outline:none;
+  border-color:#c9a227;
+  box-shadow:0 0 6px rgba(201,162,39,0.3);
+}
+
+.radio-group {
+  margin-top:10px;
+}
+
+.radio-group label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.notice {
+  margin:18px 0;
+  padding:12px;
+  background:#eaf6ef;
+  border-left:4px solid #1f6b3a;
+  font-size:13px;
+  border-radius:8px;
+  color:#1f6b3a;
+}
+
+button {
+  width:100%;
+  padding:14px;
+  margin-top:30px;
+  border:none;
+  border-radius:14px;
+  background:#1f6b3a;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+
+button:hover {
+  background:#16542d;
+  transform:scale(1.02);
+}
+
+#loader {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(255,255,255,0.8);
+  z-index:9999;
+  text-align:center;
+  padding-top:200px;
+  font-size:18px;
+  color:#1f6b3a;
+  font-weight:bold;
+}
+
+footer {
+  text-align:center;
+  margin-top:40px;
+  font-size:13px;
+  color:#888;
+}
 </style>
 </head>
-
 <body>
 
 <div class="container">
-<h1>YLC 2026 Payment Confirmation (Walk-in)</h1>
+<h1>YLC 2026 Payment</h1>
+<p class="subtitle">Youth Leaders Camp — Payment Confirmation</p>
 
 <form id="payment-form">
 
 <h2>Select Payment Type</h2>
-
-<label>
-<input type="radio" name="payment_by_radio" value="Walk-in" required>
-Walk-in Payment
-</label>
-
-<label>
-<input type="radio" name="payment_by_radio" value="Online">
-Online Payment
-</label>
+<div class="radio-group">
+  <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment (Walk-in)</label>
+  <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
+</div>
 
 <div class="notice">
-⚠️ Please screenshot your registration confirmation and present it onsite if online.
+Instructions:<br>
+- For walk-in (onsite) payment: confirm here and present this confirmation at the event.<br>
+- For online payment: confirm here, then you will be redirected to a page with QR code to upload your receipt.
 </div>
 
-<!-- Only GCash QR -->
-<div class="qr-container">
-  <div class="qr-box">
-    <img src="gcash.png" alt="GCash QR">
-    <span>GCash QR</span>
-  </div>
-</div>
-
-<button type="submit">✅ Confirm Payment</button>
-
+<button type="submit">Confirm Payment</button>
 </form>
 </div>
+
+<div id="loader">Processing payment, please wait...</div>
 
 <footer>
 © 2026 FEBIAS College of Bible — Youth Leaders Camp
 </footer>
 
 <script>
-// Highlight QR box selection (visual only)
-const qrBox = document.querySelector(".qr-box");
-qrBox.addEventListener("click", () => {
-  qrBox.style.borderColor = "#0b3d2e";
-});
+const sheetUrl = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
 
-// Handle form submission
-document.getElementById("payment-form").addEventListener("submit", async function(e){
+const loader = document.getElementById('loader');
+
+// Get rowIndex from URL
+const urlParams = new URLSearchParams(window.location.search);
+const rowIndex = urlParams.get("rowIndex");
+
+if (!rowIndex) {
+  alert("Invalid access. Please register first.");
+  window.location.href = "ylc.html";
+}
+
+document.getElementById('payment-form').addEventListener('submit', async e => {
   e.preventDefault();
 
-  const paymentBy = document.querySelector('input[name="payment_by_radio"]:checked')?.value;
-  if(!paymentBy){
-    alert("Please select a payment type.");
+  const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
+
+  if (!paymentBy) {
+    alert('Please select payment type');
     return;
   }
 
-  // ✅ GET REAL ROW FROM URL (same as payment.html)
-  const urlParams = new URLSearchParams(window.location.search);
-  const rowIndex = urlParams.get("row");
-
-  if(!rowIndex){
-    alert("Missing registration reference. Please register first.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("action", "payment");
-  formData.append("rowIndex", rowIndex);
-  formData.append("sheet", "ylc2"); // 🔥 THIS is the only difference from payment.html
-  formData.append("payment_by", paymentBy + " (GCash QR)");
-
-  const url = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
+  // Show loader to prevent double clicks
+  loader.style.display = 'block';
 
   try {
-    const res = await fetch(url, { method: "POST", body: formData });
+    const postData = new URLSearchParams();
+    postData.append('action', 'payment');
+    postData.append('rowIndex', rowIndex);
+    postData.append('sheet', 'ylc2');
+    postData.append('payment_by', paymentBy);
+
+    const res = await fetch(sheetUrl, { method: 'POST', body: postData });
     const result = await res.json();
 
-    if(result.result === "success"){
-      alert("Payment updated successfully. Please show receipt to registration desk.");
-      window.location.href = "thankyou2.html";
-    } else {
-      alert("Error: " + result.error);
+    if (result.result !== 'success') {
+      alert('Payment update failed. Please try again.');
+      loader.style.display = 'none';
+      return;
     }
-  } catch(err){
-    alert("Network error. Please try again.");
+
+    // Success → redirect to thankyou.html with rowIndex
+    window.location.href = 'thankyou.html?rowIndex=' + rowIndex;
+
+  } catch (err) {
+    console.error(err);
+    alert('Payment submission failed. Please try again.');
+    loader.style.display = 'none';
   }
 });
 </script>
