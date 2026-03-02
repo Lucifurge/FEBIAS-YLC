@@ -52,25 +52,33 @@ input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border
 <footer>© 2026 FEBIAS College of Bible — Youth Leaders Camp</footer>
 
 <script>
-// URLs
-const sheetUrl = "https://script.google.com/macros/s/AKfycbzLyAL1pu1WYazuTgXBNAbW6QFEKmJxpNG-GkFgiWCsiuWwSGG0mfhTUvFaCUKKvc5lAg/exec"; // sheet
-const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec"; // drive
+const sheetUrl = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
+const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
 
 const onlineUpload = document.getElementById('online-upload');
 const paymentBoxes = document.querySelectorAll('.payment-box');
 const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
 const paymentMethodsDiv = document.querySelector('.payment-methods');
 
-// Show/hide payment methods based on type
+// 🔥 GET rowIndex FROM URL
+const urlParams = new URLSearchParams(window.location.search);
+const rowIndex = urlParams.get("rowIndex");
+
+if (!rowIndex) {
+  alert("Invalid access. Please register first.");
+  window.location.href = "ylc.html";
+}
+
+// Show/hide payment methods
 paymentRadios.forEach(radio => {
   radio.addEventListener('change', () => {
     if (radio.value === 'Online') {
       onlineUpload.style.display = 'block';
       paymentMethodsDiv.style.display = 'flex';
-    } else { // Onsite
+    } else {
       onlineUpload.style.display = 'none';
       paymentMethodsDiv.style.display = 'none';
-      paymentBoxes.forEach(b => b.classList.remove('selected')); // deselect any
+      paymentBoxes.forEach(b => b.classList.remove('selected'));
     }
   });
 });
@@ -83,30 +91,25 @@ paymentBoxes.forEach(box => {
   });
 });
 
-// Form submission
+// Submit
 document.getElementById('payment-form').addEventListener('submit', async e => {
   e.preventDefault();
 
-  const email = document.getElementById('regEmail').value.trim();
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   const selectedBox = document.querySelector('.payment-box.selected');
   const method = selectedBox?.dataset.method;
 
-  if (!email) { alert('Please enter your email'); return; }
-  if (!paymentBy) { alert('Please select payment type'); return; }
-  if (paymentBy === 'Online' && !method) { alert('Please select a payment method for Online Payment'); return; }
+  if (!paymentBy) {
+    alert('Please select payment type');
+    return;
+  }
 
-  // 1️⃣ Check email
-  let rowIndex;
-  try {
-    const params = new URLSearchParams({ action: 'checkEmail', email, sheet: 'ylc' });
-    const res = await fetch(sheetUrl + "?" + params.toString(), { method: 'GET' });
-    const data = await res.json();
-    if (data.result !== 'success') { alert("Email not found. Please register first."); return; }
-    rowIndex = data.rowIndex;
-  } catch (err) { alert('Failed to check registration: ' + err); return; }
+  if (paymentBy === 'Online' && !method) {
+    alert('Please select a payment method');
+    return;
+  }
 
-  // 2️⃣ Update payment
+  // 1️⃣ Update Sheet
   try {
     const postData = new URLSearchParams();
     postData.append('action', 'payment');
@@ -114,41 +117,64 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
     postData.append('sheet', 'ylc');
 
     if (paymentBy === 'Online') {
-      postData.append('payment_by', 'Online (' + method + ')'); // e.g., Online (Bank)
+      postData.append('payment_by', 'Online (' + method + ')');
     } else {
-      postData.append('payment_by', 'Onsite'); // Onsite ignores method
+      postData.append('payment_by', 'Onsite');
     }
 
     const res = await fetch(sheetUrl, { method: 'POST', body: postData });
     const result = await res.json();
-    if (result.result !== 'success') { alert('Sheet update failed: ' + result.error); return; }
-  } catch (err) { alert('Failed to update payment: ' + err); return; }
 
-  // 3️⃣ Upload file if online
+    if (result.result !== 'success') {
+      alert('Sheet update failed: ' + result.error);
+      return;
+    }
+
+  } catch (err) {
+    alert('Payment update failed: ' + err);
+    return;
+  }
+
+  // 2️⃣ Upload Receipt if Online
   if (paymentBy === 'Online') {
     const file = document.getElementById('receipt').files[0];
     const fileName = document.getElementById('fileName').value.trim();
-    if (!file || !fileName) { alert('Please enter file name and select file'); return; }
+
+    if (!file || !fileName) {
+      alert('Please enter receipt name and upload file');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result.split(',')[1];
-      const postData = new URLSearchParams();
-      postData.append('fileName', fileName);
-      postData.append('file', base64);
-      postData.append('fileType', file.type);
+
+      const uploadData = new URLSearchParams();
+      uploadData.append('fileName', fileName);
+      uploadData.append('file', base64);
+      uploadData.append('fileType', file.type);
 
       try {
-        const res = await fetch(driveUrl, { method: 'POST', body: postData });
+        const res = await fetch(driveUrl, { method: 'POST', body: uploadData });
         const result = await res.json();
-        if (result.result !== 'success') { alert('Drive upload failed: ' + result.error); return; }
-        alert('Payment and receipt uploaded successfully!');
+
+        if (result.result !== 'success') {
+          alert('Receipt upload failed: ' + result.error);
+          return;
+        }
+
+        alert('Payment confirmed and receipt uploaded!');
         window.location.href = 'thankyou.html';
-      } catch (err) { alert('Drive upload failed: ' + err); return; }
+
+      } catch (err) {
+        alert('Drive upload failed: ' + err);
+      }
     };
+
     reader.readAsDataURL(file);
+
   } else {
-    alert('Payment updated successfully!');
+    alert('Onsite payment recorded successfully!');
     window.location.href = 'thankyou.html';
   }
 });
