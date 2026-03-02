@@ -1,8 +1,198 @@
-<script>
-// Loader element
-const loader = document.getElementById('loader');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YLC 2026 Payment | FEBIAS College of Bible</title>
+<link rel="icon" href="logo.ico">
 
-// Get rowIndex from URL
+<style>
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background:#f9f9f9;
+  color:#222;
+}
+
+.container {
+  max-width:600px;
+  margin:60px auto;
+  background:#ffffff;
+  padding:35px;
+  border-radius:18px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.08);
+  border-top:6px solid #c9a227;
+}
+
+h1 {
+  text-align:center;
+  color:#1f6b3a;
+  margin-bottom:10px;
+}
+
+.subtitle {
+  text-align:center;
+  color:#777;
+  margin-bottom:30px;
+  font-size:14px;
+}
+
+h2 {
+  margin-top:25px;
+  color:#1f6b3a;
+  font-size:17px;
+}
+
+label {
+  display:block;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+.radio-group {
+  margin-top:10px;
+}
+
+.radio-group label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.payment-methods {
+  display:flex;
+  gap:15px;
+  margin-top:15px;
+  justify-content: center;
+}
+
+.payment-box {
+  flex:1;
+  background:#f5f5f5;
+  border:2px solid transparent;
+  border-radius:14px;
+  padding:18px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.25s ease;
+}
+
+.payment-box:hover {
+  transform:translateY(-4px);
+  border-color:#c9a227;
+}
+
+.payment-box.selected {
+  border:2px solid #c9a227;
+  background:#fffbea;
+}
+
+.payment-box img {
+  width:80px;
+  margin-bottom:8px;
+}
+
+.notice {
+  margin:18px 0;
+  padding:12px;
+  background:#eaf6ef;
+  border-left:4px solid #1f6b3a;
+  font-size:13px;
+  border-radius:8px;
+  color:#1f6b3a;
+  text-align:center;
+}
+
+button {
+  width:100%;
+  padding:14px;
+  margin-top:30px;
+  border:none;
+  border-radius:14px;
+  background:#1f6b3a;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+
+button:hover {
+  background:#16542d;
+  transform:scale(1.02);
+}
+
+#loader {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(255,255,255,0.8);
+  z-index:9999;
+  text-align:center;
+  padding-top:200px;
+  font-size:18px;
+  color:#1f6b3a;
+  font-weight:bold;
+}
+
+footer {
+  text-align:center;
+  margin-top:40px;
+  font-size:13px;
+  color:#888;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>YLC 2026 Payment</h1>
+<p class="subtitle">Youth Leaders Camp — Payment Confirmation</p>
+
+<form id="payment-form">
+
+<h2>Select Payment Type</h2>
+<div class="radio-group">
+  <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment (Walk-in)</label>
+  <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
+</div>
+
+<div class="notice">
+Instructions:<br>
+- For walk-in (onsite) payment: confirm here and present this confirmation at the event.<br>
+- For online payment: select your payment method below and confirm.
+</div>
+
+<div class="payment-methods">
+  <div class="payment-box" data-method="Bank Transfer">
+    <img src="bank.png" alt="Bank QR">
+    <div>Bank Transfer</div>
+  </div>
+  <div class="payment-box" data-method="GCash">
+    <img src="gcash.png" alt="GCash QR">
+    <div>GCash</div>
+  </div>
+</div>
+
+<button type="submit">Confirm Payment</button>
+</form>
+</div>
+
+<div id="loader">Processing payment, please wait...</div>
+
+<footer>
+© 2026 FEBIAS College of Bible — Youth Leaders Camp
+</footer>
+
+<script>
+const sheetUrl = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
+
+const loader = document.getElementById('loader');
+const paymentBoxes = document.querySelectorAll('.payment-box');
+const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+
 const urlParams = new URLSearchParams(window.location.search);
 const rowIndex = urlParams.get("rowIndex");
 
@@ -11,18 +201,31 @@ if (!rowIndex) {
   window.location.href = "ylc2.html";
 }
 
+// Toggle payment method selection only for Online
+paymentBoxes.forEach(box => {
+  box.addEventListener('click', () => {
+    paymentBoxes.forEach(b => b.classList.remove('selected'));
+    box.classList.add('selected');
+  });
+});
+
 document.getElementById('payment-form').addEventListener('submit', async e => {
   e.preventDefault();
-
   const submitBtn = e.target.querySelector('button[type="submit"]');
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
+  const selectedBox = document.querySelector('.payment-box.selected');
+  const method = selectedBox?.dataset.method;
 
   if (!paymentBy) {
     alert('Please select payment type');
     return;
   }
 
-  // Show loader & disable submit button to prevent double clicks
+  if (paymentBy === 'Online' && !method) {
+    alert('Please select a payment method');
+    return;
+  }
+
   loader.style.display = 'block';
   submitBtn.disabled = true;
 
@@ -31,13 +234,9 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
     postData.append('action', 'payment');
     postData.append('rowIndex', rowIndex);
     postData.append('sheet', 'ylc2');
-    postData.append('payment_by', paymentBy);
+    postData.append('payment_by', paymentBy === 'Online' ? 'Online (' + method + ')' : 'Onsite');
 
-    const res = await fetch("https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec", {
-      method: 'POST',
-      body: postData
-    });
-
+    const res = await fetch(sheetUrl, { method: 'POST', body: postData });
     const result = await res.json();
 
     if (result.result !== 'success') {
@@ -47,9 +246,7 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
       return;
     }
 
-    // Success → redirect to thankyou page with rowIndex
     window.location.href = 'thankyou.html?rowIndex=' + rowIndex;
-
   } catch (err) {
     console.error(err);
     alert('Payment submission failed. Please try again.');
@@ -58,3 +255,5 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
   }
 });
 </script>
+</body>
+</html>
