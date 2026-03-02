@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Attendance 2 | FEBIAS College of Bible</title>
+<title>YLC 2026 Attendance | FEBIAS College of Bible</title>
 
 <link rel="icon" href="logo.ico">
 
@@ -46,7 +46,7 @@ th {
 </head>
 <body>
 
-<h1>YLC 2026 Attendance 2</h1>
+<h1>YLC 2026 Attendance</h1>
 <p>Click the emoji to update attendance (✅ = Attended, 🟠 = Waiting, ❌ = Cancelled).</p>
 
 <button onclick="loadAttendance()">🔄 Refresh Now</button>
@@ -64,11 +64,11 @@ th {
 </table>
 
 <script>
-const BASE_URL = "https://script.google.com/macros/s/AKfycbw0b9STdg2gFcj5wC6C5P9efC_LEYb4kmndC8jyBCbadkjbM2tlpg3kQMkqXq2OCUSfbg/exec";
-const SHEET_NAME = "ylc2"; // ✅ Load from YLC2 sheet
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
 const tbody = document.querySelector("#attendance-table tbody");
 
 let peopleMap = new Map();
+let localOverrides = new Map(); // 🔥 prevents reverting
 const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
 
 // Render or update a row
@@ -89,63 +89,73 @@ function renderRow(person) {
     peopleMap.set(person.rowIndex, tr);
   }
 
+  // 🔥 If we have a local override, use it instead of sheet value
+  if (localOverrides.has(person.rowIndex)) {
+    person.attendanceStatus = localOverrides.get(person.rowIndex);
+  }
+
   tr.querySelector(".first").textContent = person.firstName || "";
   tr.querySelector(".last").textContent = person.lastName || "";
 
   const paymentCell = tr.querySelector(".payment");
   const attendanceCell = tr.querySelector(".attendance-check");
 
-  // Payment display
   function updatePaymentUI(status) {
     const lower = (status || "").toLowerCase();
     if (lower.includes("online")) {
       paymentCell.textContent = "✅ Paid";
       paymentCell.className = "payment status-paid";
     } else if (lower.includes("onsite")) {
-      paymentCell.textContent = "🟠 ON-Waiting";
+      paymentCell.textContent = "⚠️ On-Waiting";
       paymentCell.className = "payment status-onsite";
     } else {
       paymentCell.textContent = "❌ Not Paid";
       paymentCell.className = "payment status-not";
     }
   }
-  updatePaymentUI(person.paymentStatus);
 
-  // Attendance emoji
   function setEmoji(status) {
-    attendanceCell.textContent = status === "Attended" ? "✅"
-                             : status === "Cancelled" ? "❌" : "🟠";
+    attendanceCell.textContent =
+      status === "Attended" ? "✅" :
+      status === "Cancelled" ? "❌" : "🟠";
   }
+
+  updatePaymentUI(person.paymentStatus);
   setEmoji(person.attendanceStatus);
 
-  // Fast click handler
   attendanceCell.onclick = () => {
-    let idx = statusCycle.indexOf(person.attendanceStatus);
+    let current = localOverrides.get(person.rowIndex) || person.attendanceStatus;
+    let idx = statusCycle.indexOf(current);
     if (idx === -1) idx = 0;
     let newStatus = statusCycle[(idx + 1) % statusCycle.length];
 
-    // 🔥 INSTANT UI UPDATE
-    person.attendanceStatus = newStatus;
+    // 🔥 SAVE LOCALLY FIRST (prevents reverting)
+    localOverrides.set(person.rowIndex, newStatus);
+
     setEmoji(newStatus);
 
-    // 🔥 INSTANT PAYMENT UPDATE in UI
     if (newStatus === "Attended") {
-      person.paymentStatus = "Online Payment";
+      updatePaymentUI("Online Payment");
     } else if (newStatus === "ON-waiting") {
-      person.paymentStatus = "Onsite Payment";
+      updatePaymentUI("Onsite Payment");
     } else {
-      person.paymentStatus = "Not Paid";
+      updatePaymentUI("Not Paid");
     }
-    updatePaymentUI(person.paymentStatus);
 
     // Background sync
     const formData = new FormData();
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
     formData.append("attendance_status", newStatus);
-    formData.append("sheet", SHEET_NAME);
+    formData.append("sheet", "ylc2");
 
     fetch(BASE_URL, { method: "POST", body: formData })
+      .then(() => {
+        // 🔥 After 5 seconds remove override (sheet likely updated)
+        setTimeout(() => {
+          localOverrides.delete(person.rowIndex);
+        }, 5000);
+      })
       .catch(err => console.error("Sync error:", err));
   };
 }
@@ -153,17 +163,17 @@ function renderRow(person) {
 // Load data without wiping table
 async function loadAttendance() {
   try {
-    const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
+    const res = await fetch(BASE_URL + "?sheet=ylc2");
     const data = await res.json();
     if (!Array.isArray(data)) return;
 
     data.forEach(person => renderRow(person));
+
   } catch (err) {
     console.error("Load error:", err);
   }
 }
 
-// Initial load + silent refresh every 15s
 loadAttendance();
 setInterval(loadAttendance, 15000);
 </script>
