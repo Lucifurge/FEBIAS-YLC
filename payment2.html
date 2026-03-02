@@ -1,164 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Payment | FEBIAS College of Bible</title>
-<link rel="icon" href="logo.ico">
-
-<style>
-body {
-  margin:0;
-  font-family: 'Segoe UI', sans-serif;
-  background:#f9f9f9;
-  color:#222;
-}
-
-.container {
-  max-width:600px;
-  margin:60px auto;
-  background:#ffffff;
-  padding:35px;
-  border-radius:18px;
-  box-shadow:0 10px 35px rgba(0,0,0,0.08);
-  border-top:6px solid #c9a227;
-}
-
-h1 {
-  text-align:center;
-  color:#1f6b3a;
-  margin-bottom:10px;
-}
-
-.subtitle {
-  text-align:center;
-  color:#777;
-  margin-bottom:30px;
-  font-size:14px;
-}
-
-h2 {
-  margin-top:25px;
-  color:#1f6b3a;
-  font-size:17px;
-}
-
-label {
-  display:block;
-  margin-top:10px;
-  cursor:pointer;
-}
-
-input[type=text] {
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  font-size:14px;
-}
-
-input:focus {
-  outline:none;
-  border-color:#c9a227;
-  box-shadow:0 0 6px rgba(201,162,39,0.3);
-}
-
-.radio-group {
-  margin-top:10px;
-}
-
-.radio-group label {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-bottom:8px;
-}
-
-.notice {
-  margin:18px 0;
-  padding:12px;
-  background:#eaf6ef;
-  border-left:4px solid #1f6b3a;
-  font-size:13px;
-  border-radius:8px;
-  color:#1f6b3a;
-}
-
-button {
-  width:100%;
-  padding:14px;
-  margin-top:30px;
-  border:none;
-  border-radius:14px;
-  background:#1f6b3a;
-  color:white;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-  transition:all 0.3s ease;
-}
-
-button:hover {
-  background:#16542d;
-  transform:scale(1.02);
-}
-
-#loader {
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(255,255,255,0.8);
-  z-index:9999;
-  text-align:center;
-  padding-top:200px;
-  font-size:18px;
-  color:#1f6b3a;
-  font-weight:bold;
-}
-
-footer {
-  text-align:center;
-  margin-top:40px;
-  font-size:13px;
-  color:#888;
-}
-</style>
-</head>
-<body>
-
-<div class="container">
-<h1>YLC 2026 Payment</h1>
-<p class="subtitle">Youth Leaders Camp — Payment Confirmation</p>
-
-<form id="payment-form">
-
-<h2>Select Payment Type</h2>
-<div class="radio-group">
-  <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment (Walk-in)</label>
-  <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
-</div>
-
-<div class="notice">
-Instructions:<br>
-- For walk-in (onsite) payment: confirm here and present this confirmation at the event.<br>
-- For online payment: confirm here, then you will be redirected to a page with QR code to upload your receipt.
-</div>
-
-<button type="submit">Confirm Payment</button>
-</form>
-</div>
-
-<div id="loader">Processing payment, please wait...</div>
-
-<footer>
-© 2026 FEBIAS College of Bible — Youth Leaders Camp
-</footer>
-
 <script>
-const sheetUrl = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
-
+// Loader element
 const loader = document.getElementById('loader');
 
 // Get rowIndex from URL
@@ -173,6 +14,7 @@ if (!rowIndex) {
 document.getElementById('payment-form').addEventListener('submit', async e => {
   e.preventDefault();
 
+  const submitBtn = e.target.querySelector('button[type="submit"]');
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
 
   if (!paymentBy) {
@@ -180,8 +22,9 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
     return;
   }
 
-  // Show loader to prevent double clicks
+  // Show loader & disable submit button to prevent double clicks
   loader.style.display = 'block';
+  submitBtn.disabled = true;
 
   try {
     const postData = new URLSearchParams();
@@ -190,25 +33,28 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
     postData.append('sheet', 'ylc2');
     postData.append('payment_by', paymentBy);
 
-    const res = await fetch(sheetUrl, { method: 'POST', body: postData });
+    const res = await fetch("https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec", {
+      method: 'POST',
+      body: postData
+    });
+
     const result = await res.json();
 
     if (result.result !== 'success') {
       alert('Payment update failed. Please try again.');
       loader.style.display = 'none';
+      submitBtn.disabled = false;
       return;
     }
 
-    // Success → redirect to thankyou.html with rowIndex
+    // Success → redirect to thankyou page with rowIndex
     window.location.href = 'thankyou.html?rowIndex=' + rowIndex;
 
   } catch (err) {
     console.error(err);
     alert('Payment submission failed. Please try again.');
     loader.style.display = 'none';
+    submitBtn.disabled = false;
   }
 });
 </script>
-
-</body>
-</html>
