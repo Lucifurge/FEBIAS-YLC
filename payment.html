@@ -6,11 +6,124 @@
 <title>YLC 2026 Payment | FEBIAS College of Bible</title>
 <link rel="icon" href="logo.ico">
 <style>
-input[type=text], input[type=file]{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #c9a227;}
-.payment-box.selected { border: 2px solid #c9a227; }
-.notice { margin:10px 0; color:#c9a227; font-weight:bold; }
-.payment-box { cursor:pointer; display:inline-block; padding:10px; border:1px solid #ccc; border-radius:8px; margin:5px; text-align:center; }
-.payment-box img { width:50px; display:block; margin:0 auto 5px; }
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #111, #1c1c1c);
+  color:#fff;
+}
+
+.container {
+  max-width:600px;
+  margin:50px auto;
+  background:#1a1a1a;
+  padding:30px;
+  border-radius:16px;
+  box-shadow:0 0 30px rgba(0,0,0,0.6);
+}
+
+h1 {
+  text-align:center;
+  color:#c9a227;
+  margin-bottom:30px;
+}
+
+h2 {
+  margin-top:25px;
+  color:#ddd;
+  font-size:18px;
+}
+
+input[type=email],
+input[type=text],
+input[type=file] {
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid #c9a227;
+  background:#111;
+  color:#fff;
+}
+
+input[type=email]:focus,
+input[type=text]:focus {
+  outline:none;
+  box-shadow:0 0 10px #c9a227;
+}
+
+label {
+  display:block;
+  margin-top:10px;
+}
+
+.payment-methods {
+  display:flex;
+  justify-content:space-between;
+  margin-top:15px;
+  gap:10px;
+}
+
+.payment-box {
+  flex:1;
+  background:#111;
+  border:2px solid #333;
+  border-radius:12px;
+  padding:15px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+
+.payment-box:hover {
+  transform:scale(1.05);
+  border-color:#c9a227;
+}
+
+.payment-box.selected {
+  border:2px solid #c9a227;
+  background:#2a2100;
+}
+
+.payment-box img {
+  width:60px;
+  margin-bottom:8px;
+}
+
+.notice {
+  margin:15px 0;
+  padding:10px;
+  background:#2a2100;
+  border-left:4px solid #c9a227;
+  font-size:14px;
+  border-radius:8px;
+}
+
+button {
+  width:100%;
+  padding:14px;
+  margin-top:25px;
+  border:none;
+  border-radius:12px;
+  background:#c9a227;
+  color:#111;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+
+button:hover {
+  background:#e5c14c;
+  transform:scale(1.03);
+}
+
+footer {
+  text-align:center;
+  margin-top:40px;
+  font-size:13px;
+  color:#888;
+}
 </style>
 </head>
 <body>
