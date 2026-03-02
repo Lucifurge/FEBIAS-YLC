@@ -465,7 +465,7 @@ input[name="nickname"] {
 
   <div id="response"></div>
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbzLyAL1pu1WYazuTgXBNAbW6QFEKmJxpNG-GkFgiWCsiuWwSGG0mfhTUvFaCUKKvc5lAg/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
 
 document.getElementById("ylcForm").addEventListener("submit", function(e){
   e.preventDefault();
@@ -473,7 +473,6 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   const form = new FormData(this);
   const formData = {};
 
-  // Map form HTML names to Apps Script parameter names
   const nameMap = {
     lastName: "last_name",
     firstName: "first_name",
@@ -517,46 +516,49 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     shirtSize: "shirt_size"
   };
 
-// Build formData object
-for (let [key, value] of form.entries()) {
-  const mappedKey = nameMap[key] || key;
+  for (let [key, value] of form.entries()) {
+    const mappedKey = nameMap[key] || key;
 
-  // === FIX: normalize email only ===
-  if (mappedKey === "email") {
-    value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
-  }
-
-  // Handle multiple checkbox values
-  if (formData[mappedKey]) {
-    if (Array.isArray(formData[mappedKey])) {
-      formData[mappedKey].push(value);
-    } else {
-      formData[mappedKey] = [formData[mappedKey], value];
+    if (mappedKey === "email") {
+      value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
     }
-  } else {
-    formData[mappedKey] = value;
-  }
-}
 
-  // Add required action and sheet parameters
+    if (formData[mappedKey]) {
+      if (Array.isArray(formData[mappedKey])) {
+        formData[mappedKey].push(value);
+      } else {
+        formData[mappedKey] = [formData[mappedKey], value];
+      }
+    } else {
+      formData[mappedKey] = value;
+    }
+  }
+
   formData.action = "register";
   formData.sheet = "ylc";
 
-  // === FIX: send as URL-encoded, not JSON ===
   fetch(scriptURL, {
     method: "POST",
-    body: new URLSearchParams(formData) // <-- this fixes the failed fetch
+    body: new URLSearchParams(formData)
   })
   .then(res => res.json())
   .then(data => {
-    if (data.result === "success") {
-      window.location.href = "payment.html";
+
+    if (data.result === "success" && data.rowIndex) {
+
+      // 🔥 THIS IS THE FIX
+      // Redirect WITH rowIndex
+      window.location.href = "payment.html?rowIndex=" + data.rowIndex;
+
     } else {
-      document.getElementById("response").innerText = "Error: " + (data.error || "Something went wrong.");
+      document.getElementById("response").innerText =
+        "Error: " + (data.error || "Something went wrong.");
     }
+
   })
   .catch(err => {
-    document.getElementById("response").innerText = "Submission failed. Please try again.";
+    document.getElementById("response").innerText =
+      "Submission failed. Please try again.";
     console.error(err);
   });
 });
