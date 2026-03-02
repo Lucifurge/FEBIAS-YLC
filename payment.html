@@ -194,6 +194,25 @@ Please screenshot your registration confirmation. If paying onsite, present it d
 </footer>
 
 <script>
+// Loader element
+const loader = document.createElement('div');
+loader.id = 'loader';
+loader.style.display = 'none';
+loader.style.position = 'fixed';
+loader.style.top = '0';
+loader.style.left = '0';
+loader.style.width = '100%';
+loader.style.height = '100%';
+loader.style.background = 'rgba(255,255,255,0.8)';
+loader.style.zIndex = '9999';
+loader.style.textAlign = 'center';
+loader.style.paddingTop = '200px';
+loader.style.fontSize = '18px';
+loader.style.color = '#1f6b3a';
+loader.style.fontWeight = 'bold';
+loader.innerText = 'Processing your payment, please wait...';
+document.body.appendChild(loader);
+
 const sheetUrl = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
 const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
 
@@ -233,9 +252,13 @@ paymentBoxes.forEach(box => {
   });
 });
 
-// Submit
+// Submit form
 document.getElementById('payment-form').addEventListener('submit', async e => {
   e.preventDefault();
+
+  loader.style.display = 'block';
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
 
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   const selectedBox = document.querySelector('.payment-box.selected');
@@ -243,11 +266,15 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
 
   if (!paymentBy) {
     alert('Please select payment type');
+    loader.style.display = 'none';
+    submitBtn.disabled = false;
     return;
   }
 
   if (paymentBy === 'Online' && !method) {
     alert('Please select payment method');
+    loader.style.display = 'none';
+    submitBtn.disabled = false;
     return;
   }
 
@@ -268,11 +295,15 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
 
     if (result.result !== 'success') {
       alert('Sheet update failed.');
+      loader.style.display = 'none';
+      submitBtn.disabled = false;
       return;
     }
 
   } catch (err) {
     alert('Payment update failed.');
+    loader.style.display = 'none';
+    submitBtn.disabled = false;
     return;
   }
 
@@ -282,6 +313,8 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
 
     if (!file || !fileName) {
       alert('Please upload receipt and enter name');
+      loader.style.display = 'none';
+      submitBtn.disabled = false;
       return;
     }
 
@@ -294,18 +327,22 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
       uploadData.append('file', base64);
       uploadData.append('fileType', file.type);
 
-      await fetch(driveUrl, { method: 'POST', body: uploadData });
-
-      window.location.href = 'thankyou.html';
+      try {
+        await fetch(driveUrl, { method: 'POST', body: uploadData });
+        window.location.href = 'thankyou2.html';
+      } catch {
+        alert('Upload failed. Please try again.');
+        loader.style.display = 'none';
+        submitBtn.disabled = false;
+      }
     };
 
     reader.readAsDataURL(file);
 
   } else {
-    window.location.href = 'thankyou.html';
+    window.location.href = 'thankyou2.html';
   }
 });
 </script>
-
 </body>
 </html>
