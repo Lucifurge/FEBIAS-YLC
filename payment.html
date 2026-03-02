@@ -7,6 +7,15 @@
 <link rel="icon" href="logo.ico">
 
 <style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YLC 2026 Payment | FEBIAS College of Bible</title>
+<link rel="icon" href="logo.ico">
+
+<style>
 body {
   margin:0;
   font-family: 'Segoe UI', sans-serif;
@@ -341,6 +350,209 @@ document.getElementById('payment-form').addEventListener('submit', async e => {
 
   } else {
     window.location.href = 'thankyou2.html';
+  }
+});
+</script>
+</body>
+</html>
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>YLC 2026 Payment</h1>
+<p class="subtitle">Youth Leaders Camp — Payment Confirmation</p>
+
+<form id="payment-form">
+
+<h2>Select Payment Type</h2>
+<div class="radio-group">
+  <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment</label>
+  <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
+</div>
+
+<div class="notice">
+Please screenshot your registration confirmation. If paying onsite, present it during the event.
+</div>
+
+<h2>Payment Methods (Online Only)</h2>
+<div class="payment-methods">
+  <div class="payment-box" data-method="Bank Transfer">
+    <img src="bank.png" alt="Bank">
+    <div>Bank Transfer</div>
+  </div>
+  <div class="payment-box" data-method="GCash">
+    <img src="gcash.png" alt="GCash">
+    <div>GCash</div>
+  </div>
+</div>
+
+<div id="online-upload" style="display:none;">
+  <h2>Upload Receipt</h2>
+  <label>Receipt Name</label>
+  <input type="text" id="fileName" placeholder="Enter receipt name">
+
+  <label>Upload Receipt Photo</label>
+  <input type="file" id="receipt" accept="image/*">
+</div>
+
+<button type="submit">Confirm Payment</button>
+
+</form>
+</div>
+
+<footer>
+© 2026 FEBIAS College of Bible — Youth Leaders Camp
+</footer>
+
+<script>
+// Loader element
+const loader = document.createElement('div');
+loader.id = 'loader';
+loader.style.display = 'none';
+loader.style.position = 'fixed';
+loader.style.top = '0';
+loader.style.left = '0';
+loader.style.width = '100%';
+loader.style.height = '100%';
+loader.style.background = 'rgba(255,255,255,0.8)';
+loader.style.zIndex = '9999';
+loader.style.textAlign = 'center';
+loader.style.paddingTop = '200px';
+loader.style.fontSize = '18px';
+loader.style.color = '#1f6b3a';
+loader.style.fontWeight = 'bold';
+loader.innerText = 'Processing your payment, please wait...';
+document.body.appendChild(loader);
+
+const sheetUrl = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBjDl7_WMDBP8lrBuZ9Y6xbTMve9KScxUXhAOjmHcrdGv-B0s7A/exec";
+const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
+
+const onlineUpload = document.getElementById('online-upload');
+const paymentBoxes = document.querySelectorAll('.payment-box');
+const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+const paymentMethodsDiv = document.querySelector('.payment-methods');
+
+// Get rowIndex from URL
+const urlParams = new URLSearchParams(window.location.search);
+const rowIndex = urlParams.get("rowIndex");
+
+if (!rowIndex) {
+  alert("Invalid access. Please register first.");
+  window.location.href = "ylc.html";
+}
+
+// Show/hide online section
+paymentRadios.forEach(radio => {
+  radio.addEventListener('change', () => {
+    if (radio.value === 'Online') {
+      onlineUpload.style.display = 'block';
+      paymentMethodsDiv.style.display = 'flex';
+    } else {
+      onlineUpload.style.display = 'none';
+      paymentMethodsDiv.style.display = 'none';
+      paymentBoxes.forEach(b => b.classList.remove('selected'));
+    }
+  });
+});
+
+// Select payment box
+paymentBoxes.forEach(box => {
+  box.addEventListener('click', () => {
+    paymentBoxes.forEach(b => b.classList.remove('selected'));
+    box.classList.add('selected');
+  });
+});
+
+// Submit form
+document.getElementById('payment-form').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  loader.style.display = 'block';
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+
+  const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
+  const selectedBox = document.querySelector('.payment-box.selected');
+  const method = selectedBox?.dataset.method;
+
+  if (!paymentBy) {
+    alert('Please select payment type');
+    loader.style.display = 'none';
+    submitBtn.disabled = false;
+    return;
+  }
+
+  if (paymentBy === 'Online' && !method) {
+    alert('Please select payment method');
+    loader.style.display = 'none';
+    submitBtn.disabled = false;
+    return;
+  }
+
+  try {
+    const postData = new URLSearchParams();
+    postData.append('action', 'payment');
+    postData.append('rowIndex', rowIndex);
+    postData.append('sheet', 'ylc');
+
+    if (paymentBy === 'Online') {
+      postData.append('payment_by', 'Online (' + method + ')');
+    } else {
+      postData.append('payment_by', 'Onsite');
+    }
+
+    const res = await fetch(sheetUrl, { method: 'POST', body: postData });
+    const result = await res.json();
+
+    if (result.result !== 'success') {
+      alert('Sheet update failed.');
+      loader.style.display = 'none';
+      submitBtn.disabled = false;
+      return;
+    }
+
+  } catch (err) {
+    alert('Payment update failed.');
+    loader.style.display = 'none';
+    submitBtn.disabled = false;
+    return;
+  }
+
+  if (paymentBy === 'Online') {
+    const file = document.getElementById('receipt').files[0];
+    const fileName = document.getElementById('fileName').value.trim();
+
+    if (!file || !fileName) {
+      alert('Please upload receipt and enter name');
+      loader.style.display = 'none';
+      submitBtn.disabled = false;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result.split(',')[1];
+
+      const uploadData = new URLSearchParams();
+      uploadData.append('fileName', fileName);
+      uploadData.append('file', base64);
+      uploadData.append('fileType', file.type);
+
+      try {
+        await fetch(driveUrl, { method: 'POST', body: uploadData });
+        window.location.href = 'thankyou2.html';
+      } catch {
+        alert('Upload failed. Please try again.');
+        loader.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    };
+
+    reader.readAsDataURL(file);
+
+  } else {
+    window.location.href = 'thankyou.html';
   }
 });
 </script>
