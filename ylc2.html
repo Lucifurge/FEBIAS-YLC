@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YLC 2026 Walk-In Registration</title>
     <style>
-    /* ---------- BODY & HEADINGS ---------- */
+   /* ---------- BODY & HEADINGS ---------- */
 body {
   font-family: 'Arial', sans-serif;
   background-color: #ffffff;
@@ -143,7 +144,6 @@ button:hover {
 /* ---------- LISTS ---------- */
 ul {
   margin-left: 25px;
-
 }
 
 /* ---------- CAPS LOCK FOR NAMES ---------- */
@@ -154,9 +154,9 @@ input[name="nickname"] {
   text-transform: uppercase;
 }
 
-      /* Loader overlay */
+/* Loader overlay */
 #loader {
-  display: none; /* hidden by default */
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -179,11 +179,10 @@ input[name="nickname"] {
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
+
 /* ---------- RESPONSIVE DESIGN ---------- */
 @media (max-width: 1024px) {
-  form {
-    padding: 30px;
-  }
+  form { padding: 30px; }
   h1 { font-size: 2.2em; }
   h2 { font-size: 1.6em; }
   h3 { font-size: 1.3em; }
@@ -192,38 +191,37 @@ input[name="nickname"] {
 }
 
 @media (max-width: 768px) {
-  form {
-    padding: 20px;
-  }
+  form { padding: 20px; }
   h1 { font-size: 2em; }
   h2 { font-size: 1.4em; }
   h3 { font-size: 1.2em; }
   input, select, textarea { font-size: 1.05em; padding: 12px; }
   button { font-size: 1.15em; padding: 14px; }
 
-  /* Make table rows stack vertically */
-  table td {
-    display: block;
-    width: 100%;
-    padding: 8px 0;
-  }
-  td:first-child, td:nth-child(3), td:nth-child(5) {
-    margin-top: 10px;
-    font-weight: bold;
-  }
-  td:nth-child(2), td:nth-child(4), td:nth-child(6) {
-    width: 100%;
-  }
+  table td { display: block; width: 100%; padding: 8px 0; }
+  td:first-child, td:nth-child(3), td:nth-child(5) { margin-top: 10px; font-weight: bold; }
+  td:nth-child(2), td:nth-child(4), td:nth-child(6) { width: 100%; }
 }
 
-/* For very small phones */
+/* ---------- FOR SMALL PHONES (LESS THAN 480px) ---------- */
 @media (max-width: 480px) {
   form { padding: 15px; }
   h1 { font-size: 1.8em; }
   h2 { font-size: 1.3em; }
   h3 { font-size: 1.1em; }
-  input, select, textarea { font-size: 1em; padding: 10px; }
-  button { font-size: 1em; padding: 12px; }
+
+  /* Bigger inputs and selects for touch */
+  input, select, textarea { font-size: 1.1em; padding: 14px; }
+
+  button { font-size: 1.1em; padding: 14px; }
+
+  /* Stack table rows and add spacing */
+  table td { display: block; width: 100%; padding: 12px 0; }
+  td:first-child, td:nth-child(3), td:nth-child(5) { margin-top: 12px; font-weight: bold; font-size: 1.05em; }
+  td:nth-child(2), td:nth-child(4), td:nth-child(6) { width: 100%; }
+
+  /* Radio/checkbox bigger for touch */
+  .radio-group label, .checkbox-group label { font-size: 1em; }
 }
 </style>
 </head>
@@ -388,27 +386,23 @@ input[name="nickname"] {
     <textarea name="otherMinistries"></textarea>
         <h2>How often do you read the Bible in a week? *</h2>
     <div class="radio-group">
-      <label><input type="radio" name="bibleReading" value="Never" required> Never</label>
-      <label><input type="radio" name="bibleReading" value="Always"> Always</label>
-      <label><input type="radio" name="bibleReading" value="0"> 0</label>
-      <label><input type="radio" name="bibleReading" value="1"> 1</label>
-      <label><input type="radio" name="bibleReading" value="2"> 2</label>
-      <label><input type="radio" name="bibleReading" value="3"> 3</label>
-      <label><input type="radio" name="bibleReading" value="4"> 4</label>
-      <label><input type="radio" name="bibleReading" value="5"> 5</label>
+<label><input type="radio" name="bibleReading" value="0" required> 0</label>
+<label><input type="radio" name="bibleReading" value="1"> 1</label>
+<label><input type="radio" name="bibleReading" value="2"> 2</label>
+<label><input type="radio" name="bibleReading" value="3"> 3</label>
+<label><input type="radio" name="bibleReading" value="4"> 4</label>
+<label><input type="radio" name="bibleReading" value="5"> 5</label>
     </div>
 
-    <h2>How often do you attend church service in a month?</h2>
-    <div class="radio-group">
-      <label><input type="radio" name="churchAttendance" value="Never" required> Never</label>
-      <label><input type="radio" name="churchAttendance" value="Always"> Always</label>
-      <label><input type="radio" name="churchAttendance" value="0"> 0</label>
-      <label><input type="radio" name="churchAttendance" value="1"> 1</label>
-      <label><input type="radio" name="churchAttendance" value="2"> 2</label>
-      <label><input type="radio" name="churchAttendance" value="3"> 3</label>
-      <label><input type="radio" name="churchAttendance" value="4"> 4</label>
-      <label><input type="radio" name="churchAttendance" value="5"> 5</label>
-    </div>
+<h2>How often do you attend church service in a month?</h2>
+<div class="radio-group">
+<label><input type="radio" name="churchAttendance" value="0" required> 0</label>
+<label><input type="radio" name="churchAttendance" value="1"> 1</label>
+<label><input type="radio" name="churchAttendance" value="2"> 2</label>
+<label><input type="radio" name="churchAttendance" value="3"> 3</label>
+<label><input type="radio" name="churchAttendance" value="4"> 4</label>
+<label><input type="radio" name="churchAttendance" value="5"> 5</label>
+</div>
 
     <h2>Are you attending a regular discipleship or Bible study group?</h2>
     <div class="radio-group">
