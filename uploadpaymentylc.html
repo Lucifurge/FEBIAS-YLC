@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Payment | YLC 2026</title>
+<link rel="icon" href="logo.ico">
+
+<style>
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background:#f9f9f9;
+  color:#222;
+}
+
+.container {
+  max-width:600px;
+  margin:60px auto;
+  background:#ffffff;
+  padding:35px;
+  border-radius:18px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.08);
+  border-top:6px solid #c9a227;
+}
+
+h1 {
+  text-align:center;
+  color:#1f6b3a;
+  margin-bottom:10px;
+}
+
+.subtitle {
+  text-align:center;
+  color:#777;
+  margin-bottom:30px;
+  font-size:14px;
+}
+
+h2 {
+  margin-top:25px;
+  color:#1f6b3a;
+  font-size:17px;
+}
+
+label {
+  display:block;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+input[type=text],
+input[type=file] {
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:14px;
+}
+
+input:focus {
+  outline:none;
+  border-color:#c9a227;
+  box-shadow:0 0 6px rgba(201,162,39,0.3);
+}
+
+.notice {
+  margin:18px 0;
+  padding:12px;
+  background:#eaf6ef;
+  border-left:4px solid #1f6b3a;
+  font-size:13px;
+  border-radius:8px;
+  color:#1f6b3a;
+}
+
+button {
+  width:100%;
+  padding:14px;
+  margin-top:30px;
+  border:none;
+  border-radius:14px;
+  background:#1f6b3a;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+
+button:hover {
+  background:#16542d;
+  transform:scale(1.02);
+}
+
+#loader {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(255,255,255,0.8);
+  z-index:9999;
+  text-align:center;
+  padding-top:200px;
+  font-size:18px;
+  color:#1f6b3a;
+  font-weight:bold;
+}
+
+footer {
+  text-align:center;
+  margin-top:40px;
+  font-size:13px;
+  color:#888;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>Upload Your Payment Receipt</h1>
+<p class="subtitle">YLC 2026 — Online Payment</p>
+
+<form id="upload-form">
+
+<h2>Step 1: Receipt Name</h2>
+<label>Enter Receipt Name:</label>
+<input type="text" id="fileName" placeholder="E.g., John Doe Payment" required>
+
+<h2>Step 2: Upload Receipt Photo</h2>
+<label>Select Image File:</label>
+<input type="file" id="receipt" accept="image/*" required>
+
+<div class="notice">
+Please ensure your receipt is clear and correctly named. After submission, you will see a confirmation.
+</div>
+
+<button type="submit">Submit Receipt</button>
+</form>
+</div>
+
+<div id="loader">Uploading your receipt, please wait...</div>
+
+<footer>
+© 2026 FEBIAS College of Bible — Youth Leaders Camp
+</footer>
+
+<script>
+const driveUrl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
+
+// Get rowIndex from URL
+const urlParams = new URLSearchParams(window.location.search);
+const rowIndex = urlParams.get("rowIndex");
+
+if (!rowIndex) {
+  alert("Invalid access. Please register first.");
+  window.location.href = "ylc.html";
+}
+
+const loader = document.getElementById('loader');
+
+document.getElementById('upload-form').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const fileName = document.getElementById('fileName').value.trim();
+  const file = document.getElementById('receipt').files[0];
+
+  if (!fileName || !file) {
+    alert('Please provide receipt name and upload file.');
+    return;
+  }
+
+  loader.style.display = 'block';
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const base64 = reader.result.split(',')[1];
+
+      const postData = new URLSearchParams();
+      postData.append('fileName', fileName);
+      postData.append('file', base64);
+      postData.append('fileType', file.type);
+      postData.append('rowIndex', rowIndex);
+
+      const res = await fetch(driveUrl, { method: 'POST', body: postData });
+      const result = await res.json();
+
+      if (result.result === 'success') {
+        alert('Receipt uploaded successfully!');
+        window.location.href = 'thankyou2.html?rowIndex=' + rowIndex;
+      } else {
+        alert('Upload failed. Please try again.');
+        loader.style.display = 'none';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Upload error. Please try again.');
+      loader.style.display = 'none';
+    }
+  };
+
+  reader.readAsDataURL(file);
+});
+</script>
+
+</body>
+</html>
