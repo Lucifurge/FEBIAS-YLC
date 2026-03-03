@@ -123,9 +123,12 @@ input:focus {
   background: rgba(255,255,255,0.2);
 }
 
+/* Updated QR / Bank image size */
 .payment-box img {
-  width:60px;
-  margin-bottom:8px;
+  width: 240px;        /* increased for scanning */
+  max-width: 100%;     /* responsive */
+  height: auto;
+  margin-bottom: 15px;
 }
 
 /* Online upload section */
@@ -181,6 +184,9 @@ footer {
 @media(max-width:480px) {
   .payment-methods {
     flex-direction: column;
+  }
+  .payment-box img {
+    width: 80%;   /* shrink QR for mobile */
   }
 }
 </style>
