@@ -6,23 +6,26 @@
 <title>YLC | FEBIAS College of Bible</title>
 
 <link rel="icon" href="logo.ico">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+
+<!-- GOOGLE FONTS -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
+
 /* ================= RESET ================= */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Segoe UI", system-ui, sans-serif;
 }
 
 body {
-  background: transparent;
-  color: #1f2937;
+  font-family: "Montserrat", sans-serif;
+  background: #000;
+  color: #fff;
 }
 
-/* ================= ANIMATED BACKGROUND ================= */
+/* ================= BACKGROUND SLIDESHOW ================= */
 .bg-slideshow {
   position: fixed;
   top: 0;
@@ -54,32 +57,29 @@ body {
   100% { opacity: 0; }
 }
 
+/* FIRE OVERLAY */
 .bg-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    rgba(11,61,46,0.75),
-    rgba(212,175,55,0.65)
-  );
+  background: linear-gradient(180deg, rgba(255,106,0,0.8), rgba(230,57,0,0.85));
   z-index: -1;
 }
 
 /* ================= NAV ================= */
 nav {
-  background: #0b3d2e;
-  border-bottom: 4px solid #d4af37;
+  background: rgba(0,0,0,0.85);
+  border-bottom: 3px solid #FFD700;
   padding: 1rem;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  align-items: center;
 }
 
 nav img {
-  height: 48px;
+  height: 50px;
 }
 
 nav ul {
@@ -92,58 +92,72 @@ nav a {
   color: #fff;
   text-decoration: none;
   font-weight: 600;
-  font-size: 1.05rem;
+  transition: 0.3s;
+}
+
+nav a:hover {
+  color: #FFD700;
 }
 
 /* ================= HERO ================= */
 header {
   text-align: center;
-  padding: 3rem 1.5rem 2rem;
-  background: #ffffff;
+  padding: 5rem 1.5rem 3rem;
 }
 
 header h1 {
-  font-size: 2.6rem;
-  color: #0b3d2e;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 5rem;
+  letter-spacing: 6px;
+  color: #FF6A00;
+  text-shadow: 0 0 25px rgba(255,106,0,0.7);
 }
 
-.ylc {
-  font-family: "Cinzel", serif;
-  letter-spacing: 5px;
-  color: #d4af37;
+header h2 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.8rem;
+  margin-top: 10px;
+  color: #FFD700;
 }
 
 header p {
-  margin-top: 1rem;
-  font-size: 1.15rem;
+  margin-top: 1.5rem;
+  font-family: "Roboto", sans-serif;
+  font-size: 1.2rem;
   max-width: 700px;
   margin-inline: auto;
 }
 
-/* ================= BIG REGISTER BUTTON ================= */
+/* ================= REGISTER BUTTON ================= */
 .big-register {
   display: block;
   max-width: 420px;
-  margin: 2.5rem auto;
+  margin: 3rem auto;
   padding: 1.6rem;
-  font-size: 1.7rem;
+  font-size: 1.8rem;
   font-weight: 800;
   text-align: center;
   border-radius: 18px;
-  background: #d4af37;
-  color: #0b3d2e;
+  background: #FF6A00;
+  color: #fff;
   text-decoration: none;
-  box-shadow: 0 10px 25px rgba(0,0,0,.25);
+  box-shadow: 0 0 30px rgba(255,106,0,.6);
+  transition: 0.3s ease;
+}
+
+.big-register:hover {
+  background: #E63900;
+  box-shadow: 0 0 40px rgba(255,215,0,.8);
+  transform: translateY(-5px);
 }
 
 /* ================= SECTIONS ================= */
 section {
   max-width: 1100px;
-  margin: 3rem auto;
+  margin: 4rem auto;
   padding: 0 1.5rem;
 }
 
-/* ================= INFO CARDS ================= */
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
@@ -151,11 +165,17 @@ section {
 }
 
 .card {
-  background: #fff;
+  background: rgba(0,0,0,0.85);
   border-radius: 16px;
-  border: 2px solid #d4af37;
-  box-shadow: 0 10px 30px rgba(0,0,0,.12);
-  padding: 1.4rem;
+  border: 2px solid #FF6A00;
+  box-shadow: 0 0 25px rgba(255,106,0,.3);
+  padding: 1.6rem;
+  transition: 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  border-color: #FFD700;
 }
 
 .card img {
@@ -165,30 +185,36 @@ section {
 }
 
 .card h3 {
-  color: #0b3d2e;
-  text-align: center;
-  margin-bottom: .5rem;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 2rem;
+  color: #FFD700;
+  margin-bottom: .8rem;
 }
 
 .card p {
+  font-family: "Montserrat", sans-serif;
   line-height: 1.6;
-  font-size: 1.05rem;
 }
 
 /* ================= FOOTER ================= */
 footer {
-  background: #0b3d2e;
+  background: #000;
   color: #fff;
   text-align: center;
   padding: 2rem 1rem;
   margin-top: 4rem;
-  font-size: 1rem;
+  border-top: 3px solid #FF6A00;
+  font-family: "Roboto", sans-serif;
 }
 
-/* ================= MOBILE OPTIMIZATION ================= */
+/* ================= MOBILE ================= */
 @media (max-width: 600px) {
   header h1 {
-    font-size: 2.1rem;
+    font-size: 3.5rem;
+  }
+
+  header h2 {
+    font-size: 1.3rem;
   }
 
   .big-register {
@@ -197,17 +223,16 @@ footer {
   }
 
   nav ul {
-    width: 100%;
-    justify-content: center;
-    margin-top: .8rem;
+    gap: 1rem;
   }
 }
+
 </style>
 </head>
 
 <body>
 
-<!-- ANIMATED BACKGROUND -->
+<!-- BACKGROUND -->
 <div class="bg-slideshow">
   <img src="qw.jpg" alt="">
   <img src="fcb.jpg" alt="">
@@ -224,12 +249,12 @@ footer {
 </nav>
 
 <header>
-  <h1>Youth Leaders Camp <span class="ylc">YLC</span></h1>
-  <p>FEBIAS College of Bible Youth Fellowship — building Christ-centered leaders.</p>
+  <h1>REFINE</h1>
+  <h2>Youth Leaders Camp 2026</h2>
+  <p>“These trials will show that your faith is genuine.” — 1 Peter 1:7</p>
 </header>
 
-<!-- BUTTON NOW LINKS TO ylc.html -->
-<a href="ylc.html" class="big-register">👉 CLICK HERE TO REGISTER</a>
+<a href="ylc.html" class="big-register">🔥 REGISTER NOW 🔥</a>
 
 <section id="about" class="info-grid">
   <div class="card">
