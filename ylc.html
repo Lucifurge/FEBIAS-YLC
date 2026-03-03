@@ -59,6 +59,34 @@ label {
   margin-top: 12px;
   color: #FFFFFF;
 }
+      /* ---------- LOADER FIXED ---------- */
+#loader {
+  display: none; /* Hidden by default */
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+/* When active */
+#loader.active {
+  display: flex;
+}
+
+/* Loader Box */
+.loader-content {
+  padding: 30px 40px;
+  background: #111;
+  border-radius: 16px;
+  border: 2px solid #FF6A00;
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 1.3em;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255,106,0,.8);
+}
 
 /* ---------- INPUTS ---------- */
 input, select, textarea {
