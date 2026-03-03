@@ -7,34 +7,29 @@
 <link rel="icon" href="logo.ico">
 
 <style>
-/* Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", system-ui, sans-serif;
-}
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;700&family=Roboto:wght@400;500&display=swap');
 
 /* Body */
 body {
-  background: #f9f9f9;
-  color: #222;
+  background: linear-gradient(180deg,#FF6A00,#E63900);
+  color: #FFFFFF;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   line-height: 1.6;
+  font-family:'Montserrat',sans-serif;
 }
 
 /* Container */
 .container {
-  background: #fff;
+  background: rgba(0,0,0,0.85);
   padding: 3rem 2rem;
   border-radius: 18px;
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 35px rgba(255,106,0,0.4);
   text-align: center;
   max-width: 500px;
-  border-top: 6px solid #c9a227;
+  border-top: 6px solid #FFD700;
 }
 
 /* Logo */
@@ -43,19 +38,22 @@ body {
   height: auto;
   margin-bottom: 1.5rem;
   border-radius: 50%;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(255,214,0,0.4);
 }
 
 /* Headings & text */
 h1 {
-  color: #1f6b3a;
+  font-family:'Bebas Neue',cursive;
+  color: #FF6A00;
   margin-bottom: 1rem;
   font-size: 28px;
+  text-transform: uppercase;
 }
+
 p {
   margin-bottom: 2rem;
   font-size: 1.1rem;
-  color: #555;
+  color: #FFFFFF;
 }
 
 /* Button */
@@ -63,15 +61,16 @@ button {
   padding: 1rem 2rem;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
-  background: #1f6b3a;
+  color: #000;
+  background: #FF6A00;
   border: none;
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
+
 button:hover {
-  background: #16542d;
+  background: #FFD700;
   transform: scale(1.05);
 }
 
