@@ -7,7 +7,7 @@
 <link rel="icon" href="logo.ico">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;700&family=Roboto:wght@400;500&display=swap');
 
 /* Body */
 body {
@@ -15,57 +15,53 @@ body {
   font-family: 'Montserrat', sans-serif;
   background: linear-gradient(180deg,#FF6A00,#E63900);
   color:#FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 2rem;
 }
 
 /* Container */
 .container {
-  max-width: 600px;
-  width: 100%;
+  max-width:600px;
+  margin:60px auto;
   background: rgba(0,0,0,0.85);
-  padding: 35px;
-  border-radius: 18px;
-  box-shadow: 0 10px 35px rgba(255,106,0,0.3);
-  border-top: 6px solid #FFD700;
-  text-align: center;
+  padding:35px;
+  border-radius:18px;
+  box-shadow:0 10px 35px rgba(255,106,0,0.3);
+  border-top:6px solid #FFD700;
 }
 
 /* Headings */
 h1 {
-  color: #FF6A00;
-  margin-bottom: 10px;
+  text-align:center;
+  color:#FF6A00;
+  margin-bottom:10px;
   font-family: 'Bebas Neue', cursive;
   text-transform: uppercase;
 }
 .subtitle {
-  color: #FFFFFF;
-  margin-bottom: 30px;
-  font-size: 14px;
+  text-align:center;
+  color:#FFFFFF;
+  margin-bottom:30px;
+  font-size:14px;
 }
 h2 {
-  margin-top: 25px;
-  color: #FF6A00;
-  font-size: 17px;
+  margin-top:25px;
+  color:#FF6A00;
+  font-size:17px;
 }
 
-/* Inputs */
+/* Labels & Inputs */
 label {
-  display: block;
-  margin-top: 10px;
-  cursor: pointer;
+  display:block;
+  margin-top:10px;
+  cursor:pointer;
 }
 input[type=text],
 input[type=file] {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  border-radius: 10px;
-  border: 1px solid #FFD700;
-  font-size: 14px;
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:10px;
+  border:1px solid #FFD700;
+  font-size:14px;
   background: rgba(255,255,255,0.1);
   color: #FFFFFF;
 }
@@ -76,90 +72,84 @@ input:focus {
   background: rgba(255,255,255,0.15);
 }
 
-/* Notice Box */
+/* Notice box */
 .notice {
-  margin: 18px 0;
-  padding: 14px;
+  margin:18px 0;
+  padding:12px;
   background: rgba(0,0,0,0.6);
-  border-left: 4px solid #FFD700;
-  font-size: 13px;
-  border-radius: 8px;
-  color: #FFD700;
-  text-align: left;
+  border-left:4px solid #FFD700;
+  font-size:13px;
+  border-radius:8px;
+  color:#FFD700;
+  text-align:center;
 }
 
 /* Button */
 button {
-  width: 100%;
-  padding: 16px;
-  margin-top: 30px;
-  border: none;
-  border-radius: 14px;
-  background: #FF6A00;
-  color: black;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  width:100%;
+  padding:14px;
+  margin-top:30px;
+  border:none;
+  border-radius:14px;
+  background:#FF6A00;
+  color:black;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:all 0.3s ease;
 }
 button:hover {
-  background: #FFD700;
-  transform: scale(1.02);
+  background:#FFD700;
+  transform:scale(1.02);
 }
 
 /* Loader */
 #loader {
-  display: none;
-  position: fixed;
+  display:none;
+  position:fixed;
   top:0; left:0;
   width:100%; height:100%;
-  background: rgba(0,0,0,0.85);
-  z-index: 9999;
-  text-align: center;
-  padding-top: 200px;
-  font-size: 18px;
-  color: #FFD700;
-  font-weight: bold;
+  background:rgba(0,0,0,0.85);
+  z-index:9999;
+  text-align:center;
+  padding-top:200px;
+  font-size:18px;
+  color:#FFD700;
+  font-weight:bold;
   font-family:'Montserrat', sans-serif;
 }
 
 /* Footer */
 footer {
-  text-align: center;
-  margin-top: 40px;
-  font-size: 13px;
-  color: #FFFFFF;
-}
-
-/* Mobile */
-@media(max-width:480px){
-  .container { padding: 25px 20px; }
-  h1 { font-size: 24px; }
-  button { font-size: 15px; padding: 14px; }
+  text-align:center;
+  margin-top:40px;
+  font-size:13px;
+  color:#FFFFFF;
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Upload Your Payment Receipt</h1>
-  <p class="subtitle">YLC 2026 — Online Payment</p>
+<h1>Upload Your Payment Receipt</h1>
+<p class="subtitle">YLC 2026 — Online Payment</p>
 
-  <form id="upload-form">
-    <h2>Step 1: Receipt Name</h2>
-    <label>Enter Receipt Name:</label>
-    <input type="text" id="fileName" placeholder="E.g., John Doe Payment" required>
+<form id="upload-form">
 
-    <h2>Step 2: Upload Receipt Photo</h2>
-    <label>Select Image File:</label>
-    <input type="file" id="receipt" accept="image/*" required>
+<h2>Step 1: Receipt Name</h2>
+<label>Enter Receipt Name:</label>
+<input type="text" id="fileName" placeholder="E.g., John Doe Payment" required>
 
-    <div class="notice">
-      Please ensure your receipt is clear and correctly named. After submission, you will see a confirmation.
-    </div>
+<h2>Step 2: Upload Receipt Photo</h2>
+<label>Select Image File:</label>
+<input type="file" id="receipt" accept="image/*" required>
 
-    <button type="submit">Submit Receipt</button>
-  </form>
+<div class="notice">
+Please ensure your receipt is clear and correctly named. After submission, you will see a confirmation.
+</div>
+
+<button type="submit">Submit Receipt</button>
+</form>
 </div>
 
 <div id="loader">Uploading your receipt, please wait...</div>
@@ -174,13 +164,11 @@ const loader = document.getElementById('loader');
 
 document.getElementById('upload-form').addEventListener('submit', async e => {
   e.preventDefault();
-
   const fileName = document.getElementById('fileName').value.trim();
   const file = document.getElementById('receipt').files[0];
   if (!fileName || !file) { alert('Please provide receipt name and upload file.'); return; }
 
   loader.style.display = 'block';
-
   const reader = new FileReader();
   reader.onload = async () => {
     try {
@@ -195,7 +183,7 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
 
       if (result.result === 'success') {
         alert('Receipt uploaded successfully!');
-        window.location.href = 'thankyou2.html';
+        window.location.href = 'thankyou.html';
       } else {
         alert('Upload failed. Please try again.');
         loader.style.display = 'none';
@@ -206,7 +194,6 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
       loader.style.display = 'none';
     }
   };
-
   reader.readAsDataURL(file);
 });
 </script>
