@@ -22,7 +22,7 @@
 body {
   font-family: "Montserrat", sans-serif;
   background: #000000;
-  color: #ffffff;
+  color: #FFFFFF; /* TEXT WHITE */
 }
 
 /* ================= BACKGROUND SLIDESHOW ================= */
@@ -42,7 +42,6 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  filter: brightness(45%) contrast(110%);
   animation: slideFade 18s infinite;
 }
 
@@ -58,19 +57,14 @@ body {
   100% { opacity: 0; }
 }
 
-/* ================= FIRE OVERLAY ================= */
+/* ================= DARK OVERLAY ================= */
 .bg-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.85);
   z-index: -2;
-
-  border: 8px solid #ff5a00;
-
-  box-shadow:
-  0 0 40px #ff5a00,
-  0 0 80px #ff2a00 inset,
-  0 0 120px rgba(255,120,0,.4);
+  border: 8px solid #FF6A00;
+  box-shadow: 0 0 40px #FF6A00, 0 0 80px #E63900 inset;
 }
 
 /* ================= NAV ================= */
@@ -80,8 +74,7 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  border-bottom: 3px solid #ff5a00;
+  border-bottom: 2px solid #FFD700;
 }
 
 nav img {
@@ -95,15 +88,14 @@ nav ul {
 }
 
 nav a {
-  color: #ffffff;
+  color: #FFFFFF;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 600;
   transition: 0.3s;
 }
 
 nav a:hover {
-  color: #ff7a00;
-  text-shadow: 0 0 10px rgba(255,120,0,.8);
+  color: #FFD700;
 }
 
 /* ================= HERO ================= */
@@ -112,34 +104,26 @@ header {
   padding: 6rem 1.5rem 3rem;
 }
 
-/* REFINE TITLE */
+/* REFINE TITLE (NOW WHITE) */
 header h1 {
   font-family: "Bebas Neue", sans-serif;
   font-size: 6rem;
   letter-spacing: 8px;
-
-  background: linear-gradient(
-    90deg,
-    #ff2a00,
-    #ff7a00,
-    #ffd000
-  );
-
-  -webkit-background-clip: text;
-  color: transparent;
+  color: #FFFFFF;
 
   text-shadow:
-  0 0 15px rgba(255,80,0,.9),
-  0 0 30px rgba(255,120,0,.8),
-  0 0 60px rgba(255,60,0,.7);
+    0 0 10px rgba(255,90,0,.9),
+    0 0 20px rgba(255,120,0,.8),
+    0 0 40px rgba(255,60,0,.7),
+    0 0 80px rgba(255,120,0,.5);
 }
 
 /* Subtitle */
 header h2 {
   margin-top: 15px;
   font-size: 1.8rem;
-  color: #ff7a00;
-  font-weight: 700;
+  color: #FFD700;
+  font-weight: 600;
 }
 
 /* Verse */
@@ -147,7 +131,7 @@ header p {
   margin-top: 1.5rem;
   font-family: "Roboto", sans-serif;
   font-size: 1.2rem;
-  color: #ffffff;
+  color: #FFFFFF;
   max-width: 700px;
   margin-inline: auto;
 }
@@ -158,41 +142,21 @@ header p {
   max-width: 450px;
   margin: 3rem auto;
   padding: 1.7rem;
-
   font-size: 1.9rem;
   font-weight: 800;
   text-align: center;
-
   border-radius: 20px;
-
-  background: linear-gradient(
-    45deg,
-    #ff2a00,
-    #ff7a00
-  );
-
-  color: #ffffff;
+  background: #FF6A00;
+  color: #FFFFFF;
   text-decoration: none;
-
-  box-shadow:
-  0 0 25px rgba(255,90,0,.7),
-  0 10px 25px rgba(0,0,0,.4);
-
+  box-shadow: 0 0 35px rgba(255,106,0,.7);
   transition: 0.3s ease;
 }
 
 .big-register:hover {
-
-  background: linear-gradient(
-    45deg,
-    #ff7a00,
-    #ffd000
-  );
-
-  box-shadow:
-  0 0 45px rgba(255,120,0,.9);
-
-  transform: translateY(-6px) scale(1.03);
+  background: #E63900;
+  box-shadow: 0 0 45px rgba(255,215,0,.9);
+  transform: translateY(-6px);
 }
 
 /* ================= INFO SECTION ================= */
@@ -209,30 +173,17 @@ section {
 }
 
 .card {
-  background: rgba(0,0,0,0.85);
-
+  background: rgba(0,0,0,0.9);
   border-radius: 18px;
-
-  border: 2px solid #ff5a00;
-
-  box-shadow:
-  0 10px 25px rgba(0,0,0,.4),
-  0 0 20px rgba(255,90,0,.4);
-
+  border: 2px solid #FF6A00;
+  box-shadow: 0 0 25px rgba(255,106,0,.4);
   padding: 1.8rem;
-
   transition: 0.3s ease;
 }
 
 .card:hover {
-
-  transform: translateY(-8px) scale(1.02);
-
-  border-color: #ffd000;
-
-  box-shadow:
-  0 15px 35px rgba(0,0,0,.5),
-  0 0 30px rgba(255,120,0,.7);
+  transform: translateY(-8px);
+  border-color: #FFD700;
 }
 
 .card img {
@@ -242,38 +193,27 @@ section {
 }
 
 .card h3 {
-
   font-family: "Bebas Neue", sans-serif;
-
   font-size: 2.2rem;
-
-  color: #ff7a00;
-
+  color: #FFD700;
   margin-bottom: 1rem;
 }
 
 .card p {
   font-size: 1.05rem;
   line-height: 1.7;
-  color: #ffffff;
+  color: #FFFFFF;
 }
 
 /* ================= FOOTER ================= */
 footer {
-
   background: #000000;
-
   text-align: center;
-
   padding: 2rem 1rem;
-
   margin-top: 4rem;
-
-  border-top: 4px solid #ff5a00;
-
+  border-top: 3px solid #FF6A00;
   font-family: "Roboto", sans-serif;
-
-  color: #ffffff;
+  color: #FFFFFF;
 }
 
 /* ================= MOBILE ================= */
@@ -296,7 +236,6 @@ footer {
   nav ul {
     gap: 1rem;
   }
-
 }
 </style>
 </head>
