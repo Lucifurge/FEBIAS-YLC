@@ -576,7 +576,7 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   }
 
   formData.action = "register";
-  formData.sheet = "ylc";
+  formData.sheet = "ylc2";
 
   // Send form data to Google Apps Script
   fetch(scriptURL, {
@@ -589,7 +589,7 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
 
     if (data.result === "success" && data.rowIndex) {
       // Redirect to payment page with rowIndex
-      window.location.href = "payment.html?rowIndex=" + data.rowIndex;
+      window.location.href = "payment2.html?rowIndex=" + data.rowIndex;
     } else {
       document.getElementById("response").innerText =
         "Error: " + (data.error || "Something went wrong.");
