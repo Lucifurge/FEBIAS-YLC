@@ -227,7 +227,26 @@ button:hover{
     font-weight:bold;
   }
 }
+/* ---------- CAMP T-SHIRT IMAGE BESIDE RADIOS ---------- */
+.shirt-container{
+  display:flex;
+  align-items:flex-start;
+  gap:20px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
 
+.shirt-sizes{
+  flex:1;
+}
+
+.shirt-image img{
+  max-width:250px;
+  width:100%;
+  height:auto;
+  border:2px solid #FF6A00;
+  border-radius:12px;
+}
 </style>
 </head>
 <body>
@@ -429,16 +448,20 @@ button:hover{
       <label><input type="radio" name="churchMembership" value="2 yr above"> 2 yr above</label>
     </div>    <h2>CAMP T-SHIRT</h2>
     <p>Kindly check your preferred shirt size. Please refer to Size.*</p>
-    <div class="radio-group">
-      <label><input type="radio" name="shirtSize" value="XS" required> XS</label>
-      <label><input type="radio" name="shirtSize" value="S"> S</label>
-      <label><input type="radio" name="shirtSize" value="M"> M</label>
-      <label><input type="radio" name="shirtSize" value="L"> L</label>
-      <label><input type="radio" name="shirtSize" value="XL"> XL</label>
-      <label><input type="radio" name="shirtSize" value="XXL"> XXL</label>
-      <label><input type="radio" name="shirtSize" value="3XL"> 3XL</label>
-    </div>
-
+  <div class="shirt-container">
+  <div class="radio-group shirt-sizes">
+    <label><input type="radio" name="shirtSize" value="XS" required> XS</label>
+    <label><input type="radio" name="shirtSize" value="S"> S</label>
+    <label><input type="radio" name="shirtSize" value="M"> M</label>
+    <label><input type="radio" name="shirtSize" value="L"> L</label>
+    <label><input type="radio" name="shirtSize" value="XL"> XL</label>
+    <label><input type="radio" name="shirtSize" value="XXL"> XXL</label>
+    <label><input type="radio" name="shirtSize" value="3XL"> 3XL</label>
+  </div>
+  <div class="shirt-image">
+    <img src="shirt.jpg" alt="Shirt Sizes Reference">
+  </div>
+</div>
     <h2>Health Information</h2>
     <p>For your safety, please provide health details that may affect your participation in camp activities.</p>
 
