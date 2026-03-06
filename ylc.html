@@ -500,11 +500,37 @@ const scriptURL = "https://script.google.com/macros/s/AKfycbxJBP-r5ADNDEKhnCpmBj
 document.getElementById("ylcForm").addEventListener("submit", function(e){
   e.preventDefault();
 
-  // Show loader overlay
+  // ---------- VALIDATION: Ensure all inputs, selects, textareas, radios, checkboxes are filled ----------
+  const formElements = this.querySelectorAll("input, select, textarea");
+  for (const el of formElements) {
+    if ((el.type === "radio" || el.type === "checkbox")) {
+      // For radios: at least one in group must be checked
+      if (el.required) {
+        const group = this.querySelectorAll(`input[name="${el.name}"]`);
+        if (![...group].some(r => r.checked)) {
+          alert(`Please select an option for "${el.name}".`);
+          el.focus();
+          return;
+        }
+      }
+    } else if (!el.value.trim()) {
+      alert(`Please fill out the "${el.name}" field.`);
+      el.focus();
+      return;
+    }
+  }
+
+  // ---------- VALIDATION: Health Declaration must select exactly 4 ----------
+  const healthDecl = this.querySelectorAll('input[name="healthDeclaration"]:checked');
+  if (healthDecl.length !== 4) {
+    alert("Please select exactly 4 options for Health Declaration.");
+    return;
+  }
+
+  // ---------- SHOW LOADER ----------
   const loader = document.getElementById("loader");
   loader.classList.add("active");
 
-  // Disable submit button to prevent double-click
   const submitBtn = this.querySelector("button[type='submit']");
   submitBtn.disabled = true;
 
@@ -554,16 +580,13 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     shirtSize: "shirt_size"
   };
 
-  // Map form values to structured object
   for (let [key, value] of form.entries()) {
     const mappedKey = nameMap[key] || key;
 
-    // Clean email
     if (mappedKey === "email") {
       value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
     }
 
-    // Handle multiple values (checkboxes)
     if (formData[mappedKey]) {
       if (Array.isArray(formData[mappedKey])) {
         formData[mappedKey].push(value);
@@ -578,27 +601,24 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   formData.action = "register";
   formData.sheet = "ylc";
 
-  // Send form data to Google Apps Script
   fetch(scriptURL, {
     method: "POST",
     body: new URLSearchParams(formData)
   })
   .then(res => res.json())
   .then(data => {
-    loader.classList.remove("active"); // hide loader
-
+    loader.classList.remove("active");
     if (data.result === "success" && data.rowIndex) {
-      // Redirect to payment page with rowIndex
       window.location.href = "payment.html?rowIndex=" + data.rowIndex;
     } else {
       document.getElementById("response").innerText =
         "Error: " + (data.error || "Something went wrong.");
-      submitBtn.disabled = false; // re-enable button
+      submitBtn.disabled = false;
     }
   })
   .catch(err => {
-    loader.classList.remove("active"); // hide loader
-    submitBtn.disabled = false; // re-enable button
+    loader.classList.remove("active");
+    submitBtn.disabled = false;
     document.getElementById("response").innerText =
       "Submission failed. Please try again.";
     console.error(err);
