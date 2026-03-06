@@ -4,8 +4,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YLC 2026 Walk-In Registration</title>
   <link rel="icon" href="logo.ico">
-    <style>
-  /* ---------- RESET ---------- */
+   <style>
+
+/* ---------- GOOGLE FONTS AUTO LOAD ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600&family=Roboto:wght@400;500&display=swap');
+
+/* ---------- RESET ---------- */
 *{
   box-sizing:border-box;
   margin:0;
@@ -26,9 +30,10 @@ h1{
   text-align:center;
   font-size:2.8rem;
   letter-spacing:3px;
-  color:#FF6A00;
+  color:#fff;
   margin-bottom:30px;
   text-shadow:0 0 20px rgba(255,106,0,.7);
+  font-family:'Bebas Neue',sans-serif;
 }
 
 /* ---------- FORM ---------- */
@@ -44,17 +49,19 @@ form{
 
 /* ---------- HEADINGS ---------- */
 h2{
-  color:#FFD700;
+  color:#fff;
   margin-top:40px;
   margin-bottom:15px;
   border-bottom:2px solid #FF6A00;
   padding-bottom:6px;
+  font-family:'Roboto',sans-serif;
 }
 
 h3{
-  color:#FF6A00;
+  color:#fff;
   margin-top:25px;
   margin-bottom:10px;
+  font-family:'Roboto',sans-serif;
 }
 
 /* ---------- LABEL ---------- */
@@ -62,6 +69,7 @@ label{
   display:block;
   margin-top:12px;
   font-weight:600;
+  color:#fff;
 }
 
 /* ---------- INPUTS ---------- */
@@ -75,6 +83,7 @@ input,select,textarea{
   color:#fff;
   font-size:1rem;
   transition:.3s;
+  font-family:'Montserrat',sans-serif;
 }
 
 textarea{
@@ -174,8 +183,9 @@ button:hover{
   border-radius:16px;
   border:2px solid #FF6A00;
   box-shadow:0 0 30px rgba(255,106,0,.6);
-  color:#FFD700;
+  color:#fff;
   font-weight:bold;
+  font-family:'Roboto',sans-serif;
 }
 
 .spinner{
@@ -217,6 +227,7 @@ button:hover{
     font-weight:bold;
   }
 }
+
 </style>
 </head>
 <body>
@@ -230,7 +241,7 @@ button:hover{
 
     <h2>Privacy Statement</h2>
     <p>
-      Your privacy is important to us. The Youth Leadership Camp 2025 Team is committed to protecting the personal information you provide in this registration form. Your data will be collected, stored, and processed solely for camp administration, including but not limited to:
+      Your privacy is important to us. The Youth Leadership Camp 2026 Team is committed to protecting the personal information you provide in this registration form. Your data will be collected, stored, and processed solely for camp administration, including but not limited to:
     </p>
     <ul>
       <li>Verifying your identity and registration status</li>
@@ -246,7 +257,7 @@ button:hover{
       For participants under 18 years old, a Minor Consent Form must be completed by a parent or guardian to authorize the collection and use of personal data. Any health-related details you provide will be used exclusively to ensure appropriate medical attention and accommodations when necessary.
     </p>
     <p>
-      By proceeding with this registration, you acknowledge that you have read and understood this Privacy Statement and consent to the collection and processing of your personal information for YLC 2025 purposes. If you have any concerns or wish to request modifications to your data, you may contact the YLC 2025 Registration Team.
+      By proceeding with this registration, you acknowledge that you have read and understood this Privacy Statement and consent to the collection and processing of your personal information for YLC 2026 purposes. If you have any concerns or wish to request modifications to your data, you may contact the YLC 2026 Registration Team.
     </p>
     <div class="checkbox-group">
       <label><input type="checkbox" name="privacyConsent" required> I have read and understood the privacy statement.</label>
@@ -255,8 +266,8 @@ button:hover{
     <h3>Minor Consent Form*</h3>
     <div class="radio-group">
       <label><input type="radio" name="minorConsent" value="Adult" required> I am no longer a minor and I do not require parental consent. (18 years old and above)</label>
-      <label><input type="radio" name="minorConsent" value="Minor"> I am a minor and my parent/s or guardian/s have agreed to allow me to participate in YLC 2025.</label>
-      <label><input type="radio" name="minorConsent" value="Parent"> I am a parent/guardian of a minor child and I give full consent to have him/her participate in YLC 2025.</label>
+      <label><input type="radio" name="minorConsent" value="Minor"> I am a minor and my parent/s or guardian/s have agreed to allow me to participate in YLC 2026.</label>
+      <label><input type="radio" name="minorConsent" value="Parent"> I am a parent/guardian of a minor child and I give full consent to have him/her participate in YLC 2026.</label>
     </div>
     <h2>Camper's Personal Information</h2>
     <p>
@@ -320,7 +331,7 @@ button:hover{
     <div class="radio-group">
       <label><input type="radio" name="learnAboutYLC" value="FebiasReferral" required> I was invited or referred by a Febias Student, Faculty & Staff, or Alumni.</label>
       <label><input type="radio" name="learnAboutYLC" value="ChurchReferral"> I was invited or referred by my Church Pastor, Leader, or Friend.</label>
-      <label><input type="radio" name="learnAboutYLC" value="OtherMeans"> I learned about YLC 2025 through other means. (social media, posts, etc.)</label>
+      <label><input type="radio" name="learnAboutYLC" value="OtherMeans"> I learned about YLC 2026 through other means. (social media, posts, etc.)</label>
     </div>
         <h2>Christian Service Information (ASSESSMENT)</h2>
 
@@ -417,7 +428,7 @@ button:hover{
       <label><input type="radio" name="churchMembership" value="1-2 yr"> 1-2 yr</label>
       <label><input type="radio" name="churchMembership" value="2 yr above"> 2 yr above</label>
     </div>    <h2>CAMP T-SHIRT</h2>
-    <p>Kindly check your preferred shirt size. Please refer to Size Chart.*</p>
+    <p>Kindly check your preferred shirt size. Please refer to Size.*</p>
     <div class="radio-group">
       <label><input type="radio" name="shirtSize" value="XS" required> XS</label>
       <label><input type="radio" name="shirtSize" value="S"> S</label>
@@ -464,9 +475,9 @@ button:hover{
     <h3>Health Declaration (Must select exactly 4 options)</h3>
     <div class="checkbox-group">
       <label><input type="checkbox" name="healthDeclaration" value="TrueAccurate"> I declare that my answers to the questions above are true and accurate to the best of my knowledge.</label>
-      <label><input type="checkbox" name="healthDeclaration" value="PhysicallyFit"> I declare that I am physically fit and able to participate in YLC 2025.</label>
+      <label><input type="checkbox" name="healthDeclaration" value="PhysicallyFit"> I declare that I am physically fit and able to participate in YLC 2026.</label>
       <label><input type="checkbox" name="healthDeclaration" value="Responsible"> I am responsible for my own health and safety. In case of existing health conditions, I will bring my own personal medication or treatment. (ex.: inhaler, allergy creams, allergy meds, etc.)</label>
-      <label><input type="checkbox" name="healthDeclaration" value="NoLiability"> I will not hold FEBIAS College of Bible liable in case of any health issues or concerns during the YLC 2025 as I have declared myself physically fit and able to participate.</label>
+      <label><input type="checkbox" name="healthDeclaration" value="NoLiability"> I will not hold FEBIAS College of Bible liable in case of any health issues or concerns during the YLC 2026 as I have declared myself physically fit and able to participate.</label>
     </div>    <h2>Payment Information</h2>
 
     <h3>Who made the payment?*</h3>
