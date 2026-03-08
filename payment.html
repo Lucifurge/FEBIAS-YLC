@@ -46,7 +46,7 @@ h1,h2{
   border-radius: 10px;
   font-size: 14px;
   line-height: 1.6;
-  color: #ffffff; /* white text */
+  color: #ffffff;
   margin-bottom: 25px;
 }
 
@@ -178,11 +178,8 @@ footer{
 
 <div class="instructions">
 <strong>Payment Instructions:</strong><br>
-The registration fee is <strong>₱1,500</strong>. A promo rate of 
-<strong>₱1,400</strong> is available for those who register on or before 
-<strong>March 27</strong>.<br><br>
-To avail of the promo rate, pay a <strong>down payment of ₱700</strong> to secure your slot.  
-The remaining balance may be paid onsite during the event.<br><br>
+The registration fee is <strong>₱1,500</strong>. Promo rate: <strong>₱1,400</strong> if registered on or before <strong>March 27</strong>.<br><br>
+Down payment: <strong>₱700</strong>. Remaining balance onsite.<br><br>
 Campers may choose to pay <strong>online</strong> or <strong>onsite</strong>.
 </div>
 
@@ -203,7 +200,6 @@ If you paid online, please screenshot your receipt and present it during registr
 <img src="bank.png" alt="Bank Transfer">
 <div>Bank Transfer</div>
 </div>
-
 <div class="payment-box" data-method="GCash">
 <img src="gcash.png" alt="GCash">
 <div>GCash</div>
@@ -230,7 +226,7 @@ If you paid online, please screenshot your receipt and present it during registr
 
 <script>
 const driveUrl = "https://script.google.com/macros/s/AKfycbwGvtDdMW4wjI1LV2t4Y8AhSDMKCRFIyb-LXKMfCjWuboLEgV89Un7kiqw8WFWJkxU-/exec";
-const sheetUrl = "https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/execL";
+const sheetUrl = "https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec";
 
 const loader = document.getElementById('loader');
 const receiptInput = document.getElementById("receipt");
@@ -271,7 +267,7 @@ receiptInput.addEventListener('change', async function(){
     this.value = "";
     return;
   }
-  if(receiptUploaded) return; // already uploaded
+  if(receiptUploaded) return;
 
   const fileName = document.getElementById('fileName').value.trim();
   const file = this.files[0];
@@ -302,9 +298,9 @@ receiptInput.addEventListener('change', async function(){
       receiptInput.disabled = true; // lock
     } catch(err){
       alert("Upload failed. Please try again.");
-      this.value = ""; // retry allowed
-      loader.style.display = "none";
       console.error(err);
+      this.value = "";
+      loader.style.display = "none";
     } finally{
       loader.style.display = "none";
     }
@@ -332,9 +328,10 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
   loader.style.display = "block";
 
   try{
+    const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
     const postSheet = new URLSearchParams();
     postSheet.append('action','payment');
-    postSheet.append('rowIndex', new URLSearchParams(window.location.search).get("rowIndex"));
+    postSheet.append('rowIndex', rowIndex);
     postSheet.append('sheet','ylc');
     postSheet.append('payment_by', paymentBy==="Online"?`Online (${method})`:'Onsite');
 
@@ -342,7 +339,7 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
     const sheetResult = await sheetRes.json();
     if(sheetResult.result !== 'success') throw new Error("Payment submission failed");
 
-    window.location.href = `thankyou.html?rowIndex=${postSheet.get('rowIndex')}`;
+    window.location.href = `thankyou.html?rowIndex=${rowIndex}`;
   } catch(err){
     alert(err.message || "Payment submission failed. Please try again.");
     loader.style.display = "none";
