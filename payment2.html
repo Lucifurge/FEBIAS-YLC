@@ -56,7 +56,6 @@ label, p, .notice {
   text-align:center;
 }
 
-/* Payment boxes */
 .payment-methods {
   display:flex;
   gap:30px;
@@ -93,7 +92,6 @@ label, p, .notice {
   margin-bottom:15px;
 }
 
-/* Button */
 button {
   width:100%;
   padding:16px;
@@ -114,7 +112,6 @@ button:hover {
   transform:scale(1.02);
 }
 
-/* Loader overlay */
 #loader {
   display:none;
   position:fixed;
@@ -129,7 +126,6 @@ button:hover {
   font-weight:bold;
 }
 
-/* Footer */
 footer {
   text-align:center;
   margin-top:40px;
@@ -137,7 +133,6 @@ footer {
   color:#FFFFFF;
 }
 
-/* Mobile */
 @media (max-width:768px) {
   .container { margin:20px; padding:25px; }
   .payment-methods { flex-direction:column; gap:25px; }
@@ -147,38 +142,55 @@ footer {
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
-  <h1>YLC 2026 Payment</h1>
-  <p class="subtitle">Youth Leaders Camp — Payment Confirmation</p>
 
-  <form id="payment-form">
-    <h2>Select Payment Type</h2>
-    <div class="radio-group">
-      <label><input type="radio" name="payment_by" value="Onsite" required> Onsite Payment (Walk-in)</label>
-      <label><input type="radio" name="payment_by" value="Online"> Online Payment</label>
-    </div>
+<h1>YLC 2026 Payment</h1>
+<p class="subtitle">Youth Leaders Camp — Payment Confirmation</p>
 
-    <div class="notice">
-      Instructions:<br>
-      - Walk-in payment: confirm here and present at the event.<br>
-      - Online payment: select a payment method below and confirm.
-    </div>
+<div class="notice">
+<strong>Payment Instructions:</strong><br><br>
+The registration fee is <strong>₱1,500</strong>. A promo rate of <strong>₱1,400</strong> is available for those who register on or before <strong>March 27</strong>.<br><br>
+To avail of the promo rate, pay a <strong>down payment of ₱700</strong> to secure your slot.  
+The remaining balance may be paid onsite during the event.<br><br>
+Campers may choose to pay <strong>online</strong> or <strong>onsite</strong>.
+</div>
 
-    <div class="payment-methods">
-      <div class="payment-box" data-method="Bank Transfer">
-        <img src="bank.png" alt="Bank QR">
-        <div>Bank Transfer</div>
-      </div>
-      <div class="payment-box" data-method="GCash">
-        <img src="gcash.png" alt="GCash QR">
-        <div>GCash</div>
-      </div>
-    </div>
+<div class="notice">
+Instructions:<br>
+- Walk-in payment: confirm here and present at the event.<br>
+- Online payment: select a payment method below and confirm.
+</div>
 
-    <button type="submit">Confirm Payment</button>
-  </form>
+<form id="payment-form">
+
+<div style="text-align:center;margin-top:20px;">
+<label>
+<input type="radio" name="payment_by" value="Online"> Online
+</label>
+
+<label style="margin-left:20px;">
+<input type="radio" name="payment_by" value="Onsite"> Onsite
+</label>
+</div>
+
+<div class="payment-methods">
+<div class="payment-box" data-method="Bank Transfer">
+<img src="bank.png" alt="Bank QR">
+<div>Bank Transfer</div>
+</div>
+
+<div class="payment-box" data-method="GCash">
+<img src="gcash.png" alt="GCash QR">
+<div>GCash</div>
+</div>
+</div>
+
+<button type="submit">Confirm Payment</button>
+
+</form>
 </div>
 
 <div id="loader">Processing payment, please wait...</div>
@@ -188,53 +200,75 @@ footer {
 </footer>
 
 <script>
+
 const sheetUrl = "https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec";
+
 const loader = document.getElementById('loader');
 const paymentBoxes = document.querySelectorAll('.payment-box');
-const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
 
 const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
-if (!rowIndex) { alert("Invalid access. Please register first."); window.location.href="ylc.html"; }
 
-paymentBoxes.forEach(box => {
-  box.addEventListener('click', () => {
-    paymentBoxes.forEach(b => b.classList.remove('selected'));
+if (!rowIndex) {
+  alert("Invalid access. Please register first.");
+  window.location.href="ylc.html";
+}
+
+paymentBoxes.forEach(box=>{
+  box.addEventListener('click',()=>{
+    paymentBoxes.forEach(b=>b.classList.remove('selected'));
     box.classList.add('selected');
   });
 });
 
-document.getElementById('payment-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
-  const selectedBox = document.querySelector('.payment-box.selected');
-  const method = selectedBox?.dataset.method;
+document.getElementById('payment-form').addEventListener('submit',async e=>{
+e.preventDefault();
 
-  if (!paymentBy) { alert('Please select payment type'); return; }
-  if (paymentBy === 'Online' && !method) { alert('Please select a payment method'); return; }
+const submitBtn=e.target.querySelector('button[type="submit"]');
+const paymentBy=document.querySelector('input[name="payment_by"]:checked')?.value;
+const selectedBox=document.querySelector('.payment-box.selected');
+const method=selectedBox?.dataset.method;
 
-  loader.style.display='block';
-  submitBtn.disabled=true;
+if(!paymentBy){
+alert('Please select payment type');
+return;
+}
 
-  try {
-    const postData = new URLSearchParams();
-    postData.append('action','payment');
-    postData.append('rowIndex',rowIndex);
-    postData.append('sheet','ylc2');
-    postData.append('payment_by', paymentBy==='Online' ? `Online (${method})` : 'Onsite');
+if(paymentBy==='Online' && !method){
+alert('Please select a payment method');
+return;
+}
 
-    const res = await fetch(sheetUrl,{method:'POST',body:postData});
-    const result = await res.json();
-    if(result.result!=='success') throw new Error('Payment update failed');
+loader.style.display='block';
+submitBtn.disabled=true;
+submitBtn.innerText="Processing...";
 
-    window.location.href='thankyou2.html?rowIndex='+rowIndex;
-  } catch(err){
-    console.error(err);
-    alert(err.message || 'Payment submission failed. Please try again.');
-    loader.style.display='none';
-    submitBtn.disabled=false;
-  }
+try{
+
+const postData=new URLSearchParams();
+postData.append('action','payment');
+postData.append('rowIndex',rowIndex);
+postData.append('sheet','ylc2');
+postData.append('payment_by',paymentBy==='Online'?`Online (${method})`:'Onsite');
+
+const res=await fetch(sheetUrl,{method:'POST',body:postData});
+const result=await res.json();
+
+if(result.result!=='success') throw new Error('Payment update failed');
+
+window.location.href='thankyou2.html?rowIndex='+rowIndex;
+
+}catch(err){
+
+console.error(err);
+alert('Payment submission failed. Please try again.');
+loader.style.display='none';
+submitBtn.disabled=false;
+submitBtn.innerText="Confirm Payment";
+
+}
+
 });
+
 </script>
 
 </body>
