@@ -8,48 +8,54 @@
 <link rel="icon" href="logo.ico">
 
 <style>
-body {
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: #f8f8f8;
-  color: #1f2937;
-  padding: 2rem;
+body{
+font-family:"Segoe UI",system-ui,sans-serif;
+background:#f8f8f8;
+color:#1f2937;
+padding:2rem;
 }
 
-h1 { text-align: center; color: #0b3d2e; }
+h1{text-align:center;color:#0b3d2e;}
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1.5rem;
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:1.5rem;
 }
 
-th, td {
-  border: 1px solid #ccc;
-  padding: 0.8rem;
+th,td{
+border:1px solid #ccc;
+padding:0.8rem;
 }
 
-th {
-  background: #0b3d2e;
-  color: white;
+th{
+background:#0b3d2e;
+color:white;
 }
 
-.status-paid { color: green; font-weight: bold; }
-.status-onsite { color: orange; font-weight: bold; }
-.status-not { color: red; font-weight: bold; }
+.status-paid{color:green;font-weight:bold;}
+.status-onsite{color:orange;font-weight:bold;}
+.status-not{color:red;font-weight:bold;}
 
-.attendance-check {
-  cursor: pointer;
-  text-align: center;
-  font-size: 1.4rem;
+.attendance-check{
+cursor:pointer;
+text-align:center;
+font-size:1.4rem;
+user-select:none;
+}
+
+.attendance-check:hover{
+transform:scale(1.2);
 }
 </style>
 </head>
+
 <body>
 
 <h1>YLC 2026 Attendance</h1>
 <p>Click the emoji to update attendance (✅ = Attended, 🟠 = Waiting, ❌ = Cancelled).</p>
 
-<button onclick="loadAttendance()">🔄 Refresh Now</button>
+<button onclick="manualRefresh()">🔄 Refresh Now</button>
 
 <table id="attendance-table">
 <thead>
@@ -62,7 +68,9 @@ th {
 </thead>
 <tbody></tbody>
 </table>
+
 <script>
+
 const BASE_URL="https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec";
 
 const tbody=document.querySelector("#attendance-table tbody");
@@ -75,141 +83,180 @@ const statusCycle=["ON-waiting","Attended","Cancelled"];
 let loading=false;
 let lastRefresh=0;
 
+
+/* payment UI */
 function paymentUI(cell,status){
- const s=(status||"").toLowerCase();
 
- if(s.includes("online")){
-  cell.textContent="✅ Paid";
-  cell.className="status-paid";
- }
- else if(s.includes("onsite")){
-  cell.textContent="🟠 Waiting";
-  cell.className="status-onsite";
- }
- else{
-  cell.textContent="❌ Not Paid";
-  cell.className="status-not";
- }
+const s=(status||"").toLowerCase();
+
+if(s.includes("online")){
+cell.textContent="✅ Paid";
+cell.className="status-paid";
+}
+else if(s.includes("onsite")){
+cell.textContent="🟠 Waiting";
+cell.className="status-onsite";
+}
+else{
+cell.textContent="❌ Not Paid";
+cell.className="status-not";
 }
 
+}
+
+
+/* emoji */
 function emoji(status){
- return status==="Attended"?"✅":
-        status==="Cancelled"?"❌":"🟠";
+return status==="Attended"?"✅":
+status==="Cancelled"?"❌":"🟠";
 }
 
+
+/* create row */
 function createRow(person){
 
- const tr=document.createElement("tr");
+const tr=document.createElement("tr");
 
- tr.innerHTML=`
- <td class="first"></td>
- <td class="last"></td>
- <td class="payment"></td>
- <td class="attendance-check"></td>
- `;
+tr.innerHTML=`
+<td class="first"></td>
+<td class="last"></td>
+<td class="payment"></td>
+<td class="attendance-check"></td>
+`;
 
- tbody.appendChild(tr);
+tbody.appendChild(tr);
 
- rows.set(person.rowIndex,tr);
+rows.set(person.rowIndex,tr);
 
- return tr;
+return tr;
+
 }
 
+
+/* update row */
 function updateRow(person){
 
- let tr=rows.get(person.rowIndex);
- if(!tr) tr=createRow(person);
+let tr=rows.get(person.rowIndex);
+if(!tr) tr=createRow(person);
 
- if(localOverrides.has(person.rowIndex))
-  person.attendanceStatus=localOverrides.get(person.rowIndex);
+if(localOverrides.has(person.rowIndex))
+person.attendanceStatus=localOverrides.get(person.rowIndex);
 
- const first=tr.querySelector(".first");
- const last=tr.querySelector(".last");
- const payment=tr.querySelector(".payment");
- const attend=tr.querySelector(".attendance-check");
+const first=tr.querySelector(".first");
+const last=tr.querySelector(".last");
+const payment=tr.querySelector(".payment");
+const attend=tr.querySelector(".attendance-check");
 
- first.textContent=person.firstName||"";
- last.textContent=person.lastName||"";
+first.textContent=person.firstName||"";
+last.textContent=person.lastName||"";
 
- paymentUI(payment,person.paymentStatus);
+paymentUI(payment,person.paymentStatus);
 
- attend.textContent=emoji(person.attendanceStatus);
+attend.textContent=emoji(person.attendanceStatus);
 
- attend.onclick=()=>{
+/* prevent stacked handlers */
+attend.onclick=null;
 
-  let current=localOverrides.get(person.rowIndex)||person.attendanceStatus;
+attend.onclick=()=>{
 
-  let i=statusCycle.indexOf(current);
-  if(i<0)i=0;
+let current=localOverrides.get(person.rowIndex)||person.attendanceStatus;
 
-  let next=statusCycle[(i+1)%statusCycle.length];
+let i=statusCycle.indexOf(current);
+if(i<0)i=0;
 
-  localOverrides.set(person.rowIndex,next);
+let next=statusCycle[(i+1)%statusCycle.length];
 
-  attend.textContent=emoji(next);
+localOverrides.set(person.rowIndex,next);
 
-  const form=new FormData();
-  form.append("action","attendance");
-  form.append("rowIndex",person.rowIndex);
-  form.append("attendance_status",next);
-  form.append("sheet","ylc");
+attend.textContent=emoji(next);
 
-  fetch(BASE_URL,{method:"POST",body:form})
-  .then(()=>setTimeout(()=>localOverrides.delete(person.rowIndex),4000))
-  .catch(e=>console.error(e));
- };
+/* update payment visually */
+
+if(next==="Attended"){
+paymentUI(payment,"Online Payment");
+}
+else if(next==="ON-waiting"){
+paymentUI(payment,"Onsite Payment");
+}
+else{
+paymentUI(payment,"Not Paid");
 }
 
+/* send update */
+
+const form=new FormData();
+
+form.append("action","attendance");
+form.append("rowIndex",person.rowIndex);
+form.append("attendance_status",next);
+form.append("sheet","ylc");
+
+fetch(BASE_URL,{method:"POST",body:form})
+.then(()=>{
+setTimeout(()=>localOverrides.delete(person.rowIndex),4000);
+})
+.catch(e=>console.error(e));
+
+};
+
+}
+
+
+/* load attendance */
 async function loadAttendance(force=false){
 
- if(loading) return;
+if(loading) return;
 
- const now=Date.now();
+const now=Date.now();
 
- if(!force && now-lastRefresh<4000) return;
+if(!force && now-lastRefresh<4000) return;
 
- loading=true;
- lastRefresh=now;
+loading=true;
+lastRefresh=now;
 
- try{
+try{
 
-  const res=await fetch(BASE_URL+"?sheet=ylc",{cache:"no-store"});
-  const data=await res.json();
+const res=await fetch(BASE_URL+"?sheet=ylc",{cache:"no-store"});
+const data=await res.json();
 
-  if(!Array.isArray(data)) return;
+if(!Array.isArray(data)) return;
 
-  const active=new Set();
+const active=new Set();
 
-  data.forEach(p=>{
-   active.add(p.rowIndex);
-   updateRow(p);
-  });
+data.forEach(p=>{
+active.add(p.rowIndex);
+updateRow(p);
+});
 
-  rows.forEach((tr,id)=>{
-   if(!active.has(id)){
-    tr.remove();
-    rows.delete(id);
-   }
-  });
-
- }
- catch(e){
-  console.error("Load error",e);
- }
-
- loading=false;
+rows.forEach((tr,id)=>{
+if(!active.has(id)){
+tr.remove();
+rows.delete(id);
 }
+});
+
+}
+catch(e){
+console.error("Load error",e);
+}
+
+loading=false;
+
+}
+
 
 /* manual refresh */
 function manualRefresh(){
- loadAttendance(true);
+loadAttendance(true);
 }
+
 
 /* start */
 loadAttendance();
 
-/* background refresh */
+/* auto refresh */
 setInterval(loadAttendance,8000);
+
 </script>
 
 </body>
