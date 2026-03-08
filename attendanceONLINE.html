@@ -62,120 +62,154 @@ th {
 </thead>
 <tbody></tbody>
 </table>
-
 <script>
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec";
-const tbody = document.querySelector("#attendance-table tbody");
+const BASE_URL="https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec";
 
-let peopleMap = new Map();
-let localOverrides = new Map(); // 🔥 prevents reverting
-const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
+const tbody=document.querySelector("#attendance-table tbody");
 
-// Render or update a row
-function renderRow(person) {
-  let tr = peopleMap.get(person.rowIndex);
+const rows=new Map();
+const localOverrides=new Map();
 
-  if (!tr) {
-    tr = document.createElement("tr");
-    tr.dataset.row = person.rowIndex;
+const statusCycle=["ON-waiting","Attended","Cancelled"];
 
-    tr.innerHTML = `
-      <td class="first"></td>
-      <td class="last"></td>
-      <td class="payment"></td>
-      <td class="attendance-check"></td>
-    `;
-    tbody.appendChild(tr);
-    peopleMap.set(person.rowIndex, tr);
-  }
+let loading=false;
+let lastRefresh=0;
 
-  // 🔥 If we have a local override, use it instead of sheet value
-  if (localOverrides.has(person.rowIndex)) {
-    person.attendanceStatus = localOverrides.get(person.rowIndex);
-  }
+function paymentUI(cell,status){
+ const s=(status||"").toLowerCase();
 
-  tr.querySelector(".first").textContent = person.firstName || "";
-  tr.querySelector(".last").textContent = person.lastName || "";
-
-  const paymentCell = tr.querySelector(".payment");
-  const attendanceCell = tr.querySelector(".attendance-check");
-
-  function updatePaymentUI(status) {
-    const lower = (status || "").toLowerCase();
-    if (lower.includes("online")) {
-      paymentCell.textContent = "✅ Paid";
-      paymentCell.className = "payment status-paid";
-    } else if (lower.includes("onsite")) {
-      paymentCell.textContent = "⚠️ On-Waiting";
-      paymentCell.className = "payment status-onsite";
-    } else {
-      paymentCell.textContent = "❌ Not Paid";
-      paymentCell.className = "payment status-not";
-    }
-  }
-
-  function setEmoji(status) {
-    attendanceCell.textContent =
-      status === "Attended" ? "✅" :
-      status === "Cancelled" ? "❌" : "🟠";
-  }
-
-  updatePaymentUI(person.paymentStatus);
-  setEmoji(person.attendanceStatus);
-
-  attendanceCell.onclick = () => {
-    let current = localOverrides.get(person.rowIndex) || person.attendanceStatus;
-    let idx = statusCycle.indexOf(current);
-    if (idx === -1) idx = 0;
-    let newStatus = statusCycle[(idx + 1) % statusCycle.length];
-
-    // 🔥 SAVE LOCALLY FIRST (prevents reverting)
-    localOverrides.set(person.rowIndex, newStatus);
-
-    setEmoji(newStatus);
-
-    if (newStatus === "Attended") {
-      updatePaymentUI("Online Payment");
-    } else if (newStatus === "ON-waiting") {
-      updatePaymentUI("Onsite Payment");
-    } else {
-      updatePaymentUI("Not Paid");
-    }
-
-    // Background sync
-    const formData = new FormData();
-    formData.append("action", "attendance");
-    formData.append("rowIndex", person.rowIndex);
-    formData.append("attendance_status", newStatus);
-    formData.append("sheet", "ylc");
-
-    fetch(BASE_URL, { method: "POST", body: formData })
-      .then(() => {
-        // 🔥 After 5 seconds remove override (sheet likely updated)
-        setTimeout(() => {
-          localOverrides.delete(person.rowIndex);
-        }, 5000);
-      })
-      .catch(err => console.error("Sync error:", err));
-  };
+ if(s.includes("online")){
+  cell.textContent="✅ Paid";
+  cell.className="status-paid";
+ }
+ else if(s.includes("onsite")){
+  cell.textContent="🟠 Waiting";
+  cell.className="status-onsite";
+ }
+ else{
+  cell.textContent="❌ Not Paid";
+  cell.className="status-not";
+ }
 }
 
-// Load data without wiping table
-async function loadAttendance() {
-  try {
-    const res = await fetch(BASE_URL + "?sheet=ylc");
-    const data = await res.json();
-    if (!Array.isArray(data)) return;
-
-    data.forEach(person => renderRow(person));
-
-  } catch (err) {
-    console.error("Load error:", err);
-  }
+function emoji(status){
+ return status==="Attended"?"✅":
+        status==="Cancelled"?"❌":"🟠";
 }
 
+function createRow(person){
+
+ const tr=document.createElement("tr");
+
+ tr.innerHTML=`
+ <td class="first"></td>
+ <td class="last"></td>
+ <td class="payment"></td>
+ <td class="attendance-check"></td>
+ `;
+
+ tbody.appendChild(tr);
+
+ rows.set(person.rowIndex,tr);
+
+ return tr;
+}
+
+function updateRow(person){
+
+ let tr=rows.get(person.rowIndex);
+ if(!tr) tr=createRow(person);
+
+ if(localOverrides.has(person.rowIndex))
+  person.attendanceStatus=localOverrides.get(person.rowIndex);
+
+ const first=tr.querySelector(".first");
+ const last=tr.querySelector(".last");
+ const payment=tr.querySelector(".payment");
+ const attend=tr.querySelector(".attendance-check");
+
+ first.textContent=person.firstName||"";
+ last.textContent=person.lastName||"";
+
+ paymentUI(payment,person.paymentStatus);
+
+ attend.textContent=emoji(person.attendanceStatus);
+
+ attend.onclick=()=>{
+
+  let current=localOverrides.get(person.rowIndex)||person.attendanceStatus;
+
+  let i=statusCycle.indexOf(current);
+  if(i<0)i=0;
+
+  let next=statusCycle[(i+1)%statusCycle.length];
+
+  localOverrides.set(person.rowIndex,next);
+
+  attend.textContent=emoji(next);
+
+  const form=new FormData();
+  form.append("action","attendance");
+  form.append("rowIndex",person.rowIndex);
+  form.append("attendance_status",next);
+  form.append("sheet","ylc");
+
+  fetch(BASE_URL,{method:"POST",body:form})
+  .then(()=>setTimeout(()=>localOverrides.delete(person.rowIndex),4000))
+  .catch(e=>console.error(e));
+ };
+}
+
+async function loadAttendance(force=false){
+
+ if(loading) return;
+
+ const now=Date.now();
+
+ if(!force && now-lastRefresh<4000) return;
+
+ loading=true;
+ lastRefresh=now;
+
+ try{
+
+  const res=await fetch(BASE_URL+"?sheet=ylc",{cache:"no-store"});
+  const data=await res.json();
+
+  if(!Array.isArray(data)) return;
+
+  const active=new Set();
+
+  data.forEach(p=>{
+   active.add(p.rowIndex);
+   updateRow(p);
+  });
+
+  rows.forEach((tr,id)=>{
+   if(!active.has(id)){
+    tr.remove();
+    rows.delete(id);
+   }
+  });
+
+ }
+ catch(e){
+  console.error("Load error",e);
+ }
+
+ loading=false;
+}
+
+/* manual refresh */
+function manualRefresh(){
+ loadAttendance(true);
+}
+
+/* start */
 loadAttendance();
-setInterval(loadAttendance, 15000);
+
+/* background refresh */
+setInterval(loadAttendance,8000);
 </script>
 
 </body>
