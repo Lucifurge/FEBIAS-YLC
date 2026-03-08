@@ -236,7 +236,17 @@ const uploadSection = document.getElementById("online-upload");
 
 let receiptUploaded = false;
 
-// Show/hide online section
+// --- ACCESS CONTROL ---
+const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
+if(!rowIndex){
+  alert("Invalid access. Please register first.");
+  const form = document.getElementById('payment-form');
+  form.innerHTML = "<p style='text-align:center; color:#FFD700; font-weight:bold;'>Access Denied. Please register first on the registration page.</p>";
+  form.style.pointerEvents = "none";
+  form.style.opacity = "0.6";
+}
+
+// Show/hide online payment section
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
     if(radio.value === "Online"){
@@ -311,6 +321,7 @@ receiptInput.addEventListener('change', async function(){
 // Payment form submit
 document.getElementById('payment-form').addEventListener('submit', async e=>{
   e.preventDefault();
+  if(!rowIndex) return; // prevent submit if not registered
 
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   const method = document.querySelector('.payment-box.selected')?.dataset.method;
@@ -328,12 +339,22 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
   loader.style.display = "block";
 
   try{
-    const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
+    let receiptDriveUrl = "";
+    let receiptName = "";
+
+    if(paymentBy==="Online"){
+      const file = receiptInput.files[0];
+      receiptName = file.name;
+    }
+
+    // Submit to sheet
     const postSheet = new URLSearchParams();
     postSheet.append('action','payment');
     postSheet.append('rowIndex', rowIndex);
     postSheet.append('sheet','ylc');
     postSheet.append('payment_by', paymentBy==="Online"?`Online (${method})`:'Onsite');
+    postSheet.append('receipt', receiptDriveUrl);
+    postSheet.append('receipt_name', receiptName);
 
     const sheetRes = await fetch(sheetUrl, {method:'POST', body:postSheet});
     const sheetResult = await sheetRes.json();
