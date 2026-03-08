@@ -314,14 +314,12 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
     if(paymentBy==="Online"){
       const file = receiptInput.files[0];
       receiptName = file.name;
+
+      // Read file as base64
       const reader = new FileReader();
       const receiptBase64 = await new Promise((resolve,reject)=>{
         reader.readAsDataURL(file);
-        reader.onload = ()=>{
-          // strip "data:image/png;base64," prefix
-          const base64Str = reader.result.replace(/^data:.+;base64,/, '');
-          resolve(base64Str);
-        };
+        reader.onload = ()=>resolve(reader.result); // send full dataURL
         reader.onerror = err=>reject(err);
       });
 
@@ -329,16 +327,16 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
       const driveData = new URLSearchParams();
       driveData.append('action','upload');
       driveData.append('filename', receiptName);
-      driveData.append('file', receiptBase64);
+      driveData.append('file', encodeURIComponent(receiptBase64)); // encode safely
       driveData.append('fileType', file.type || 'image/png');
 
       const driveRes = await fetch(drivesurl,{method:'POST',body:driveData});
       const driveResult = await driveRes.json();
       if(driveResult.result!=="success") throw new Error("Receipt upload failed");
-      receiptDriveUrl = driveResult.url;
+      receiptDriveUrl = driveResult.url; // Drive file URL
     }
 
-    // Submit payment to sheet
+    // Now submit payment info to sheet
     const postData = new URLSearchParams();
     postData.append('action','payment');
     postData.append('rowIndex',rowIndex);
@@ -351,7 +349,6 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
     const result = await res.json();
     if(result.result!=='success') throw new Error("Payment submission failed");
 
-    // Success redirect
     window.location.href = "thankyou.html?rowIndex="+rowIndex;
 
   } catch(err){
