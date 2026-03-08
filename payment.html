@@ -229,8 +229,8 @@ If you paid online, please screenshot your receipt and present it during registr
 </footer>
 
 <script>
-const sheetUrl = "https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec"; // Sheet only
-const drivesurl = "https://script.google.com/macros/s/AKfycbxsjq5VN-WXElxBuMaPg9hG6hTovn4W61M2bs0reuU1NkpiHK2IJANeaAQuGr6MkOt9/exec"; // Drive only
+const sheetUrl = "https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec"; // sheet only
+const driveUrl = "https://script.google.com/macros/s/AKfycbw1oC7LR_-mMjU-bQNjZw552E1xzFQqL-mFeA8zlsPFQk87V0P1KOYZBO631h3xLKfh/exec"; // drive only
 
 const loader = document.getElementById('loader');
 const receiptInput = document.getElementById("receipt");
@@ -267,19 +267,6 @@ paymentBoxes.forEach(box=>{
   });
 });
 
-/* Lock receipt to 1 file */
-receiptInput.addEventListener("change", function(){
-  if(this.files.length>1){
-    alert("Only ONE receipt is allowed per registration.");
-    this.value="";
-    return;
-  }
-  if(this.files.length===1){
-    alert("Receipt file ready. It will be uploaded to Drive.");
-    this.disabled = true;
-  }
-});
-
 /* Form submit */
 document.getElementById('payment-form').addEventListener('submit', async e=>{
   e.preventDefault();
@@ -298,58 +285,72 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
   submitBtn.innerText="Processing...";
 
   try{
-    // Only upload receipt to Drive if Online
-    if(paymentBy==="Online"){
+    // Online payment: Drive upload first
+    if(paymentBy === "Online"){
       if(!method){
         alert("Please select a payment method");
-        loader.style.display="none";
+        loader.style.display='none';
         submitBtn.disabled=false;
         submitBtn.innerText="Confirm Payment";
         return;
       }
-      if(receiptInput.files.length===0){
-        alert("Please upload a receipt before continuing.");
-        loader.style.display="none";
-        submitBtn.disabled=false;
-        submitBtn.innerText="Confirm Payment";
-        return;
-      }
-
+      const fileNameInput = document.getElementById('fileName').value.trim();
       const file = receiptInput.files[0];
-      const receiptName = document.getElementById('fileName').value.trim() || file.name;
+      if(!fileNameInput || !file){
+        alert("Please provide receipt name and file.");
+        loader.style.display='none';
+        submitBtn.disabled=false;
+        submitBtn.innerText="Confirm Payment";
+        return;
+      }
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileName', receiptName);
-      formData.append('fileType', file.type || 'image/png');
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try{
+          const base64 = reader.result.split(',')[1];
+          const postData = new URLSearchParams();
+          postData.append('fileName', fileNameInput);
+          postData.append('file', base64);
+          postData.append('fileType', file.type);
 
-      const driveRes = await fetch(drivesurl, {method:'POST', body: formData});
-      const driveResult = await driveRes.json();
-      if(driveResult.result!=="success") throw new Error("Receipt upload failed");
-      alert("Receipt uploaded successfully to Drive!");
+          const res = await fetch(driveUrl, {method:'POST', body:postData});
+          const result = await res.json();
+          if(result.result !== 'success') throw new Error("Receipt upload failed");
+          alert("Receipt uploaded successfully!");
+        } catch(err){
+          console.error(err);
+          alert("Receipt upload failed. Please try again.");
+          loader.style.display='none';
+          submitBtn.disabled=false;
+          submitBtn.innerText="Confirm Payment";
+          return;
+        }
+      };
+      reader.readAsDataURL(file);
     }
 
-    // Always submit to sheet only the payment type/method
-    const postData = new URLSearchParams();
-    postData.append('action','payment');
-    postData.append('rowIndex',rowIndex);
-    postData.append('sheet','ylc');
-    postData.append('payment_by', paymentBy==="Online"?`Online (${method})`:'Onsite');
+    // Sheet submission
+    const postSheet = new URLSearchParams();
+    postSheet.append('action','payment');
+    postSheet.append('rowIndex', rowIndex);
+    postSheet.append('sheet','ylc');
+    postSheet.append('payment_by', paymentBy==="Online"?`Online (${method})`:'Onsite');
 
-    const res = await fetch(sheetUrl,{method:'POST',body:postData});
-    const result = await res.json();
-    if(result.result!=='success') throw new Error("Payment submission failed");
+    const sheetRes = await fetch(sheetUrl, {method:'POST', body:postSheet});
+    const sheetResult = await sheetRes.json();
+    if(sheetResult.result !== 'success') throw new Error("Payment submission failed");
 
-    window.location.href = "thankyou.html?rowIndex="+rowIndex;
+    window.location.href = `thankyou.html?rowIndex=${rowIndex}`;
 
   } catch(err){
     console.error(err);
     alert(err.message || "Payment submission failed. Please try again.");
-    loader.style.display="none";
+    loader.style.display='none';
     submitBtn.disabled=false;
     submitBtn.innerText="Confirm Payment";
   }
 });
 </script>
+
 </body>
 </html>
