@@ -70,192 +70,176 @@ transform:scale(1.2);
 </table>
 
 <script>
-
 const BASE_URL="https://script.google.com/macros/s/AKfycbzVMAvLaov_dVnMoFU1AA6-b-9YnpU2zfQ_8_EqbvmIV2mVGKK_cQarMfE-6UtusWvKAA/exec";
 
 const tbody=document.querySelector("#attendance-table tbody");
 
 const rows=new Map();
-const localOverrides=new Map();
+const overrides=new Map();
 
-const statusCycle=["ON-waiting","Attended","Cancelled"];
+const STATUS=["ON-waiting","Attended","Cancelled"];
 
 let loading=false;
-let lastRefresh=0;
-
-
-/* payment UI */
-function paymentUI(cell,status){
-
-const s=(status||"").toLowerCase();
-
-if(s.includes("online")){
-cell.textContent="✅ Paid";
-cell.className="status-paid";
-}
-else if(s.includes("onsite")){
-cell.textContent="🟠 Waiting";
-cell.className="status-onsite";
-}
-else{
-cell.textContent="❌ Not Paid";
-cell.className="status-not";
-}
-
-}
 
 
 /* emoji */
-function emoji(status){
-return status==="Attended"?"✅":
-status==="Cancelled"?"❌":"🟠";
+function emoji(s){
+ if(s==="Attended") return "✅";
+ if(s==="Cancelled") return "❌";
+ return "🟠";
 }
 
 
-/* create row */
+/* payment */
+function payment(cell,status){
+
+ const s=(status||"").toLowerCase();
+
+ if(s.includes("online")){
+  cell.textContent="✅ Paid";
+  cell.className="status-paid";
+ }
+ else if(s.includes("onsite")){
+  cell.textContent="🟠 Waiting";
+  cell.className="status-onsite";
+ }
+ else{
+  cell.textContent="❌ Not Paid";
+  cell.className="status-not";
+ }
+
+}
+
+
+/* create row only once */
 function createRow(person){
 
-const tr=document.createElement("tr");
+ const tr=document.createElement("tr");
 
-tr.innerHTML=`
-<td class="first"></td>
-<td class="last"></td>
-<td class="payment"></td>
-<td class="attendance-check"></td>
-`;
+ tr.innerHTML=`
+ <td class="first"></td>
+ <td class="last"></td>
+ <td class="payment"></td>
+ <td class="attendance-check"></td>
+ `;
 
-tbody.appendChild(tr);
+ const attend=tr.querySelector(".attendance-check");
+ const pay=tr.querySelector(".payment");
 
-rows.set(person.rowIndex,tr);
+ attend.addEventListener("click",()=>{
 
-return tr;
+  let current=overrides.get(person.rowIndex) || tr.dataset.status || "ON-waiting";
 
+  let i=STATUS.indexOf(current);
+  if(i<0)i=0;
+
+  const next=STATUS[(i+1)%STATUS.length];
+
+  overrides.set(person.rowIndex,next);
+
+  tr.dataset.status=next;
+
+  attend.textContent=emoji(next);
+
+  if(next==="Attended") payment(pay,"online");
+  else if(next==="ON-waiting") payment(pay,"onsite");
+  else payment(pay,"none");
+
+  const form=new FormData();
+
+  form.append("action","attendance");
+  form.append("rowIndex",person.rowIndex);
+  form.append("attendance_status",next);
+  form.append("sheet","ylc");
+
+  fetch(BASE_URL,{method:"POST",body:form})
+   .then(()=>setTimeout(()=>overrides.delete(person.rowIndex),3000))
+   .catch(e=>console.error(e));
+
+ });
+
+ tbody.appendChild(tr);
+
+ rows.set(person.rowIndex,tr);
+
+ return tr;
 }
 
 
 /* update row */
 function updateRow(person){
 
-let tr=rows.get(person.rowIndex);
-if(!tr) tr=createRow(person);
+ let tr=rows.get(person.rowIndex);
 
-if(localOverrides.has(person.rowIndex))
-person.attendanceStatus=localOverrides.get(person.rowIndex);
+ if(!tr) tr=createRow(person);
 
-const first=tr.querySelector(".first");
-const last=tr.querySelector(".last");
-const payment=tr.querySelector(".payment");
-const attend=tr.querySelector(".attendance-check");
+ const first=tr.querySelector(".first");
+ const last=tr.querySelector(".last");
+ const pay=tr.querySelector(".payment");
+ const attend=tr.querySelector(".attendance-check");
 
-first.textContent=person.firstName||"";
-last.textContent=person.lastName||"";
+ const status=overrides.get(person.rowIndex) || person.attendanceStatus || "ON-waiting";
 
-paymentUI(payment,person.paymentStatus);
+ tr.dataset.status=status;
 
-attend.textContent=emoji(person.attendanceStatus);
+ first.textContent=person.firstName || "";
+ last.textContent=person.lastName || "";
 
-/* prevent stacked handlers */
-attend.onclick=null;
+ payment(pay,person.paymentStatus);
 
-attend.onclick=()=>{
-
-let current=localOverrides.get(person.rowIndex)||person.attendanceStatus;
-
-let i=statusCycle.indexOf(current);
-if(i<0)i=0;
-
-let next=statusCycle[(i+1)%statusCycle.length];
-
-localOverrides.set(person.rowIndex,next);
-
-attend.textContent=emoji(next);
-
-/* update payment visually */
-
-if(next==="Attended"){
-paymentUI(payment,"Online Payment");
-}
-else if(next==="ON-waiting"){
-paymentUI(payment,"Onsite Payment");
-}
-else{
-paymentUI(payment,"Not Paid");
-}
-
-/* send update */
-
-const form=new FormData();
-
-form.append("action","attendance");
-form.append("rowIndex",person.rowIndex);
-form.append("attendance_status",next);
-form.append("sheet","ylc");
-
-fetch(BASE_URL,{method:"POST",body:form})
-.then(()=>{
-setTimeout(()=>localOverrides.delete(person.rowIndex),4000);
-})
-.catch(e=>console.error(e));
-
-};
+ attend.textContent=emoji(status);
 
 }
 
 
-/* load attendance */
-async function loadAttendance(force=false){
+/* load data */
+async function loadAttendance(){
 
-if(loading) return;
+ if(loading) return;
 
-const now=Date.now();
+ loading=true;
 
-if(!force && now-lastRefresh<4000) return;
+ try{
 
-loading=true;
-lastRefresh=now;
+  const res=await fetch(BASE_URL+"?sheet=ylc",{cache:"no-store"});
+  const data=await res.json();
 
-try{
+  if(!Array.isArray(data)) return;
 
-const res=await fetch(BASE_URL+"?sheet=ylc",{cache:"no-store"});
-const data=await res.json();
+  const active=new Set();
 
-if(!Array.isArray(data)) return;
+  data.forEach(p=>{
+   active.add(p.rowIndex);
+   updateRow(p);
+  });
 
-const active=new Set();
+  rows.forEach((tr,id)=>{
+   if(!active.has(id)){
+    tr.remove();
+    rows.delete(id);
+   }
+  });
 
-data.forEach(p=>{
-active.add(p.rowIndex);
-updateRow(p);
-});
+ }
+ catch(e){
+  console.error(e);
+ }
 
-rows.forEach((tr,id)=>{
-if(!active.has(id)){
-tr.remove();
-rows.delete(id);
-}
-});
-
-}
-catch(e){
-console.error("Load error",e);
-}
-
-loading=false;
+ loading=false;
 
 }
 
 
 /* manual refresh */
 function manualRefresh(){
-loadAttendance(true);
+ loadAttendance();
 }
 
 
-/* start */
 loadAttendance();
 
-/* auto refresh */
-setInterval(loadAttendance,8000);
+/* refresh every 10 seconds */
+setInterval(loadAttendance,10000);
 
 </script>
 
