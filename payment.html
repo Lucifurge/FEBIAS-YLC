@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -203,7 +204,6 @@ Campers may choose to pay <strong>online</strong> or <strong>onsite</strong>.
 
 <div class="notice">
 If you paid online, please screenshot your receipt and present it during registration.
-
 </div>
 
 <div class="payment-methods">
@@ -240,3 +240,70 @@ If you paid online, please screenshot your receipt and present it during registr
 <footer>
 © 2026 FEBIAS College of Bible — Youth Leaders Camp
 </footer>
+
+<script>
+
+const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+const paymentMethods = document.querySelector(".payment-methods");
+const uploadSection = document.getElementById("online-upload");
+const receiptInput = document.getElementById("receipt");
+const form = document.getElementById("payment-form");
+
+paymentRadios.forEach(radio=>{
+radio.addEventListener("change",function(){
+
+if(this.value==="Online"){
+paymentMethods.style.display="flex";
+uploadSection.style.display="block";
+receiptInput.required=true;
+}else{
+paymentMethods.style.display="none";
+uploadSection.style.display="none";
+receiptInput.required=false;
+}
+
+});
+});
+
+document.querySelectorAll(".payment-box").forEach(box=>{
+box.addEventListener("click",function(){
+
+document.querySelectorAll(".payment-box").forEach(b=>b.classList.remove("selected"));
+this.classList.add("selected");
+
+});
+});
+
+receiptInput.addEventListener("change",function(){
+
+if(this.files.length>1){
+alert("Only ONE receipt is allowed per registration.");
+this.value="";
+return;
+}
+
+if(this.files.length===1){
+alert("Receipt uploaded. Only one receipt is allowed.");
+this.disabled=true;
+}
+
+});
+
+form.addEventListener("submit",function(e){
+
+const paymentType=document.querySelector('input[name="payment_by"]:checked');
+
+if(paymentType && paymentType.value==="Online"){
+if(receiptInput.files.length===0){
+e.preventDefault();
+alert("Please upload your receipt before submitting.");
+}
+}
+
+});
+
+</script>
+
+</body>
+</html>
+```
