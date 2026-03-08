@@ -41,13 +41,13 @@ h1,h2{
 }
 
 .instructions{
-  background:rgba(255,255,255,.08);
-  padding:15px;
-  border-radius:10px;
-  font-size:14px;
-  line-height:1.6;
-  color:#FFA94D;
-  margin-bottom:25px;
+  background: rgba(255,255,255,.08);
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ffffff; /* white text */
+  margin-bottom: 25px;
 }
 
 .notice{
@@ -181,10 +181,8 @@ footer{
 The registration fee is <strong>₱1,500</strong>. A promo rate of 
 <strong>₱1,400</strong> is available for those who register on or before 
 <strong>March 27</strong>.<br><br>
-
 To avail of the promo rate, pay a <strong>down payment of ₱700</strong> to secure your slot.  
 The remaining balance may be paid onsite during the event.<br><br>
-
 Campers may choose to pay <strong>online</strong> or <strong>onsite</strong>.
 </div>
 
@@ -224,7 +222,6 @@ If you paid online, please screenshot your receipt and present it during registr
 </form>
 </div>
 
-<!-- Loader -->
 <div id="loader">Processing payment...</div>
 
 <footer>
@@ -320,23 +317,28 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
       const reader = new FileReader();
       const receiptBase64 = await new Promise((resolve,reject)=>{
         reader.readAsDataURL(file);
-        reader.onload = ()=>resolve(reader.result);
+        reader.onload = ()=>{
+          // strip "data:image/png;base64," prefix
+          const base64Str = reader.result.replace(/^data:.+;base64,/, '');
+          resolve(base64Str);
+        };
         reader.onerror = err=>reject(err);
       });
 
-      // Upload receipt to Drive via your Apps Script
+      // Send to Drive Apps Script
       const driveData = new URLSearchParams();
       driveData.append('action','upload');
       driveData.append('filename', receiptName);
       driveData.append('file', receiptBase64);
+      driveData.append('fileType', file.type || 'image/png');
 
       const driveRes = await fetch(drivesurl,{method:'POST',body:driveData});
       const driveResult = await driveRes.json();
       if(driveResult.result!=="success") throw new Error("Receipt upload failed");
-      receiptDriveUrl = driveResult.url; // get the Drive file URL
+      receiptDriveUrl = driveResult.url;
     }
 
-    // Now submit payment info to sheet
+    // Submit payment to sheet
     const postData = new URLSearchParams();
     postData.append('action','payment');
     postData.append('rowIndex',rowIndex);
@@ -361,6 +363,5 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
   }
 });
 </script>
-
 </body>
 </html>
