@@ -6,8 +6,6 @@
 <title>YLC 2026 Payment | FEBIAS College of Bible</title>
 <link rel="icon" href="logo.ico">
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;700&family=Roboto:wght@400;500&display=swap');
 
@@ -61,15 +59,6 @@ h1,h2{
   font-size:13px;
 }
 
-#qr-container{
-  text-align:center;
-  margin-bottom:25px;
-}
-
-#qrcode{
-  margin-top:15px;
-}
-
 input[type=text],input[type=file]{
   width:100%;
   padding:12px;
@@ -80,23 +69,56 @@ input[type=text],input[type=file]{
   color:#fff;
 }
 
+input:focus{
+  outline:none;
+  border-color:#FF6A00;
+  box-shadow:0 0 6px rgba(255,106,0,.6);
+}
+
+.radio-group{
+  margin-top:10px;
+}
+
+.radio-group label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+
 .payment-methods{
   display:none;
+  flex-wrap:wrap;
   gap:15px;
   margin-top:15px;
+  display:flex;
 }
 
 .payment-box{
   flex:1;
   background:rgba(255,255,255,.1);
+  border:2px solid transparent;
   border-radius:14px;
   padding:18px;
   text-align:center;
   cursor:pointer;
+  transition:.25s;
+}
+
+.payment-box:hover{
+  transform:translateY(-4px);
+  border-color:#FFD700;
 }
 
 .payment-box.selected{
   border:2px solid #FFD700;
+  background:rgba(255,255,255,.2);
+}
+
+.payment-box img{
+  width:240px;
+  max-width:100%;
+  margin-bottom:10px;
 }
 
 button{
@@ -112,6 +134,17 @@ button{
   cursor:pointer;
 }
 
+button:hover{
+  background:#FFD700;
+  color:#000;
+}
+
+footer{
+  text-align:center;
+  margin-top:40px;
+  font-size:13px;
+}
+
 #loader{
   display:none;
   position:fixed;
@@ -125,10 +158,34 @@ button{
   padding-top:200px;
   font-size:18px;
   color:#FF6A00;
+  font-weight:bold;
+}
+
+#qr-container{
+  text-align:center;
+  margin-bottom:25px;
+  background: rgba(255,255,255,.08);
+  padding:15px;
+  border-radius:10px;
+  font-size:14px;
+  line-height:1.6;
+  color:#ffffff;
+}
+
+@media(max-width:480px){
+  .payment-methods{
+    flex-direction:column;
+  }
+  .payment-box img{
+    width:80%;
+  }
 }
 </style>
-</head>
 
+<!-- QR Code Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+</head>
 <body>
 
 <div class="container">
@@ -143,14 +200,14 @@ Down payment: <strong>₱700</strong>. Remaining balance onsite.<br><br>
 Campers may choose to pay <strong>online</strong> or <strong>onsite</strong>.
 </div>
 
-<!-- QR SECTION -->
+<!-- QR Code Container -->
 <div id="qr-container">
-<p style="font-size:14px; line-height:1.6; color:#FFD700;">
-📱 Instructions:<br>
-• If you are using a laptop: Scan this QR code with your phone. It will open this same payment page on your phone so you can upload the GCash receipt directly.<br><br>
-• If you are already on your phone: Simply upload your receipt below.
-</p>
-<div id="qrcode"></div>
+  <p>
+    📱 <strong>Instructions for older users:</strong><br>
+    • If using a laptop: Scan the QR code with your phone. This will open the same page on your phone so you can upload your receipt easily.<br>
+    • If using a phone: Just press "Upload Receipt" and select your screenshot.
+  </p>
+  <div id="qrcode"></div>
 </div>
 
 <form id="payment-form">
@@ -170,7 +227,6 @@ If you paid online, please screenshot your receipt and present it during registr
 <img src="bank.png" alt="Bank Transfer">
 <div>Bank Transfer</div>
 </div>
-
 <div class="payment-box" data-method="GCash">
 <img src="gcash.png" alt="GCash">
 <div>GCash</div>
@@ -181,7 +237,6 @@ If you paid online, please screenshot your receipt and present it during registr
 <h2>Upload Receipt</h2>
 <label>Receipt Name</label>
 <input type="text" id="fileName" placeholder="Enter receipt name">
-
 <label>Upload Receipt Photo</label>
 <input type="file" id="receipt" accept="image/*">
 </div>
@@ -192,7 +247,7 @@ If you paid online, please screenshot your receipt and present it during registr
 
 <div id="loader">Processing...</div>
 
-<footer style="text-align:center;margin-top:40px;">
+<footer>
 © 2026 FEBIAS College of Bible — Youth Leaders Camp
 </footer>
 
@@ -208,25 +263,29 @@ const uploadSection = document.getElementById("online-upload");
 
 let receiptUploaded = false;
 
-/* ACCESS CONTROL */
+// --- ACCESS CONTROL ---
 const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
-
 if(!rowIndex){
   alert("Invalid access. Please register first.");
+  const form = document.getElementById('payment-form');
+  form.innerHTML = "<p style='text-align:center; color:#FFD700; font-weight:bold;'>Access Denied. Please register first on the registration page.</p>";
+  form.style.pointerEvents = "none";
+  form.style.opacity = "0.6";
 }
 
-/* QR CODE GENERATION */
-if(rowIndex){
-  const paymentLink = window.location.origin + window.location.pathname + "?rowIndex=" + rowIndex;
+// --- QR CODE GENERATION ---
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(rowIndex){
+    const paymentLink = window.location.origin + window.location.pathname + "?rowIndex=" + rowIndex;
+    new QRCode(document.getElementById("qrcode"), {
+      text: paymentLink,
+      width: 180,
+      height: 180
+    });
+  }
+});
 
-  new QRCode(document.getElementById("qrcode"), {
-    text: paymentLink,
-    width: 180,
-    height: 180
-  });
-}
-
-/* Show upload section */
+// Show/hide online payment section
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
     if(radio.value === "Online"){
@@ -235,11 +294,14 @@ paymentRadios.forEach(radio=>{
     } else {
       uploadSection.style.display="none";
       document.querySelector('.payment-methods').style.display="none";
+      receiptInput.value = "";
+      receiptInput.disabled = false;
+      receiptUploaded = false;
     }
   });
 });
 
-/* Select payment method */
+// Select payment method
 paymentBoxes.forEach(box=>{
   box.addEventListener('click',()=>{
     paymentBoxes.forEach(b=>b.classList.remove('selected'));
@@ -247,107 +309,102 @@ paymentBoxes.forEach(box=>{
   });
 });
 
-/* Receipt Upload */
+// Receipt upload logic
 receiptInput.addEventListener('change', async function(){
-
-  if(this.files.length>1){
+  if(this.files.length > 1){
     alert("Only one receipt allowed.");
-    this.value="";
+    this.value = "";
     return;
   }
+  if(receiptUploaded) return;
 
   const fileName = document.getElementById('fileName').value.trim();
   const file = this.files[0];
 
   if(!fileName || !file){
-    alert("Enter receipt name.");
-    this.value="";
+    alert("Please enter receipt name.");
+    this.value = "";
     return;
   }
 
-  loader.style.display="block";
-
+  loader.style.display = "block";
   const reader = new FileReader();
   reader.onload = async ()=>{
     try{
-
       const base64 = reader.result.split(',')[1];
-
       const postData = new URLSearchParams();
       postData.append('fileName', fileName);
       postData.append('file', base64);
       postData.append('fileType', file.type || 'image/png');
 
-      const res = await fetch(driveUrl,{method:'POST',body:postData});
+      const res = await fetch(driveUrl, {method:'POST', body:postData});
       const result = await res.json();
 
-      if(result.result!=="success") throw new Error("Receipt upload failed");
+      if(result.result !== "success") throw new Error("Receipt upload failed");
 
       alert("Receipt uploaded successfully!");
-
       receiptUploaded = true;
-      receiptInput.disabled = true;
-
-    }catch(err){
-
-      alert("Upload failed. Try again.");
+      receiptInput.disabled = true; // lock
+    } catch(err){
+      alert("Upload failed. Please try again.");
       console.error(err);
-      this.value="";
-
-    }finally{
-      loader.style.display="none";
+      this.value = "";
+      loader.style.display = "none";
+    } finally{
+      loader.style.display = "none";
     }
   };
-
   reader.readAsDataURL(file);
 });
 
-/* Submit Payment */
+// Payment form submit
 document.getElementById('payment-form').addEventListener('submit', async e=>{
-
   e.preventDefault();
-
-  if(!rowIndex) return;
+  if(!rowIndex) return; // prevent submit if not registered
 
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   const method = document.querySelector('.payment-box.selected')?.dataset.method;
 
   if(!paymentBy){
-    alert("Select payment type.");
+    alert("Please select payment type.");
     return;
   }
 
-  if(paymentBy==="Online" && !receiptUploaded){
-    alert("Upload receipt first.");
+  if(paymentBy === "Online" && !receiptUploaded){
+    alert("Please upload your receipt first.");
     return;
   }
 
-  loader.style.display="block";
+  loader.style.display = "block";
 
   try{
+    let receiptDriveUrl = "";
+    let receiptName = "";
 
+    if(paymentBy==="Online"){
+      const file = receiptInput.files[0];
+      receiptName = file.name;
+    }
+
+    // Submit to sheet
     const postSheet = new URLSearchParams();
     postSheet.append('action','payment');
-    postSheet.append('rowIndex',rowIndex);
+    postSheet.append('rowIndex', rowIndex);
     postSheet.append('sheet','ylc');
     postSheet.append('payment_by', paymentBy==="Online"?`Online (${method})`:'Onsite');
+    postSheet.append('receipt', receiptDriveUrl);
+    postSheet.append('receipt_name', receiptName);
 
-    const sheetRes = await fetch(sheetUrl,{method:'POST',body:postSheet});
+    const sheetRes = await fetch(sheetUrl, {method:'POST', body:postSheet});
     const sheetResult = await sheetRes.json();
-
-    if(sheetResult.result!=='success') throw new Error("Payment submission failed");
+    if(sheetResult.result !== 'success') throw new Error("Payment submission failed");
 
     window.location.href = `thankyou.html?rowIndex=${rowIndex}`;
-
-  }catch(err){
-
-    alert(err.message);
-    loader.style.display="none";
-
+  } catch(err){
+    alert(err.message || "Payment submission failed. Please try again.");
+    loader.style.display = "none";
   }
-
 });
 </script>
-
 </body>
 </html>
