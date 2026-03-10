@@ -276,11 +276,16 @@ if(!rowIndex){
 // --- QR CODE GENERATION ---
 document.addEventListener('DOMContentLoaded', ()=>{
   if(rowIndex){
-    const paymentLink = window.location.origin + window.location.pathname + "?rowIndex=" + rowIndex;
-    new QRCode(document.getElementById("qrcode"), {
+    const paymentLink = window.location.href;
+    const qrContainer = document.getElementById("qrcode");
+    qrContainer.innerHTML = ""; // clear previous QR
+    new QRCode(qrContainer, {
       text: paymentLink,
       width: 180,
-      height: 180
+      height: 180,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
     });
   }
 });
