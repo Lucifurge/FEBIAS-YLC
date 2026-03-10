@@ -274,21 +274,41 @@ if(!rowIndex){
 }
 
 // --- QR CODE GENERATION ---
-document.addEventListener('DOMContentLoaded', ()=>{
-  if(rowIndex){
-    const paymentLink = "https://febias-ylc.onrender.com/payment.html?rowIndex=" + rowIndex;
-    const qrContainer = document.getElementById("qrcode");
-    qrContainer.innerHTML = ""; // clear previous QR
-    new QRCode(qrContainer, {
-      text: paymentLink,
-      width: 220,
-      height: 220,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
+async function generateQR(){
+  let qrRowIndex = new URLSearchParams(window.location.search).get("rowIndex");
+
+  // If rowIndex not in URL, fetch the latest from sheet
+  if(!qrRowIndex){
+    try{
+      const res = await fetch(sheetUrl + "?action=getLatestRowIndex");
+      const data = await res.json();
+      qrRowIndex = data.rowIndex; // expects {rowIndex: 11} from your Apps Script
+    }catch(err){
+      console.error("Failed to get latest row index", err);
+    }
   }
-});
+
+  // If still no rowIndex, show message
+  const qrContainer = document.getElementById("qrcode");
+  if(!qrRowIndex){
+    qrContainer.innerHTML = "<p style='color:#FFD700;'>QR unavailable. Please register first.</p>";
+    return;
+  }
+
+  // Generate QR
+  const paymentLink = "https://febias-ylc.onrender.com/payment.html?rowIndex=" + qrRowIndex;
+  qrContainer.innerHTML = ""; // clear previous QR
+  new QRCode(qrContainer, {
+    text: paymentLink,
+    width: 220,
+    height: 220,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+document.addEventListener('DOMContentLoaded', generateQR);
 
 // Show/hide online payment section
 paymentRadios.forEach(radio=>{
