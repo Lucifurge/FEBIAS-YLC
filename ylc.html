@@ -523,35 +523,51 @@ button:hover{
   <div id="response"></div>
 
 <script>
+<script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbyqJUxYG25wJgU3PJQZ-ppizmHp9VlD5ZbCHB6Itdi10k6a8n-xTb7B0Qy824quPhLh0w/exec";
 
+// ---------- SUBMISSION LOCK ----------
+let isSubmitting = false;
+
 document.getElementById("ylcForm").addEventListener("submit", function(e){
+
+  // prevent double submission
+  if(sessionStorage.getItem("ylcSubmitted")){
+    alert("You have already submitted this registration on this device.");
+    return;
+  }
+  if(isSubmitting) return;
+  isSubmitting = true;
+
   e.preventDefault();
 
-  // ---------- VALIDATION: Ensure all inputs, selects, textareas, radios, checkboxes are filled ----------
+  // ---------- VALIDATION ----------
   const formElements = this.querySelectorAll("input, select, textarea");
+
   for (const el of formElements) {
-    if ((el.type === "radio" || el.type === "checkbox")) {
-      // For radios: at least one in group must be checked
-      if (el.required) {
+    if((el.type === "radio" || el.type === "checkbox")) {
+      if(el.required){
         const group = this.querySelectorAll(`input[name="${el.name}"]`);
-        if (![...group].some(r => r.checked)) {
+        if (![...group].some(r => r.checked)){
           alert(`Please select an option for "${el.name}".`);
           el.focus();
+          isSubmitting = false;
           return;
         }
       }
-    } else if (!el.value.trim()) {
+    } else if(!el.value.trim()){
       alert(`Please fill out the "${el.name}" field.`);
       el.focus();
+      isSubmitting = false;
       return;
     }
   }
 
-  // ---------- VALIDATION: Health Declaration must select exactly 4 ----------
+  // ---------- HEALTH DECLARATION CHECK ----------
   const healthDecl = this.querySelectorAll('input[name="healthDeclaration"]:checked');
-  if (healthDecl.length !== 4) {
+  if(healthDecl.length !== 4){
     alert("Please select exactly 4 options for Health Declaration.");
+    isSubmitting = false;
     return;
   }
 
@@ -561,6 +577,7 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
 
   const submitBtn = this.querySelector("button[type='submit']");
   submitBtn.disabled = true;
+  submitBtn.innerText = "Submitting...";
 
   const form = new FormData(this);
   const formData = {};
@@ -608,15 +625,13 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     shirtSize: "shirt_size"
   };
 
-  for (let [key, value] of form.entries()) {
+  for(let [key,value] of form.entries()){
     const mappedKey = nameMap[key] || key;
-
-    if (mappedKey === "email") {
-      value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
+    if(mappedKey === "email"){
+      value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g,'');
     }
-
-    if (formData[mappedKey]) {
-      if (Array.isArray(formData[mappedKey])) {
+    if(formData[mappedKey]){
+      if(Array.isArray(formData[mappedKey])){
         formData[mappedKey].push(value);
       } else {
         formData[mappedKey] = [formData[mappedKey], value];
@@ -629,29 +644,34 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   formData.action = "register";
   formData.sheet = "ylc";
 
-  fetch(scriptURL, {
-    method: "POST",
-    body: new URLSearchParams(formData)
+  fetch(scriptURL,{
+    method:"POST",
+    body:new URLSearchParams(formData)
   })
   .then(res => res.json())
   .then(data => {
     loader.classList.remove("active");
-    if (data.result === "success" && data.rowIndex) {
+    if(data.result === "success" && data.rowIndex){
+      sessionStorage.setItem("ylcSubmitted","true");
       window.location.href = "payment.html?rowIndex=" + data.rowIndex;
     } else {
-      document.getElementById("response").innerText =
-        "Error: " + (data.error || "Something went wrong.");
+      document.getElementById("response").innerText = "Error: "+(data.error||"Something went wrong.");
       submitBtn.disabled = false;
+      submitBtn.innerText = "Submit Registration";
+      isSubmitting = false;
     }
   })
-  .catch(err => {
+  .catch(err=>{
     loader.classList.remove("active");
     submitBtn.disabled = false;
-    document.getElementById("response").innerText =
-      "Submission failed. Please try again.";
+    submitBtn.innerText = "Submit Registration";
+    isSubmitting = false;
+    document.getElementById("response").innerText = "Submission failed. Please try again.";
     console.error(err);
   });
+
 });
+</script>
 </script>
 </body>
 </html>
