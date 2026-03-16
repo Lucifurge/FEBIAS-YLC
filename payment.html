@@ -291,7 +291,7 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
         const postSheet = new URLSearchParams();
         postSheet.append('action','payment');
         postSheet.append('rowIndex', rowIndex);
-        postSheet.append('sheet','ylc');
+        postSheet.append('sheet','Pre-Registration');
         postSheet.append('payment_by', paymentBy==="Online"?`Online (${method})`:'Onsite');
         postSheet.append('receipt', receiptDriveUrl);
         postSheet.append('receipt_name', document.getElementById('fileName').value.trim());
