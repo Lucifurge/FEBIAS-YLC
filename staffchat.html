@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YLC 2026 Chat</title>
 <style>
-* { box-sizing: border-box; margin:0; padding:0; }
-body { font-family: "Segoe UI", Arial; background:#eef2f3; height:100vh; display:flex; justify-content:center; align-items:center; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:"Segoe UI",Arial,sans-serif; background:#eef2f3; height:100vh; display:flex; justify-content:center; align-items:center; }
 
 /* Welcome */
 #welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; max-width:400px; padding:20px; background:linear-gradient(135deg,#006837,#0b3d2e); border-radius:12px; color:white; text-align:center; }
@@ -45,20 +45,8 @@ body { font-family: "Segoe UI", Arial; background:#eef2f3; height:100vh; display
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxW-NPWH7jFPHNBdajW3Kz8w9XWpaIw1THhJqEaYl-A1g9F_NJA1BfQeb7Nvl_eleiJ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec";
 let userName = "";
-let chatMessages = [];
-
-/* Load messages from localStorage */
-function loadLocalMessages() {
-  const saved = localStorage.getItem("chatMessages");
-  if (saved) chatMessages = JSON.parse(saved);
-}
-
-/* Save messages to localStorage */
-function saveLocalMessages() {
-  localStorage.setItem("chatMessages", JSON.stringify(chatMessages));
-}
 
 /* Format time */
 function formatTime(ts) {
@@ -69,16 +57,43 @@ function formatTime(ts) {
 }
 
 /* Render all messages */
-function renderMessages() {
+function renderMessages(data) {
   const box = document.getElementById("messages");
   box.innerHTML = "";
-  chatMessages.forEach(m => {
+  data.forEach(m => {
     const div = document.createElement("div");
     div.className = "message " + (m.user === userName ? "user" : "other");
     div.innerHTML = `<div class="meta">${m.user} • ${formatTime(m.time)}</div>${m.message}`;
     box.appendChild(div);
   });
   box.scrollTop = box.scrollHeight;
+}
+
+/* Load messages from backend */
+async function loadMessages() {
+  try {
+    const res = await fetch(`${WEB_APP_URL}?action=get`);
+    const data = await res.json();
+    renderMessages(data);
+  } catch (err) {
+    console.log("Failed to load messages", err);
+  }
+}
+
+/* Send message */
+async function sendMessage() {
+  const input = document.getElementById("message-input");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+
+  try {
+    await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
+  } catch (err) {
+    console.log("Failed to send message", err);
+  }
+
+  loadMessages(); // refresh after sending
 }
 
 /* Enter chat */
@@ -89,57 +104,18 @@ document.getElementById("enter-btn").onclick = () => {
   document.getElementById("welcome").style.display = "none";
   document.getElementById("chat-container").style.display = "flex";
   document.getElementById("message-input").focus();
-  loadLocalMessages();
-  renderMessages();
-  loadBackendMessages(); // optional fetch from server
+  loadMessages();
 };
 
-/* Send message */
-async function sendMessage() {
-  const input = document.getElementById("message-input");
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = "";
-
-  const messageObj = { user: userName, message: msg, time: Date.now() };
-  chatMessages.push(messageObj);
-  saveLocalMessages();
-  renderMessages();
-
-  // Optional: send to backend
-  try {
-    await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
-  } catch (err) {
-    console.log("Backend send failed:", err);
-  }
-}
-
-/* Fetch backend messages without overwriting local messages */
-async function loadBackendMessages() {
-  try {
-    const res = await fetch(`${WEB_APP_URL}?action=get`);
-    const data = await res.json();
-    data.forEach(m => {
-      if (!chatMessages.find(cm => cm.user===m.user && cm.message===m.message && cm.time===m.time)) {
-        if (!m.time) m.time = Date.now();
-        chatMessages.push(m);
-      }
-    });
-    saveLocalMessages();
-    renderMessages();
-  } catch(err) {
-    console.log("Backend load failed:", err);
-  }
-}
-
-/* Events */
+/* Event listeners */
 document.getElementById("send-btn").onclick = sendMessage;
 document.getElementById("message-input").addEventListener("keydown", e => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* Auto refresh backend every 2s */
-setInterval(() => { if(userName) loadBackendMessages(); }, 2000);
+/* Auto refresh every 2 seconds */
+setInterval(() => { if(userName) loadMessages(); }, 2000);
 </script>
+
 </body>
 </html>
