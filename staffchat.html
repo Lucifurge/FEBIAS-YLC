@@ -4,137 +4,221 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YLC 2026 Chat</title>
+
 <style>
-  body, html {
-    margin:0; padding:0; height:100%; font-family: Arial, sans-serif; background: #f0f2f5;
-    overflow: hidden;
-  }
-  .hidden { display:none; }
+* { box-sizing: border-box; }
 
-  /* Welcome Screen */
-  #welcome {
-    position: absolute; top:0; left:0; right:0; bottom:0;
-    display:flex; flex-direction: column; justify-content:center; align-items:center;
-    background: linear-gradient(135deg, #006837, #f9f9f9);
-    color:white; text-align:center; transition: all 0.5s ease;
-  }
-  #welcome h1 {
-    font-size: 3rem; margin-bottom: 25px; color:#FFD700; text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
-  }
-  #name-input {
-    padding: 15px 20px; font-size: 1rem; border-radius: 25px; border:none;
-    width: 280px; margin-bottom:20px; outline:none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  }
-  #enter-btn {
-    padding: 12px 25px; background:#FFD700; color:#006837; font-weight:bold; border:none;
-    border-radius:25px; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,0.2); transition:0.3s;
-  }
-  #enter-btn:hover { background:#e6c200; transform:translateY(-2px); }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #eef2f3;
+}
 
-  /* Chat Screen */
-  #chat-container {
-    display: flex; flex-direction: column; max-width: 700px; margin: 0 auto;
-    height: 100vh; border-radius:15px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.15);
-    background:#fff; opacity:0; transform: translateY(50px); transition: all 0.5s ease;
-  }
-  #chat-container.show { opacity:1; transform: translateY(0); }
+/* Welcome */
+#welcome {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #006837, #0b3d2e);
+  color: white;
+}
 
-  /* Messages */
-  #messages {
-    flex:1; padding:20px; overflow-y:auto; background:#f0f2f5;
-  }
-  .message {
-    margin-bottom:12px; max-width:70%; padding:12px 18px; border-radius:20px;
-    word-wrap:break-word; animation: fadeIn 0.3s ease-in; box-shadow:0 2px 5px rgba(0,0,0,0.1);
-  }
-  .message.user { background:#006837; color:white; align-self:flex-end; border-bottom-right-radius:5px; }
-  .message.other { background:#FFD700; color:#006837; align-self:flex-start; border-bottom-left-radius:5px; }
-  .meta { font-size:0.75rem; color:#555; margin-bottom:5px; }
+#welcome h1 {
+  color: #FFD700;
+}
 
-  @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+#name-input {
+  padding: 12px;
+  border-radius: 25px;
+  border: none;
+  width: 250px;
+  margin: 10px 0;
+}
 
-  /* Input */
-  #input-container { display:flex; border-top:1px solid #ddd; background:white; }
-  #message-input { flex:1; padding:15px; font-size:1rem; border:none; outline:none; }
-  #send-btn { padding:15px 25px; background:#006837; color:white; font-weight:bold; border:none; cursor:pointer; transition:0.3s; }
-  #send-btn:hover { background:#004f28; }
+#enter-btn {
+  padding: 10px 20px;
+  border-radius: 25px;
+  border: none;
+  background: #FFD700;
+  color: #006837;
+  cursor: pointer;
+  font-weight: bold;
+}
 
-  /* Scrollbar styling */
-  #messages::-webkit-scrollbar { width:8px; }
-  #messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:4px; }
-  #messages::-webkit-scrollbar-track { background: transparent; }
+/* Chat Container */
+#chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 600px;
+  margin: auto;
+  background: white;
+}
+
+/* Messages */
+#messages {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Message Bubble */
+.message {
+  padding: 8px 12px;
+  border-radius: 14px;
+  max-width: 75%;
+  font-size: 14px;
+  line-height: 1.3;
+  word-wrap: break-word;
+}
+
+.user {
+  align-self: flex-end;
+  background: #006837;
+  color: white;
+}
+
+.other {
+  align-self: flex-start;
+  background: #FFD700;
+  color: #006837;
+}
+
+/* Meta */
+.meta {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-bottom: 2px;
+}
+
+/* Input */
+#input-container {
+  display: flex;
+  border-top: 1px solid #ddd;
+}
+
+#message-input {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  outline: none;
+}
+
+#send-btn {
+  padding: 0 16px;
+  border: none;
+  background: #006837;
+  color: white;
+  cursor: pointer;
+}
+
+.hidden { display: none; }
 </style>
 </head>
+
 <body>
 
-<!-- Welcome Screen -->
 <div id="welcome">
   <h1>YLC 2026 Chat</h1>
-  <input type="text" id="name-input" placeholder="Enter your name" />
+  <input id="name-input" placeholder="Enter your name">
   <button id="enter-btn">Enter Chat</button>
 </div>
 
-<!-- Chat Screen -->
-<div id="chat-container">
+<div id="chat-container" class="hidden">
   <div id="messages"></div>
+
   <div id="input-container">
-    <input type="text" id="message-input" placeholder="Type a message..." />
+    <input id="message-input" placeholder="Type a message">
     <button id="send-btn">Send</button>
   </div>
 </div>
 
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxW-NPWH7jFPHNBdajW3Kz8w9XWpaIw1THhJqEaYl-A1g9F_NJA1BfQeb7Nvl_eleiJ/exec';
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxW-NPWH7jFPHNBdajW3Kz8w9XWpaIw1THhJqEaYl-A1g9F_NJA1BfQeb7Nvl_eleiJ/exec";
+
 let userName = "";
+let lastMessageCount = 0;
 
-// Enter name
-document.getElementById('enter-btn').addEventListener('click', () => {
-  const input = document.getElementById('name-input').value.trim();
-  if(!input) return alert("Please enter your name!");
-  userName = input;
+/* Enter Chat */
+document.getElementById("enter-btn").onclick = () => {
+  const name = document.getElementById("name-input").value.trim();
+  if (!name) return alert("Enter name");
 
-  // Hide welcome and show chat
-  document.getElementById('welcome').style.opacity='0';
-  document.getElementById('welcome').style.transform='translateY(-50px)';
-  setTimeout(()=>{ document.getElementById('welcome').classList.add('hidden'); }, 500);
+  userName = name;
+  document.getElementById("welcome").classList.add("hidden");
+  document.getElementById("chat-container").classList.remove("hidden");
 
-  document.getElementById('chat-container').classList.add('show');
   loadMessages();
+};
+
+/* Send Message */
+async function sendMessage() {
+  const input = document.getElementById("message-input");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = "";
+
+  await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
+
+  loadMessages();
+}
+
+/* Format Time */
+function formatTime(date) {
+  return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/* Load Messages */
+async function loadMessages() {
+  try {
+    const res = await fetch(WEB_APP_URL + "?action=get");
+    const data = await res.json();
+
+    const box = document.getElementById("messages");
+
+    // Prevent full redraw if same length
+    if (data.length === lastMessageCount) return;
+    lastMessageCount = data.length;
+
+    box.innerHTML = "";
+
+    data.forEach(m => {
+      const div = document.createElement("div");
+      div.className = "message " + (m.user === userName ? "user" : "other");
+
+      div.innerHTML = `
+        <div class="meta">${m.user} • ${formatTime(m.time || Date.now())}</div>
+        ${m.message}
+      `;
+
+      box.appendChild(div);
+    });
+
+    box.scrollTop = box.scrollHeight;
+
+  } catch (err) {
+    console.error("Error loading messages", err);
+  }
+}
+
+/* Events */
+document.getElementById("send-btn").onclick = sendMessage;
+
+document.getElementById("message-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMessage();
 });
 
-// Send message
-async function sendMessage(){
-  const input = document.getElementById('message-input');
-  const message = input.value.trim();
-  if(!message) return;
-  await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(message)}`);
-  input.value='';
-  loadMessages();
-}
-
-// Load messages
-async function loadMessages(){
-  try{
-    const res = await fetch(`${WEB_APP_URL}?action=get`);
-    const data = await res.json();
-    const messagesDiv = document.getElementById('messages');
-    messagesDiv.innerHTML='';
-    data.forEach(msg=>{
-      const div = document.createElement('div');
-      div.classList.add('message', msg.user===userName?'user':'other');
-      div.innerHTML=`<div class="meta">${msg.user} • ${new Date(msg.timestamp).toLocaleTimeString()}</div>${msg.message}`;
-      messagesDiv.appendChild(div);
-    });
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  } catch(err){ console.error('Error loading messages:', err); }
-}
-
-// Event listeners
-document.getElementById('send-btn').addEventListener('click', sendMessage);
-document.getElementById('message-input').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
-
-// Auto-refresh
-setInterval(()=>{ if(userName) loadMessages(); }, 2000);
+/* Auto Refresh */
+setInterval(() => {
+  if (userName) loadMessages();
+}, 2000);
 </script>
+
 </body>
 </html>
