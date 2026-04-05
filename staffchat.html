@@ -5,129 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YLC 2026 Chat</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: "Segoe UI", Arial; background:#eef2f3; height:100vh; display:flex; justify-content:center; align-items:center; }
 
-body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #eef2f3;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+/* Welcome */
+#welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; max-width:400px; padding:20px; background:linear-gradient(135deg,#006837,#0b3d2e); border-radius:12px; color:white; text-align:center; }
+#welcome h1 { color:#FFD700; margin-bottom:20px; }
+#name-input { width:100%; padding:12px; border-radius:25px; border:none; margin-bottom:12px; }
+#enter-btn { width:100%; padding:12px; border-radius:25px; border:none; background:#FFD700; color:#006837; font-weight:bold; cursor:pointer; }
 
-/* Welcome Screen */
-#welcome {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 400px;
-  padding: 20px;
-  background: linear-gradient(135deg, #006837, #0b3d2e);
-  border-radius: 12px;
-  color: white;
-  text-align: center;
-}
-
-#welcome h1 {
-  color: #FFD700;
-  margin-bottom: 20px;
-}
-
-#name-input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 25px;
-  border: none;
-  margin-bottom: 12px;
-}
-
-#enter-btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 25px;
-  border: none;
-  background: #FFD700;
-  color: #006837;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* Chat Container */
-#chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 80vh;
-  max-width: 600px;
-  width: 100%;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  display: none;
-}
-
-/* Messages */
-#messages {
-  flex: 1;
-  padding: 12px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Message Bubble */
-.message {
-  padding: 8px 12px;
-  border-radius: 14px;
-  max-width: 75%;
-  font-size: 14px;
-  word-wrap: break-word;
-}
-
-.user { align-self: flex-end; background: #006837; color: white; }
-.other { align-self: flex-start; background: #FFD700; color: #006837; }
-
-.meta {
-  font-size: 10px;
-  opacity: 0.6;
-  margin-bottom: 2px;
-}
+/* Chat */
+#chat-container { display:flex; flex-direction:column; height:80vh; max-width:600px; width:100%; background:white; border-radius:12px; overflow:hidden; display:none; }
+#messages { flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.message { padding:8px 12px; border-radius:14px; max-width:75%; font-size:14px; word-wrap:break-word; }
+.user { align-self:flex-end; background:#006837; color:white; }
+.other { align-self:flex-start; background:#FFD700; color:#006837; }
+.meta { font-size:10px; opacity:0.6; margin-bottom:2px; }
 
 /* Input */
-#input-container {
-  display: flex;
-  border-top: 1px solid #ddd;
-}
-
-#message-input {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  outline: none;
-}
-
-#send-btn {
-  padding: 0 16px;
-  border: none;
-  background: #006837;
-  color: white;
-  cursor: pointer;
-}
+#input-container { display:flex; border-top:1px solid #ddd; }
+#message-input { flex:1; padding:12px; border:none; outline:none; }
+#send-btn { padding:0 16px; border:none; background:#006837; color:white; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<!-- Welcome -->
 <div id="welcome">
   <h1>YLC 2026 Chat</h1>
   <input id="name-input" placeholder="Enter your name">
   <button id="enter-btn">Enter Chat</button>
 </div>
 
-<!-- Chat -->
 <div id="chat-container">
   <div id="messages"></div>
   <div id="input-container">
@@ -137,78 +45,101 @@ body {
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxW-NPWH7jFPHNBdajW3Kz8w9XWpaIw1THhJqEaYl-A1g9F_NJA1BfQeb7Nvl_eleiJ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec";
 let userName = "";
+let chatMessages = [];
 
-/* Enter Chat */
+/* Load messages from localStorage */
+function loadLocalMessages() {
+  const saved = localStorage.getItem("chatMessages");
+  if (saved) chatMessages = JSON.parse(saved);
+}
+
+/* Save messages to localStorage */
+function saveLocalMessages() {
+  localStorage.setItem("chatMessages", JSON.stringify(chatMessages));
+}
+
+/* Format time */
+function formatTime(ts) {
+  if (!ts) ts = Date.now();
+  const d = new Date(ts);
+  if (isNaN(d)) return "Unknown";
+  return d.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+}
+
+/* Render all messages */
+function renderMessages() {
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
+  chatMessages.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "message " + (m.user === userName ? "user" : "other");
+    div.innerHTML = `<div class="meta">${m.user} • ${formatTime(m.time)}</div>${m.message}`;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+/* Enter chat */
 document.getElementById("enter-btn").onclick = () => {
   const name = document.getElementById("name-input").value.trim();
   if (!name) return alert("Enter your name");
-
   userName = name;
-
-  // Show chat immediately
   document.getElementById("welcome").style.display = "none";
   document.getElementById("chat-container").style.display = "flex";
   document.getElementById("message-input").focus();
-
-  // Load messages but don't block UI
-  loadMessages().catch(err => console.log("Load error:", err));
+  loadLocalMessages();
+  renderMessages();
+  loadBackendMessages(); // optional fetch from server
 };
 
-/* Send Message */
+/* Send message */
 async function sendMessage() {
   const input = document.getElementById("message-input");
   const msg = input.value.trim();
   if (!msg) return;
   input.value = "";
 
-  // Send to backend (optional)
+  const messageObj = { user: userName, message: msg, time: Date.now() };
+  chatMessages.push(messageObj);
+  saveLocalMessages();
+  renderMessages();
+
+  // Optional: send to backend
   try {
     await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
   } catch (err) {
-    console.log("Send failed, continuing locally", err);
+    console.log("Backend send failed:", err);
   }
-
-  renderMessage({ user: userName, message: msg, time: Date.now() });
 }
 
-/* Render Messages */
-function renderMessage(m) {
-  const box = document.getElementById("messages");
-  const div = document.createElement("div");
-  div.className = "message " + (m.user === userName ? "user" : "other");
-  div.innerHTML = `<div class="meta">${m.user} • ${formatTime(m.time)}</div>${m.message}`;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
-
-/* Load Messages from backend */
-async function loadMessages() {
+/* Fetch backend messages without overwriting local messages */
+async function loadBackendMessages() {
   try {
     const res = await fetch(`${WEB_APP_URL}?action=get`);
     const data = await res.json();
-    data.forEach(renderMessage);
-  } catch (err) {
-    console.log("Cannot load messages", err);
+    data.forEach(m => {
+      if (!chatMessages.find(cm => cm.user===m.user && cm.message===m.message && cm.time===m.time)) {
+        if (!m.time) m.time = Date.now();
+        chatMessages.push(m);
+      }
+    });
+    saveLocalMessages();
+    renderMessages();
+  } catch(err) {
+    console.log("Backend load failed:", err);
   }
 }
 
-/* Format time */
-function formatTime(ts) {
-  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-/* Event listeners */
+/* Events */
 document.getElementById("send-btn").onclick = sendMessage;
 document.getElementById("message-input").addEventListener("keydown", e => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* Auto-refresh messages */
-setInterval(() => {
-  if (userName) loadMessages();
-}, 2000);
+/* Auto refresh backend every 2s */
+setInterval(() => { if(userName) loadBackendMessages(); }, 2000);
 </script>
 </body>
 </html>
