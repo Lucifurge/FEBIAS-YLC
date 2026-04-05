@@ -11,7 +11,8 @@
     padding: 0;
     font-family: 'Arial', sans-serif;
     height: 100%;
-    background: #f9f9f9;
+    background: #f0f2f5;
+    overflow: hidden;
   }
   .hidden { display: none; }
 
@@ -22,25 +23,27 @@
     align-items: center;
     justify-content: center;
     height: 100%;
+    width: 100%;
     background: linear-gradient(135deg, #006837, #f9f9f9);
     text-align: center;
-    padding: 20px;
     color: white;
+    transition: all 0.5s ease;
   }
   #welcome h1 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
+    font-size: 3rem;
+    margin-bottom: 25px;
     color: #FFD700;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
   }
   #name-input {
-    padding: 14px;
+    padding: 15px 20px;
     font-size: 1rem;
     border-radius: 25px;
     border: none;
     width: 280px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     outline: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   }
   #enter-btn {
     padding: 12px 25px;
@@ -50,15 +53,12 @@
     border: none;
     border-radius: 25px;
     cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     transition: 0.3s;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   }
-  #enter-btn:hover {
-    background: #e6c200;
-    transform: translateY(-2px);
-  }
+  #enter-btn:hover { background: #e6c200; transform: translateY(-2px); }
 
-  /* Chat Container */
+  /* Chat Screen */
   #chat-container {
     display: flex;
     flex-direction: column;
@@ -69,6 +69,13 @@
     overflow: hidden;
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     background: #fff;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.5s ease;
+  }
+  #chat-container.show {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   /* Messages */
@@ -118,7 +125,6 @@
     border: none;
     font-size: 1rem;
     outline: none;
-    border-radius: 0;
   }
   #send-btn {
     padding: 15px 25px;
@@ -130,19 +136,24 @@
     transition: 0.3s;
   }
   #send-btn:hover { background: #004f28; }
+
+  /* Scrollbar styling */
+  #messages::-webkit-scrollbar { width: 8px; }
+  #messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+  #messages::-webkit-scrollbar-track { background: transparent; }
 </style>
 </head>
 <body>
 
 <!-- Welcome Screen -->
 <div id="welcome">
-  <h1>YLC 2026 Public Chat</h1>
+  <h1>YLC 2026 Chat</h1>
   <input type="text" id="name-input" placeholder="Enter your name" />
   <button id="enter-btn">Enter Chat</button>
 </div>
 
 <!-- Chat Screen -->
-<div id="chat-container" class="hidden">
+<div id="chat-container">
   <div id="messages"></div>
   <div id="input-container">
     <input type="text" id="message-input" placeholder="Type a message..." />
@@ -154,13 +165,20 @@
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxW-NPWH7jFPHNBdajW3Kz8w9XWpaIw1THhJqEaYl-A1g9F_NJA1BfQeb7Nvl_eleiJ/exec';
 let userName = "";
 
-// Enter name
+// Enter name and show chat
 document.getElementById('enter-btn').addEventListener('click', () => {
   const input = document.getElementById('name-input').value.trim();
   if(!input) return alert("Please enter your name!");
   userName = input;
-  document.getElementById('welcome').classList.add('hidden');
-  document.getElementById('chat-container').classList.remove('hidden');
+
+  // Animate transition
+  document.getElementById('welcome').style.opacity = '0';
+  document.getElementById('welcome').style.transform = 'translateY(-50px)';
+  setTimeout(() => { document.getElementById('welcome').classList.add('hidden'); }, 500);
+  
+  const chat = document.getElementById('chat-container');
+  chat.classList.add('show');
+  
   loadMessages();
 });
 
@@ -197,7 +215,7 @@ async function loadMessages() {
 document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('message-input').addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
 
-// Auto-refresh
+// Auto-refresh every 2 seconds
 setInterval(() => { if(userName) loadMessages(); }, 2000);
 </script>
 
