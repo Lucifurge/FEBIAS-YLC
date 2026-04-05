@@ -43,71 +43,106 @@ body { font-family:"Segoe UI",Arial,sans-serif; background:#eef2f3; height:100vh
     <button id="send-btn">Send</button>
   </div>
 </div>
-
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbww0gXereWPMMtGwi2y6-vy7uPtyRaLSm-9DLcftYSzZXiAgp4ddXymaa39MOIzPfkW/exec"; // replace with your Apps Script URL
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbww0gXereWPMMtGwi2y6-vy7uPtyRaLSm-9DLcftYSzZXiAgp4ddXymaa39MOIzPfkW/exec";
 let userName = "";
 
-/* Format time */
+/* Format time safely */
 function formatTime(ts) {
-  if(!ts) ts = Date.now();
-  const d = new Date(ts);
-  return isNaN(d) ? "Unknown" : d.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+  if (!ts) return "";
+  const d = new Date(Number(ts));
+  return isNaN(d) ? "" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 /* Render messages */
-function renderMessages(data){
+function renderMessages(data) {
   const box = document.getElementById("messages");
   box.innerHTML = "";
-  data.forEach(m=>{
+
+  if (!data || data.length === 0) {
+    box.innerHTML = "<div style='text-align:center; opacity:0.5;'>No messages yet</div>";
+    return;
+  }
+
+  data.forEach(m => {
+    if (!m.message) return; // skip empty rows
+
     const div = document.createElement("div");
-    div.className = "message "+(m.user===userName?"user":"other");
-    div.innerHTML = `<div class="meta">${m.user} • ${formatTime(m.time)}</div>${m.message}`;
+    div.className = "message " + (m.user === userName ? "user" : "other");
+
+    div.innerHTML = `
+      <div class="meta">${m.user} • ${formatTime(m.time)}</div>
+      ${m.message}
+    `;
+
     box.appendChild(div);
   });
+
   box.scrollTop = box.scrollHeight;
 }
 
 /* Load messages */
-async function loadMessages(){
-  try{
+async function loadMessages() {
+  try {
     const res = await fetch(`${WEB_APP_URL}?action=get`);
     const data = await res.json();
+
+    // Sort by time (IMPORTANT)
+    data.sort((a, b) => Number(a.time) - Number(b.time));
+
     renderMessages(data);
-  } catch(err){ console.log("Load failed", err); }
+
+  } catch (err) {
+    console.log("Load failed:", err);
+  }
 }
 
 /* Send message */
-async function sendMessage(){
+async function sendMessage() {
   const input = document.getElementById("message-input");
   const msg = input.value.trim();
-  if(!msg) return;
+  if (!msg) return;
+
   input.value = "";
-  try{
+
+  try {
     await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
-  } catch(err){ console.log("Send failed", err); }
+  } catch (err) {
+    console.log("Send failed:", err);
+  }
+
+  // reload immediately after sending
   loadMessages();
 }
 
 /* Enter chat */
-document.getElementById("enter-btn").onclick = ()=>{
+document.getElementById("enter-btn").onclick = async () => {
   const name = document.getElementById("name-input").value.trim();
-  if(!name) return alert("Enter your name");
+  if (!name) return alert("Enter your name");
+
   userName = name;
+
   document.getElementById("welcome").style.display = "none";
   document.getElementById("chat-container").style.display = "flex";
+
   document.getElementById("message-input").focus();
-  loadMessages();
+
+  // 🔥 LOAD IMMEDIATELY
+  await loadMessages();
 };
 
 /* Events */
 document.getElementById("send-btn").onclick = sendMessage;
-document.getElementById("message-input").addEventListener("keydown",e=>{
-  if(e.key==="Enter") sendMessage();
+
+document.getElementById("message-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMessage();
 });
 
-/* Auto refresh every 2s */
-setInterval(()=>{ if(userName) loadMessages(); },2000);
+/* Auto refresh */
+setInterval(() => {
+  if (userName) loadMessages();
+}, 2000);
+
 </script>
 </body>
 </html>
