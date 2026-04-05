@@ -68,8 +68,9 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbw43IxCOZWnOUQrew5tjQE
 const tbody = document.querySelector("#attendance-table tbody");
 
 let peopleMap = new Map();
-let localOverrides = new Map(); // 🔥 prevents reverting
+let localOverrides = new Map();
 const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
+let lastManualUpdate = 0;
 
 // Render or update a row
 function renderRow(person) {
@@ -78,7 +79,7 @@ function renderRow(person) {
   if (!tr) {
     tr = document.createElement("tr");
     tr.dataset.row = person.rowIndex;
-
+    tr.dataset.locked = "false";
     tr.innerHTML = `
       <td class="first"></td>
       <td class="last"></td>
@@ -89,7 +90,7 @@ function renderRow(person) {
     peopleMap.set(person.rowIndex, tr);
   }
 
-  // 🔥 If we have a local override, use it instead of sheet value
+  // Use local override if exists
   if (localOverrides.has(person.rowIndex)) {
     person.attendanceStatus = localOverrides.get(person.rowIndex);
   }
@@ -100,6 +101,7 @@ function renderRow(person) {
   const paymentCell = tr.querySelector(".payment");
   const attendanceCell = tr.querySelector(".attendance-check");
 
+  // Payment UI helper
   function updatePaymentUI(status) {
     const lower = (status || "").toLowerCase();
     if (lower.includes("online")) {
@@ -114,6 +116,7 @@ function renderRow(person) {
     }
   }
 
+  // Attendance emoji helper
   function setEmoji(status) {
     attendanceCell.textContent =
       status === "Attended" ? "✅" :
@@ -123,59 +126,72 @@ function renderRow(person) {
   updatePaymentUI(person.paymentStatus);
   setEmoji(person.attendanceStatus);
 
-  attendanceCell.onclick = () => {
+  attendanceCell.onclick = async () => {
+    if (tr.dataset.locked === "true") return; // prevent double click
+    tr.dataset.locked = "true";
+
     let current = localOverrides.get(person.rowIndex) || person.attendanceStatus;
     let idx = statusCycle.indexOf(current);
     if (idx === -1) idx = 0;
     let newStatus = statusCycle[(idx + 1) % statusCycle.length];
 
-    // 🔥 SAVE LOCALLY FIRST (prevents reverting)
+    // Save locally first
     localOverrides.set(person.rowIndex, newStatus);
-
     setEmoji(newStatus);
 
-    if (newStatus === "Attended") {
-      updatePaymentUI("Online Payment");
-    } else if (newStatus === "ON-waiting") {
-      updatePaymentUI("Onsite Payment");
-    } else {
-      updatePaymentUI("Not Paid");
-    }
+    if (newStatus === "Attended") updatePaymentUI("Online Payment");
+    else if (newStatus === "ON-waiting") updatePaymentUI("Onsite Payment");
+    else updatePaymentUI("Not Paid");
 
-    // Background sync
+    // Send update to backend
     const formData = new FormData();
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
     formData.append("attendance_status", newStatus);
     formData.append("sheet", "ylc2");
 
-    fetch(BASE_URL, { method: "POST", body: formData })
-      .then(() => {
-        // 🔥 After 5 seconds remove override (sheet likely updated)
-        setTimeout(() => {
-          localOverrides.delete(person.rowIndex);
-        }, 5000);
-      })
-      .catch(err => console.error("Sync error:", err));
+    try {
+      const res = await fetch(BASE_URL, { method: "POST", body: formData });
+      const json = await res.json();
+      if (json.success) {
+        // update local map
+        localOverrides.set(person.rowIndex, newStatus);
+        lastManualUpdate = Date.now();
+        // clear override after 5s to allow auto-refresh
+        setTimeout(() => localOverrides.delete(person.rowIndex), 5000);
+      }
+    } catch (err) {
+      console.error("Sync error:", err);
+    } finally {
+      tr.dataset.locked = "false";
+    }
   };
 }
 
-// Load data without wiping table
+// Load data
 async function loadAttendance() {
   try {
     const res = await fetch(BASE_URL + "?sheet=ylc2");
     const data = await res.json();
     if (!Array.isArray(data)) return;
-
     data.forEach(person => renderRow(person));
-
   } catch (err) {
     console.error("Load error:", err);
   }
 }
 
+// Manual refresh button
+document.querySelector("button").onclick = () => {
+  lastManualUpdate = Date.now();
+  loadAttendance();
+};
+
+// Auto-refresh every 15s, but skip if a manual update just occurred
+setInterval(() => {
+  if (Date.now() - lastManualUpdate > 5000) loadAttendance();
+}, 15000);
+
 loadAttendance();
-setInterval(loadAttendance, 15000);
 </script>
 
 </body>
