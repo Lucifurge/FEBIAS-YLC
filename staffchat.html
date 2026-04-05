@@ -4,57 +4,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YLC 2026 Chat</title>
-
 <style>
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
   background: #eef2f3;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Welcome */
+/* Welcome Screen */
 #welcome {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
   background: linear-gradient(135deg, #006837, #0b3d2e);
+  border-radius: 12px;
   color: white;
+  text-align: center;
 }
 
 #welcome h1 {
   color: #FFD700;
+  margin-bottom: 20px;
 }
 
 #name-input {
+  width: 100%;
   padding: 12px;
   border-radius: 25px;
   border: none;
-  width: 250px;
-  margin: 10px 0;
+  margin-bottom: 12px;
 }
 
 #enter-btn {
-  padding: 10px 20px;
+  width: 100%;
+  padding: 12px;
   border-radius: 25px;
   border: none;
   background: #FFD700;
   color: #006837;
-  cursor: pointer;
   font-weight: bold;
+  cursor: pointer;
 }
 
 /* Chat Container */
 #chat-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 80vh;
   max-width: 600px;
-  margin: auto;
+  width: 100%;
   background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  display: none;
 }
 
 /* Messages */
@@ -73,23 +84,12 @@ body {
   border-radius: 14px;
   max-width: 75%;
   font-size: 14px;
-  line-height: 1.3;
   word-wrap: break-word;
 }
 
-.user {
-  align-self: flex-end;
-  background: #006837;
-  color: white;
-}
+.user { align-self: flex-end; background: #006837; color: white; }
+.other { align-self: flex-start; background: #FFD700; color: #006837; }
 
-.other {
-  align-self: flex-start;
-  background: #FFD700;
-  color: #006837;
-}
-
-/* Meta */
 .meta {
   font-size: 10px;
   opacity: 0.6;
@@ -116,22 +116,20 @@ body {
   color: white;
   cursor: pointer;
 }
-
-.hidden { display: none; }
 </style>
 </head>
-
 <body>
 
+<!-- Welcome -->
 <div id="welcome">
   <h1>YLC 2026 Chat</h1>
   <input id="name-input" placeholder="Enter your name">
   <button id="enter-btn">Enter Chat</button>
 </div>
 
-<div id="chat-container" class="hidden">
+<!-- Chat -->
+<div id="chat-container">
   <div id="messages"></div>
-
   <div id="input-container">
     <input id="message-input" placeholder="Type a message">
     <button id="send-btn">Send</button>
@@ -140,20 +138,22 @@ body {
 
 <script>
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxW-NPWH7jFPHNBdajW3Kz8w9XWpaIw1THhJqEaYl-A1g9F_NJA1BfQeb7Nvl_eleiJ/exec";
-
 let userName = "";
-let lastMessageCount = 0;
 
 /* Enter Chat */
 document.getElementById("enter-btn").onclick = () => {
   const name = document.getElementById("name-input").value.trim();
-  if (!name) return alert("Enter name");
+  if (!name) return alert("Enter your name");
 
   userName = name;
-  document.getElementById("welcome").classList.add("hidden");
-  document.getElementById("chat-container").classList.remove("hidden");
 
-  loadMessages();
+  // Show chat immediately
+  document.getElementById("welcome").style.display = "none";
+  document.getElementById("chat-container").style.display = "flex";
+  document.getElementById("message-input").focus();
+
+  // Load messages but don't block UI
+  loadMessages().catch(err => console.log("Load error:", err));
 };
 
 /* Send Message */
@@ -161,64 +161,54 @@ async function sendMessage() {
   const input = document.getElementById("message-input");
   const msg = input.value.trim();
   if (!msg) return;
-
   input.value = "";
 
-  await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
+  // Send to backend (optional)
+  try {
+    await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
+  } catch (err) {
+    console.log("Send failed, continuing locally", err);
+  }
 
-  loadMessages();
+  renderMessage({ user: userName, message: msg, time: Date.now() });
 }
 
-/* Format Time */
-function formatTime(date) {
-  return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+/* Render Messages */
+function renderMessage(m) {
+  const box = document.getElementById("messages");
+  const div = document.createElement("div");
+  div.className = "message " + (m.user === userName ? "user" : "other");
+  div.innerHTML = `<div class="meta">${m.user} • ${formatTime(m.time)}</div>${m.message}`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 
-/* Load Messages */
+/* Load Messages from backend */
 async function loadMessages() {
   try {
-    const res = await fetch(WEB_APP_URL + "?action=get");
+    const res = await fetch(`${WEB_APP_URL}?action=get`);
     const data = await res.json();
-
-    const box = document.getElementById("messages");
-
-    // Prevent full redraw if same length
-    if (data.length === lastMessageCount) return;
-    lastMessageCount = data.length;
-
-    box.innerHTML = "";
-
-    data.forEach(m => {
-      const div = document.createElement("div");
-      div.className = "message " + (m.user === userName ? "user" : "other");
-
-      div.innerHTML = `
-        <div class="meta">${m.user} • ${formatTime(m.time || Date.now())}</div>
-        ${m.message}
-      `;
-
-      box.appendChild(div);
-    });
-
-    box.scrollTop = box.scrollHeight;
-
+    data.forEach(renderMessage);
   } catch (err) {
-    console.error("Error loading messages", err);
+    console.log("Cannot load messages", err);
   }
 }
 
-/* Events */
-document.getElementById("send-btn").onclick = sendMessage;
+/* Format time */
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
 
+/* Event listeners */
+document.getElementById("send-btn").onclick = sendMessage;
 document.getElementById("message-input").addEventListener("keydown", e => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* Auto Refresh */
+/* Auto-refresh messages */
 setInterval(() => {
   if (userName) loadMessages();
 }, 2000);
 </script>
-
 </body>
 </html>
