@@ -65,6 +65,7 @@ th {
 
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbw43IxCOZWnOUQrew5tjQEKsvHIKIRmzT4KgrBAJbC8oKgt08ICBtfJmZcfo8-1NDTAIA/exec";
+const SHEET_NAME = "Walk-in"; // ✅ target sheet
 const tbody = document.querySelector("#attendance-table tbody");
 
 let peopleMap = new Map();
@@ -148,13 +149,12 @@ function renderRow(person) {
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
     formData.append("attendance_status", newStatus);
-    formData.append("sheet", "Walk-in");
+    formData.append("sheet", SHEET_NAME);
 
     try {
       const res = await fetch(BASE_URL, { method: "POST", body: formData });
       const json = await res.json();
       if (json.success) {
-        // update local map
         localOverrides.set(person.rowIndex, newStatus);
         lastManualUpdate = Date.now();
         // clear override after 5s to allow auto-refresh
@@ -171,7 +171,7 @@ function renderRow(person) {
 // Load data
 async function loadAttendance() {
   try {
-    const res = await fetch(BASE_URL + "?sheet=ylc2");
+    const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
     const data = await res.json();
     if (!Array.isArray(data)) return;
     data.forEach(person => renderRow(person));
@@ -192,6 +192,7 @@ setInterval(() => {
 }, 15000);
 
 loadAttendance();
+
 </script>
 
 </body>
