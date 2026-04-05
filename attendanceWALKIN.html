@@ -148,7 +148,7 @@ function renderRow(person) {
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
     formData.append("attendance_status", newStatus);
-    formData.append("sheet", "ylc2");
+    formData.append("sheet", "Walk-in");
 
     try {
       const res = await fetch(BASE_URL, { method: "POST", body: formData });
