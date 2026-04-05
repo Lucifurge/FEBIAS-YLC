@@ -43,6 +43,7 @@ body { font-family:"Segoe UI",Arial,sans-serif; background:#eef2f3; height:100vh
     <button id="send-btn">Send</button>
   </div>
 </div>
+
 <script>
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbww0gXereWPMMtGwi2y6-vy7uPtyRaLSm-9DLcftYSzZXiAgp4ddXymaa39MOIzPfkW/exec";
 let userName = "";
@@ -142,6 +143,7 @@ document.getElementById("message-input").addEventListener("keydown", e => {
 setInterval(() => {
   if (userName) loadMessages();
 }, 2000);
+</script>
 
 </script>
 </body>
