@@ -17,7 +17,7 @@ body { font-family:"Segoe UI",Arial,sans-serif; background:#eef2f3; height:100vh
 /* Chat */
 #chat-container { display:flex; flex-direction:column; height:80vh; max-width:600px; width:100%; background:white; border-radius:12px; overflow:hidden; display:none; }
 #messages { flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
-.message { padding:8px 12px; border-radius:14px; max-width:75%; font-size:14px; word-wrap:break-word; }
+.message { padding:8px 12px; border-radius:14px; max-width:75%; font-size:14px; word-wrap:break-word; white-space: pre-wrap; }
 .user { align-self:flex-end; background:#006837; color:white; }
 .other { align-self:flex-start; background:#FFD700; color:#006837; }
 .meta { font-size:10px; opacity:0.6; margin-bottom:2px; }
@@ -45,10 +45,10 @@ body { font-family:"Segoe UI",Arial,sans-serif; background:#eef2f3; height:100vh
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbww0gXereWPMMtGwi2y6-vy7uPtyRaLSm-9DLcftYSzZXiAgp4ddXymaa39MOIzPfkW/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyTk_7LRdKUpUywWIuWlzgnTanUy2E-Ob-Caa_t5Do87MiKU602Kz_vQ0bZozgJ7rQB/exec";
 let userName = "";
 
-/* Format time safely */
+/* Format timestamp */
 function formatTime(ts) {
   if (!ts) return "";
   const d = new Date(Number(ts));
@@ -66,16 +66,10 @@ function renderMessages(data) {
   }
 
   data.forEach(m => {
-    if (!m.message) return; // skip empty rows
-
+    if (!m.message) return;
     const div = document.createElement("div");
     div.className = "message " + (m.user === userName ? "user" : "other");
-
-    div.innerHTML = `
-      <div class="meta">${m.user} • ${formatTime(m.time)}</div>
-      ${m.message}
-    `;
-
+    div.innerHTML = `<div class="meta">${m.user} • ${formatTime(m.time)}</div>${m.message}`;
     box.appendChild(div);
   });
 
@@ -87,12 +81,8 @@ async function loadMessages() {
   try {
     const res = await fetch(`${WEB_APP_URL}?action=get`);
     const data = await res.json();
-
-    // Sort by time (IMPORTANT)
     data.sort((a, b) => Number(a.time) - Number(b.time));
-
     renderMessages(data);
-
   } catch (err) {
     console.log("Load failed:", err);
   }
@@ -103,7 +93,6 @@ async function sendMessage() {
   const input = document.getElementById("message-input");
   const msg = input.value.trim();
   if (!msg) return;
-
   input.value = "";
 
   try {
@@ -111,8 +100,6 @@ async function sendMessage() {
   } catch (err) {
     console.log("Send failed:", err);
   }
-
-  // reload immediately after sending
   loadMessages();
 }
 
@@ -122,29 +109,22 @@ document.getElementById("enter-btn").onclick = async () => {
   if (!name) return alert("Enter your name");
 
   userName = name;
-
   document.getElementById("welcome").style.display = "none";
   document.getElementById("chat-container").style.display = "flex";
-
   document.getElementById("message-input").focus();
 
-  // 🔥 LOAD IMMEDIATELY
-  await loadMessages();
+  await loadMessages(); // 🔥 show history immediately
 };
 
 /* Events */
 document.getElementById("send-btn").onclick = sendMessage;
-
 document.getElementById("message-input").addEventListener("keydown", e => {
   if (e.key === "Enter") sendMessage();
 });
 
 /* Auto refresh */
-setInterval(() => {
-  if (userName) loadMessages();
-}, 2000);
+setInterval(() => { if (userName) loadMessages(); }, 2000);
 </script>
 
-</script>
 </body>
 </html>
