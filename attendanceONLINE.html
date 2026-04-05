@@ -8,54 +8,48 @@
 <link rel="icon" href="logo.ico">
 
 <style>
-body{
-font-family:"Segoe UI",system-ui,sans-serif;
-background:#f8f8f8;
-color:#1f2937;
-padding:2rem;
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f8f8f8;
+  color: #1f2937;
+  padding: 2rem;
 }
 
-h1{text-align:center;color:#0b3d2e;}
+h1 { text-align: center; color: #0b3d2e; }
 
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:1.5rem;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
 }
 
-th,td{
-border:1px solid #ccc;
-padding:0.8rem;
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.8rem;
 }
 
-th{
-background:#0b3d2e;
-color:white;
+th {
+  background: #0b3d2e;
+  color: white;
 }
 
-.status-paid{color:green;font-weight:bold;}
-.status-onsite{color:orange;font-weight:bold;}
-.status-not{color:red;font-weight:bold;}
+.status-paid { color: green; font-weight: bold; }
+.status-onsite { color: orange; font-weight: bold; }
+.status-not { color: red; font-weight: bold; }
 
-.attendance-check{
-cursor:pointer;
-text-align:center;
-font-size:1.4rem;
-user-select:none;
-}
-
-.attendance-check:hover{
-transform:scale(1.2);
+.attendance-check {
+  cursor: pointer;
+  text-align: center;
+  font-size: 1.4rem;
 }
 </style>
 </head>
-
 <body>
 
 <h1>YLC 2026 Attendance</h1>
 <p>Click the emoji to update attendance (✅ = Attended, 🟠 = Waiting, ❌ = Cancelled).</p>
 
-<button onclick="manualRefresh()">🔄 Refresh Now</button>
+<button onclick="loadAttendance()">🔄 Refresh Now</button>
 
 <table id="attendance-table">
 <thead>
@@ -70,176 +64,134 @@ transform:scale(1.2);
 </table>
 
 <script>
-const BASE_URL="https://script.google.com/macros/s/AKfycbww2ngKYi48M1wtwoOXhhE4uP71mFCT7DFa8PneyfS-NKJGaVi1Lc9er5o5qKsWa36UBg/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbw43IxCOZWnOUQrew5tjQEKsvHIKIRmzT4KgrBAJbC8oKgt08ICBtfJmZcfo8-1NDTAIA/exec";
+const SHEET_NAME = "Pre-Registration"; // ✅ target sheet
+const tbody = document.querySelector("#attendance-table tbody");
 
-const tbody=document.querySelector("#attendance-table tbody");
+let peopleMap = new Map();
+let localOverrides = new Map();
+const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
+let lastManualUpdate = 0;
 
-const rows=new Map();
-const overrides=new Map();
+// Render or update a row
+function renderRow(person) {
+  let tr = peopleMap.get(person.rowIndex);
 
-const STATUS=["ON-waiting","Attended","Cancelled"];
+  if (!tr) {
+    tr = document.createElement("tr");
+    tr.dataset.row = person.rowIndex;
+    tr.dataset.locked = "false";
+    tr.innerHTML = `
+      <td class="first"></td>
+      <td class="last"></td>
+      <td class="payment"></td>
+      <td class="attendance-check"></td>
+    `;
+    tbody.appendChild(tr);
+    peopleMap.set(person.rowIndex, tr);
+  }
 
-let loading=false;
+  // Use local override if exists
+  if (localOverrides.has(person.rowIndex)) {
+    person.attendanceStatus = localOverrides.get(person.rowIndex);
+  }
 
+  tr.querySelector(".first").textContent = person.firstName || "";
+  tr.querySelector(".last").textContent = person.lastName || "";
 
-/* emoji */
-function emoji(s){
- if(s==="Attended") return "✅";
- if(s==="Cancelled") return "❌";
- return "🟠";
+  const paymentCell = tr.querySelector(".payment");
+  const attendanceCell = tr.querySelector(".attendance-check");
+
+  // Payment UI helper
+  function updatePaymentUI(status) {
+    const lower = (status || "").toLowerCase();
+    if (lower.includes("online")) {
+      paymentCell.textContent = "✅ Paid";
+      paymentCell.className = "payment status-paid";
+    } else if (lower.includes("onsite")) {
+      paymentCell.textContent = "⚠️ On-Waiting";
+      paymentCell.className = "payment status-onsite";
+    } else {
+      paymentCell.textContent = "❌ Not Paid";
+      paymentCell.className = "payment status-not";
+    }
+  }
+
+  // Attendance emoji helper
+  function setEmoji(status) {
+    attendanceCell.textContent =
+      status === "Attended" ? "✅" :
+      status === "Cancelled" ? "❌" : "🟠";
+  }
+
+  updatePaymentUI(person.paymentStatus);
+  setEmoji(person.attendanceStatus);
+
+  attendanceCell.onclick = async () => {
+    if (tr.dataset.locked === "true") return; // prevent double click
+    tr.dataset.locked = "true";
+
+    let current = localOverrides.get(person.rowIndex) || person.attendanceStatus;
+    let idx = statusCycle.indexOf(current);
+    if (idx === -1) idx = 0;
+    let newStatus = statusCycle[(idx + 1) % statusCycle.length];
+
+    // Save locally first
+    localOverrides.set(person.rowIndex, newStatus);
+    setEmoji(newStatus);
+
+    if (newStatus === "Attended") updatePaymentUI("Online Payment");
+    else if (newStatus === "ON-waiting") updatePaymentUI("Onsite Payment");
+    else updatePaymentUI("Not Paid");
+
+    // Send update to backend
+    const formData = new FormData();
+    formData.append("action", "attendance");
+    formData.append("rowIndex", person.rowIndex);
+    formData.append("attendance_status", newStatus);
+    formData.append("sheet", SHEET_NAME);
+
+    try {
+      const res = await fetch(BASE_URL, { method: "POST", body: formData });
+      const json = await res.json();
+      if (json.success) {
+        localOverrides.set(person.rowIndex, newStatus);
+        lastManualUpdate = Date.now();
+        // clear override after 5s to allow auto-refresh
+        setTimeout(() => localOverrides.delete(person.rowIndex), 5000);
+      }
+    } catch (err) {
+      console.error("Sync error:", err);
+    } finally {
+      tr.dataset.locked = "false";
+    }
+  };
 }
 
-
-/* payment */
-function payment(cell,status){
-
- const s=(status||"").toLowerCase();
-
- if(s.includes("online")){
-  cell.textContent="✅ Paid";
-  cell.className="status-paid";
- }
- else if(s.includes("onsite")){
-  cell.textContent="🟠 Waiting";
-  cell.className="status-onsite";
- }
- else{
-  cell.textContent="❌ Not Paid";
-  cell.className="status-not";
- }
-
+// Load data
+async function loadAttendance() {
+  try {
+    const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
+    const data = await res.json();
+    if (!Array.isArray(data)) return;
+    data.forEach(person => renderRow(person));
+  } catch (err) {
+    console.error("Load error:", err);
+  }
 }
 
+// Manual refresh button
+document.querySelector("button").onclick = () => {
+  lastManualUpdate = Date.now();
+  loadAttendance();
+};
 
-/* create row only once */
-function createRow(person){
-
- const tr=document.createElement("tr");
-
- tr.innerHTML=`
- <td class="first"></td>
- <td class="last"></td>
- <td class="payment"></td>
- <td class="attendance-check"></td>
- `;
-
- const attend=tr.querySelector(".attendance-check");
- const pay=tr.querySelector(".payment");
-
- attend.addEventListener("click",()=>{
-
-  let current=overrides.get(person.rowIndex) || tr.dataset.status || "ON-waiting";
-
-  let i=STATUS.indexOf(current);
-  if(i<0)i=0;
-
-  const next=STATUS[(i+1)%STATUS.length];
-
-  overrides.set(person.rowIndex,next);
-
-  tr.dataset.status=next;
-
-  attend.textContent=emoji(next);
-
-  if(next==="Attended") payment(pay,"online");
-  else if(next==="ON-waiting") payment(pay,"onsite");
-  else payment(pay,"none");
-
-  const form=new FormData();
-
-  form.append("action","attendance");
-  form.append("rowIndex",person.rowIndex);
-  form.append("attendance_status",next);
-  form.append("sheet","ylc");
-
-  fetch(BASE_URL,{method:"POST",body:form})
-   .then(()=>setTimeout(()=>overrides.delete(person.rowIndex),3000))
-   .catch(e=>console.error(e));
-
- });
-
- tbody.appendChild(tr);
-
- rows.set(person.rowIndex,tr);
-
- return tr;
-}
-
-
-/* update row */
-function updateRow(person){
-
- let tr=rows.get(person.rowIndex);
-
- if(!tr) tr=createRow(person);
-
- const first=tr.querySelector(".first");
- const last=tr.querySelector(".last");
- const pay=tr.querySelector(".payment");
- const attend=tr.querySelector(".attendance-check");
-
- const status=overrides.get(person.rowIndex) || person.attendanceStatus || "ON-waiting";
-
- tr.dataset.status=status;
-
- first.textContent=person.firstName || "";
- last.textContent=person.lastName || "";
-
- payment(pay,person.paymentStatus);
-
- attend.textContent=emoji(status);
-
-}
-
-
-/* load data */
-async function loadAttendance(){
-
- if(loading) return;
-
- loading=true;
-
- try{
-
-  const res=await fetch(BASE_URL+"?sheet=ylc",{cache:"no-store"});
-  const data=await res.json();
-
-  if(!Array.isArray(data)) return;
-
-  const active=new Set();
-
-  data.forEach(p=>{
-   active.add(p.rowIndex);
-   updateRow(p);
-  });
-
-  rows.forEach((tr,id)=>{
-   if(!active.has(id)){
-    tr.remove();
-    rows.delete(id);
-   }
-  });
-
- }
- catch(e){
-  console.error(e);
- }
-
- loading=false;
-
-}
-
-
-/* manual refresh */
-function manualRefresh(){
- loadAttendance();
-}
-
+// Auto-refresh every 15s, but skip if a manual update just occurred
+setInterval(() => {
+  if (Date.now() - lastManualUpdate > 5000) loadAttendance();
+}, 15000);
 
 loadAttendance();
-
-/* refresh every 10 seconds */
-setInterval(loadAttendance,10000);
 
 </script>
 
