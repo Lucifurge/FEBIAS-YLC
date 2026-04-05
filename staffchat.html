@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YLC 2026 Chat</title>
+<style>
+  /* Global Styles */
+  body, html { margin:0; padding:0; font-family: 'Arial', sans-serif; height:100%; background: #f9f9f9; }
+  .hidden { display:none; }
+
+  /* Welcome Screen */
+  #welcome { display:flex; align-items:center; justify-content:center; height:100%; flex-direction:column; background: linear-gradient(135deg, #006837, #f9f9f9); color:white; text-align:center; padding:20px; }
+  #welcome h1 { font-size:2rem; margin-bottom:10px; color:#FFD700; }
+  #name-input { padding:10px; font-size:1rem; border-radius:5px; border:none; width:250px; margin-bottom:15px; }
+  #enter-btn { padding:10px 20px; background:#FFD700; color:#006837; font-weight:bold; border:none; border-radius:5px; cursor:pointer; transition:0.3s; }
+  #enter-btn:hover { background:#e6c200; }
+
+  /* Chat Container */
+  #chat-container { display:flex; flex-direction:column; max-width:700px; margin:0 auto; height:100vh; border-radius:10px; overflow:hidden; box-shadow:0 0 15px rgba(0,0,0,0.1); background:#fff; }
+
+  /* Messages */
+  #messages { flex:1; padding:20px; overflow-y:auto; background:#f0f2f5; }
+  .message { margin-bottom:10px; max-width:70%; padding:10px 15px; border-radius:15px; word-wrap:break-word; }
+  .message.user { background:#006837; color:white; align-self:flex-end; }
+  .message.other { background:#FFD700; color:#006837; align-self:flex-start; }
+  .meta { font-size:0.75rem; color:#555; margin-bottom:3px; }
+
+  /* Input Area */
+  #input-container { display:flex; border-top:1px solid #ddd; background:white; }
+  #message-input { flex:1; padding:15px; border:none; font-size:1rem; }
+  #send-btn { padding:15px 20px; background:#006837; color:white; font-weight:bold; border:none; cursor:pointer; transition:0.3s; }
+  #send-btn:hover { background:#004f28; }
+</style>
+</head>
+<body>
+
+<!-- Welcome Screen -->
+<div id="welcome">
+  <h1>YLC 2026 Public Chat</h1>
+  <input type="text" id="name-input" placeholder="Enter your name" />
+  <button id="enter-btn">Enter Chat</button>
+</div>
+
+<!-- Chat Screen -->
+<div id="chat-container" class="hidden">
+  <div id="messages"></div>
+  <div id="input-container">
+    <input type="text" id="message-input" placeholder="Type a message..." />
+    <button id="send-btn">Send</button>
+  </div>
+</div>
+
+<script>
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxW-NPWH7jFPHNBdajW3Kz8w9XWpaIw1THhJqEaYl-A1g9F_NJA1BfQeb7Nvl_eleiJ/exec'; // Replace with your Apps Script Web App URL
+let userName = "";
+
+// Welcome screen logic
+document.getElementById('enter-btn').addEventListener('click', () => {
+  const input = document.getElementById('name-input');
+  const name = input.value.trim();
+  if(name === "") {
+    alert("Please enter your name!");
+    return;
+  }
+  userName = name;
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('chat-container').classList.remove('hidden');
+  loadMessages(); // Load messages when entering
+});
+
+// Send message function
+async function sendMessage() {
+  const messageInput = document.getElementById('message-input');
+  const message = messageInput.value.trim();
+  if(message === "") return;
+
+  await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(message)}`);
+  messageInput.value = "";
+  loadMessages();
+}
+
+// Load messages function
+async function loadMessages() {
+  try {
+    const res = await fetch(`${WEB_APP_URL}?action=get`);
+    const data = await res.json();
+    const messagesDiv = document.getElementById('messages');
+
+    messagesDiv.innerHTML = '';
+    data.forEach(msg => {
+      const div = document.createElement('div');
+      div.classList.add('message');
+      div.classList.add(msg.user === userName ? 'user' : 'other');
+      div.innerHTML = `<div class="meta">${msg.user} • ${new Date(msg.timestamp).toLocaleTimeString()}</div>${msg.message}`;
+      messagesDiv.appendChild(div);
+    });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  } catch(err) {
+    console.error("Error loading messages", err);
+  }
+}
+
+// Event listeners
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+document.getElementById('message-input').addEventListener('keydown', e => {
+  if(e.key === "Enter") sendMessage();
+});
+
+// Polling every 2 seconds for new messages
+setInterval(() => {
+  if(userName) loadMessages();
+}, 2000);
+</script>
+
+</body>
+</html>
