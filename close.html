@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YLC Registration Closed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #0a0a0a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      padding: 40px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: 0 0 30px rgba(255, 87, 34, 0.2);
+      border: 1px solid rgba(255, 87, 34, 0.3);
+      max-width: 500px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: #ff5722; /* lava orange */
+      letter-spacing: 1px;
+    }
+
+    p {
+      font-size: 16px;
+      color: #dddddd;
+    }
+
+    .line {
+      width: 60px;
+      height: 4px;
+      background: #ff5722;
+      margin: 20px auto;
+      border-radius: 2px;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    /* subtle glow animation */
+    @keyframes glow {
+      0% { box-shadow: 0 0 10px rgba(255, 87, 34, 0.2); }
+      50% { box-shadow: 0 0 25px rgba(255, 87, 34, 0.5); }
+      100% { box-shadow: 0 0 10px rgba(255, 87, 34, 0.2); }
+    }
+
+    .container {
+      animation: glow 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>YLC REGISTRATION HAS BEEN CLOSED</h1>
+    <div class="line"></div>
+    <p>
+      Thank you for your interest. Registration is no longer available at this time.
+    </p>
+
+    <div class="footer">
+      YLC • See you next event
+    </div>
+  </div>
+
+</body>
+</html>
