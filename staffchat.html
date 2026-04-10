@@ -8,153 +8,160 @@
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI",sans-serif; }
+:root{
+  --bg:#0b0b0f;
+  --panel:#15151c;
+  --panel2:#1c1c26;
+  --orange:#ff4d00;
+  --white:#ffffff;
+  --gray:#a1a1aa;
+}
 
-/* ===== LOGIN ===== */
-#login {
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI",sans-serif;
+}
+
+body{
+  background:var(--bg);
+  height:100vh;
+  display:flex;
+  color:var(--white);
+}
+
+/* LOGIN */
+#login{
   position:fixed;
   inset:0;
-  background:linear-gradient(135deg,#0b0f0c,#1e1f22);
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#000,#1a0a00);
   z-index:999;
 }
 
-#login-box {
-  width:320px;
+#login-box{
+  background:var(--panel);
   padding:30px;
   border-radius:16px;
-  background:#2b2d31;
+  width:320px;
   text-align:center;
-  box-shadow:0 0 25px rgba(0,0,0,0.6);
-  border:1px solid rgba(255,90,31,0.2);
+  border:1px solid rgba(255,77,0,0.2);
 }
 
-#login h1 {
-  color:#ff5a1f;
+#login h1{
+  color:var(--orange);
   margin-bottom:15px;
 }
 
-#name-input {
+#name-input{
   width:100%;
   padding:12px;
+  margin-bottom:10px;
   border:none;
   border-radius:10px;
-  margin-bottom:12px;
-  background:#1e1f22;
+  background:var(--panel2);
   color:white;
-  outline:none;
 }
 
-#enter-btn {
+#enter-btn{
   width:100%;
   padding:12px;
+  background:var(--orange);
   border:none;
   border-radius:10px;
-  background:#006837;
   color:white;
   font-weight:bold;
   cursor:pointer;
 }
 
-#enter-btn:hover {
-  background:#ff5a1f;
-}
-
-/* ===== APP ===== */
-body {
-  background:#1e1f22;
-  height:100vh;
-  display:flex;
-}
-
 /* SIDEBAR */
-#sidebar {
+#sidebar{
   width:70px;
-  background:#111214;
+  background:#0a0a0d;
   display:flex;
-  flex-direction:column;
-  align-items:center;
+  justify-content:center;
   padding:10px;
 }
 
-.server {
+.server{
   width:50px;
   height:50px;
-  background:#006837;
   border-radius:14px;
+  background:var(--orange);
   display:flex;
   align-items:center;
   justify-content:center;
-  color:white;
   font-weight:bold;
 }
 
 /* MAIN */
-#main {
+#main{
   flex:1;
   display:flex;
   flex-direction:column;
 }
 
 /* HEADER */
-#header {
+#header{
   height:52px;
-  background:#2b2d31;
+  background:var(--panel);
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
   padding:0 15px;
-  color:white;
+  border-bottom:1px solid #222;
 }
 
 /* CALL BUTTON */
-#call-btn {
-  background:#006837;
-  color:white;
+#call-btn{
+  background:var(--orange);
   border:none;
-  padding:8px 14px;
+  padding:8px 12px;
   border-radius:10px;
+  color:white;
   cursor:pointer;
-  font-weight:bold;
-}
-
-#call-btn.active {
-  background:#ff5a1f;
-  box-shadow:0 0 12px #ff5a1f;
 }
 
 /* VIDEO */
-#video-section {
+#video-section{
   display:none;
   background:#000;
   padding:10px;
+  border-bottom:1px solid #222;
 }
 
-#videos {
+#videos{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
 }
 
-/* VOICE CONTROLS */
-#mic-btn, #cam-btn {
-  background:#2b2d31;
-  color:white;
-  border:none;
-  padding:8px 12px;
-  border-radius:10px;
-  cursor:pointer;
+/* CONTROLS */
+#call-controls{
+  margin-top:10px;
+  display:flex;
+  gap:10px;
 }
 
-#mic-btn.active, #cam-btn.active {
-  background:#ff5a1f;
-  box-shadow:0 0 10px #ff5a1f;
+.ctrl{
+  padding:8px 12px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  background:var(--panel2);
+  color:white;
+}
+
+.ctrl.active{
+  background:var(--orange);
 }
 
 /* CHAT */
-#messages {
+#messages{
   flex:1;
   padding:15px;
   overflow-y:auto;
@@ -163,62 +170,52 @@ body {
   gap:10px;
 }
 
-.message {
-  display:flex;
-  flex-direction:column;
+.message{
   max-width:70%;
-}
-
-.user { align-self:flex-end; }
-.other { align-self:flex-start; }
-
-.meta {
-  font-size:11px;
-  opacity:0.6;
-  margin-bottom:3px;
-  color:#aaa;
-}
-
-.bubble {
   padding:10px 14px;
   border-radius:14px;
+  background:var(--panel2);
+  animation:pop .15s ease;
 }
 
-.user .bubble {
-  background:#ff5a1f;
-  color:white;
+@keyframes pop{
+  from{transform:scale(.95);opacity:0;}
+  to{transform:scale(1);opacity:1;}
 }
 
-.other .bubble {
-  background:#2b2d31;
-  color:white;
-  border:1px solid #111;
+.user{
+  align-self:flex-end;
+  background:var(--orange);
+}
+
+.other{
+  align-self:flex-start;
 }
 
 /* INPUT */
-#input-container {
+#input-container{
   display:flex;
   padding:10px;
-  background:#2b2d31;
+  background:var(--panel);
+  border-top:1px solid #222;
 }
 
-#message-input {
+#message-input{
   flex:1;
   padding:12px;
   border:none;
   border-radius:10px;
-  background:#1e1f22;
+  background:#0f0f14;
   color:white;
 }
 
-#send-btn {
+#send-btn{
   margin-left:10px;
   padding:12px 16px;
+  background:var(--orange);
   border:none;
-  background:#006837;
-  color:white;
   border-radius:10px;
-  cursor:pointer;
+  color:white;
 }
 </style>
 </head>
@@ -230,7 +227,7 @@ body {
   <div id="login-box">
     <h1>YLC CHAT</h1>
     <input id="name-input" placeholder="Enter your name">
-    <button id="enter-btn">Enter Chat</button>
+    <button id="enter-btn">Enter</button>
   </div>
 </div>
 
@@ -247,132 +244,83 @@ body {
     <button id="call-btn" onclick="toggleVideo()">📞 Call</button>
   </div>
 
-  <!-- VIDEO -->
   <div id="video-section">
-
     <div id="videos"></div>
 
-    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-      <button onclick="joinCall()">Join Call</button>
-      <button onclick="leaveCall()">Leave Call</button>
+    <button onclick="joinCall()" class="ctrl">Join</button>
+    <button onclick="leaveCall()" class="ctrl">Leave</button>
 
-      <button id="mic-btn" onclick="toggleMic()">🎤 Mic</button>
-      <button id="cam-btn" onclick="toggleCam()">📷 Cam</button>
+    <div id="call-controls">
+      <button id="micBtn" class="ctrl" onclick="toggleMic()">🎤 Mic</button>
+      <button id="camBtn" class="ctrl" onclick="toggleCam()">📷 Cam</button>
     </div>
-
   </div>
 
-  <!-- CHAT -->
   <div id="messages"></div>
 
   <div id="input-container">
-    <input id="message-input" placeholder="Message YLC...">
+    <input id="message-input" placeholder="Message...">
     <button id="send-btn">Send</button>
   </div>
 
 </div>
 
 <script>
-
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyTk_7LRdKUpUywWIuWlzgnTanUy2E-Ob-Caa_t5Do87MiKU602Kz_vQ0bZozgJ7rQB/exec";
 const APP_ID = "81cc7072a40b4f14a790848d6035888a";
 const CHANNEL = "ylc-room";
 
-let userName = "";
+let userName="";
+let client = AgoraRTC.createClient({mode:"rtc",codec:"vp8"});
+let localTracks=[];
 
 /* LOGIN */
-document.getElementById("enter-btn").onclick = () => {
-  const name = document.getElementById("name-input").value.trim();
-  if (!name) return alert("Enter your name!");
-
-  userName = name;
-  document.getElementById("login").style.display = "none";
+document.getElementById("enter-btn").onclick=()=>{
+  const n=document.getElementById("name-input").value.trim();
+  if(!n) return;
+  userName=n;
+  document.getElementById("login").style.display="none";
   loadMessages();
 };
 
 /* CHAT */
-function renderMessages(data){
-  const box = document.getElementById("messages");
-  box.innerHTML = "";
-
-  data.sort((a,b)=>Number(a.time)-Number(b.time));
-
-  data.forEach(m=>{
-    if(!m.message) return;
-
-    const div = document.createElement("div");
-    div.className = "message " + (m.user===userName?"user":"other");
-
-    div.innerHTML = `
-      <div class="meta">${m.user}</div>
-      <div class="bubble">${m.message}</div>
-    `;
-
+async function loadMessages(){
+  const r=await fetch(`${WEB_APP_URL}?action=get`);
+  const d=await r.json();
+  const box=document.getElementById("messages");
+  box.innerHTML="";
+  d.forEach(m=>{
+    const div=document.createElement("div");
+    div.className="message "+(m.user===userName?"user":"other");
+    div.innerText=`${m.user}: ${m.message}`;
     box.appendChild(div);
   });
-
-  box.scrollTop = box.scrollHeight;
-}
-
-async function loadMessages(){
-  const res = await fetch(`${WEB_APP_URL}?action=get`);
-  const data = await res.json();
-  renderMessages(data);
 }
 
 async function sendMessage(){
-  const input = document.getElementById("message-input");
-  const msg = input.value.trim();
-  if(!msg) return;
-
-  input.value = "";
-
-  await fetch(`${WEB_APP_URL}?action=send&user=${encodeURIComponent(userName)}&message=${encodeURIComponent(msg)}`);
+  const i=document.getElementById("message-input");
+  if(!i.value.trim()) return;
+  await fetch(`${WEB_APP_URL}?action=send&user=${userName}&message=${i.value}`);
+  i.value="";
   loadMessages();
 }
 
-document.getElementById("send-btn").onclick = sendMessage;
-document.getElementById("message-input").addEventListener("keydown", e=>{
-  if(e.key==="Enter") sendMessage();
-});
+document.getElementById("send-btn").onclick=sendMessage;
 
-setInterval(()=>{ if(userName) loadMessages(); }, 2000);
-
-/* ===== VIDEO (AGORA) ===== */
-let client = AgoraRTC.createClient({ mode:"rtc", codec:"vp8" });
-let localTracks = [];
-
-let micOn = true;
-let camOn = true;
-
-/* JOIN */
+/* VIDEO */
 async function joinCall(){
-  await client.join(APP_ID, CHANNEL, null, null);
+  await client.join(APP_ID,CHANNEL,null,null);
+  localTracks=await AgoraRTC.createMicrophoneAndCameraTracks();
 
-  localTracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+  const v=document.createElement("div");
+  v.style.width="200px";
+  v.style.height="150px";
+  document.getElementById("videos").appendChild(v);
 
-  const player = document.createElement("div");
-  player.style.width = "200px";
-  player.style.height = "150px";
-  document.getElementById("videos").appendChild(player);
-
-  localTracks[1].play(player);
+  localTracks[1].play(v);
   await client.publish(localTracks);
-
-  client.on("user-published", async (user, mediaType)=>{
-    await client.subscribe(user, mediaType);
-
-    const remote = document.createElement("div");
-    remote.style.width = "200px";
-    remote.style.height = "150px";
-    document.getElementById("videos").appendChild(remote);
-
-    if(mediaType==="video") user.videoTrack.play(remote);
-    if(mediaType==="audio") user.audioTrack.play();
-  });
 }
 
-/* LEAVE */
 async function leaveCall(){
   localTracks.forEach(t=>t.stop());
   localTracks.forEach(t=>t.close());
@@ -380,44 +328,39 @@ async function leaveCall(){
   document.getElementById("videos").innerHTML="";
 }
 
-/* TOGGLE UI */
-function toggleVideo(){
-  const v = document.getElementById("video-section");
-  const btn = document.getElementById("call-btn");
-
-  if(v.style.display === "none" || v.style.display === ""){
-    v.style.display = "block";
-    btn.classList.add("active");
-  } else {
-    v.style.display = "none";
-    btn.classList.remove("active");
+/* MIC */
+async function toggleMic(){
+  const mic=localTracks[0];
+  if(!mic) return;
+  if(mic.enabled){
+    await mic.setEnabled(false);
+    micBtn.classList.remove("active");
+  }else{
+    await mic.setEnabled(true);
+    micBtn.classList.add("active");
   }
 }
 
-/* MIC */
-function toggleMic(){
-  if(!localTracks[0]) return;
-
-  micOn = !micOn;
-  localTracks[0].setEnabled(micOn);
-
-  const btn = document.getElementById("mic-btn");
-  btn.classList.toggle("active", !micOn);
-  btn.innerText = micOn ? "🎤 Mic" : "🔇 Muted";
-}
-
 /* CAM */
-function toggleCam(){
-  if(!localTracks[1]) return;
-
-  camOn = !camOn;
-  localTracks[1].setEnabled(camOn);
-
-  const btn = document.getElementById("cam-btn");
-  btn.classList.toggle("active", !camOn);
-  btn.innerText = camOn ? "📷 Cam" : "🚫 Off";
+async function toggleCam(){
+  const cam=localTracks[1];
+  if(!cam) return;
+  if(cam.enabled){
+    await cam.setEnabled(false);
+    camBtn.classList.remove("active");
+  }else{
+    await cam.setEnabled(true);
+    camBtn.classList.add("active");
+  }
 }
 
+/* UI */
+function toggleVideo(){
+  const v=document.getElementById("video-section");
+  v.style.display=v.style.display==="block"?"none":"block";
+}
+
+setInterval(()=>{if(userName)loadMessages();},2000);
 </script>
 
 </body>
