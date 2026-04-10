@@ -270,97 +270,167 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyTk_7LRdKUpUywWIuW
 const APP_ID = "81cc7072a40b4f14a790848d6035888a";
 const CHANNEL = "ylc-room";
 
-let userName="";
-let client = AgoraRTC.createClient({mode:"rtc",codec:"vp8"});
-let localTracks=[];
+let userName = "";
+let client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-/* LOGIN */
-document.getElementById("enter-btn").onclick=()=>{
-  const n=document.getElementById("name-input").value.trim();
-  if(!n) return;
-  userName=n;
-  document.getElementById("login").style.display="none";
+let localTracks = {
+  audio: null,
+  video: null
+};
+
+let remoteUsers = {};
+
+/* ================= LOGIN ================= */
+document.getElementById("enter-btn").onclick = () => {
+  const n = document.getElementById("name-input").value.trim();
+  if (!n) return;
+
+  userName = n;
+  document.getElementById("login").style.display = "none";
   loadMessages();
 };
 
-/* CHAT */
-async function loadMessages(){
-  const r=await fetch(`${WEB_APP_URL}?action=get`);
-  const d=await r.json();
-  const box=document.getElementById("messages");
-  box.innerHTML="";
-  d.forEach(m=>{
-    const div=document.createElement("div");
-    div.className="message "+(m.user===userName?"user":"other");
-    div.innerText=`${m.user}: ${m.message}`;
+/* ================= CHAT ================= */
+async function loadMessages() {
+  const res = await fetch(`${WEB_APP_URL}?action=get`);
+  const data = await res.json();
+
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
+
+  data.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "message " + (m.user === userName ? "user" : "other");
+    div.innerText = `${m.user}: ${m.message}`;
     box.appendChild(div);
   });
+
+  box.scrollTop = box.scrollHeight;
 }
 
-async function sendMessage(){
-  const i=document.getElementById("message-input");
-  if(!i.value.trim()) return;
-  await fetch(`${WEB_APP_URL}?action=send&user=${userName}&message=${i.value}`);
-  i.value="";
+async function sendMessage() {
+  const input = document.getElementById("message-input");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = "";
+
+  await fetch(`${WEB_APP_URL}?action=send&user=${userName}&message=${msg}`);
   loadMessages();
 }
 
-document.getElementById("send-btn").onclick=sendMessage;
+document.getElementById("send-btn").onclick = sendMessage;
 
-/* VIDEO */
-async function joinCall(){
-  await client.join(APP_ID,CHANNEL,null,null);
-  localTracks=await AgoraRTC.createMicrophoneAndCameraTracks();
+/* ================= VIDEO CALL ================= */
+async function joinCall() {
+  await client.join(APP_ID, CHANNEL, null, null);
 
-  const v=document.createElement("div");
-  v.style.width="200px";
-  v.style.height="150px";
-  document.getElementById("videos").appendChild(v);
+  const [micTrack, camTrack] =
+    await AgoraRTC.createMicrophoneAndCameraTracks();
 
-  localTracks[1].play(v);
-  await client.publish(localTracks);
+  localTracks.audio = micTrack;
+  localTracks.video = camTrack;
+
+  /* LOCAL VIDEO */
+  const localBox = document.createElement("div");
+  localBox.id = "local-player";
+  localBox.style.width = "200px";
+  localBox.style.height = "150px";
+  document.getElementById("videos").appendChild(localBox);
+
+  camTrack.play(localBox);
+
+  await client.publish([micTrack, camTrack]);
+
+  /* ================= REMOTE USERS ================= */
+  client.on("user-published", async (user, mediaType) => {
+    await client.subscribe(user, mediaType);
+
+    if (!remoteUsers[user.uid]) {
+      const container = document.createElement("div");
+      container.id = "remote-" + user.uid;
+      container.style.width = "200px";
+      container.style.height = "150px";
+      container.style.background = "#111";
+      container.style.borderRadius = "10px";
+      container.style.overflow = "hidden";
+
+      document.getElementById("videos").appendChild(container);
+
+      remoteUsers[user.uid] = { container };
+    }
+
+    if (mediaType === "video") {
+      user.videoTrack.play(remoteUsers[user.uid].container);
+    }
+
+    if (mediaType === "audio") {
+      user.audioTrack.play();
+    }
+  });
+
+  client.on("user-unpublished", (user) => {
+    const el = document.getElementById("remote-" + user.uid);
+    if (el) el.remove();
+    delete remoteUsers[user.uid];
+  });
 }
 
-async function leaveCall(){
-  localTracks.forEach(t=>t.stop());
-  localTracks.forEach(t=>t.close());
+/* ================= LEAVE ================= */
+async function leaveCall() {
+  Object.values(localTracks).forEach(t => {
+    if (t) {
+      t.stop();
+      t.close();
+    }
+  });
+
+  localTracks = { audio: null, video: null };
+
   await client.leave();
-  document.getElementById("videos").innerHTML="";
+
+  document.getElementById("videos").innerHTML = "";
+  remoteUsers = {};
 }
 
-/* MIC */
-async function toggleMic(){
-  const mic=localTracks[0];
-  if(!mic) return;
-  if(mic.enabled){
+/* ================= MIC TOGGLE ================= */
+async function toggleMic() {
+  const mic = localTracks.audio;
+  if (!mic) return;
+
+  if (mic.enabled) {
     await mic.setEnabled(false);
     micBtn.classList.remove("active");
-  }else{
+  } else {
     await mic.setEnabled(true);
     micBtn.classList.add("active");
   }
 }
 
-/* CAM */
-async function toggleCam(){
-  const cam=localTracks[1];
-  if(!cam) return;
-  if(cam.enabled){
+/* ================= CAMERA TOGGLE ================= */
+async function toggleCam() {
+  const cam = localTracks.video;
+  if (!cam) return;
+
+  if (cam.enabled) {
     await cam.setEnabled(false);
     camBtn.classList.remove("active");
-  }else{
+  } else {
     await cam.setEnabled(true);
     camBtn.classList.add("active");
   }
 }
 
-/* UI */
-function toggleVideo(){
-  const v=document.getElementById("video-section");
-  v.style.display=v.style.display==="block"?"none":"block";
+/* ================= UI ================= */
+function toggleVideo() {
+  const v = document.getElementById("video-section");
+  v.style.display = v.style.display === "block" ? "none" : "block";
 }
 
-setInterval(()=>{if(userName)loadMessages();},2000);
+/* AUTO REFRESH CHAT */
+setInterval(() => {
+  if (userName) loadMessages();
+}, 2000);
 </script>
 
 </body>
