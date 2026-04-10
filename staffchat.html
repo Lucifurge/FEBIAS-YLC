@@ -10,31 +10,31 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI",sans-serif; }
 
-/* ===== LOGIN SCREEN ===== */
+/* ===== LOGIN ===== */
 #login {
   position:fixed;
   inset:0;
   background:linear-gradient(135deg,#0b0f0c,#1e1f22);
   display:flex;
-  flex-direction:column;
   justify-content:center;
   align-items:center;
-  color:white;
   z-index:999;
 }
 
 #login-box {
-  background:#2b2d31;
+  width:320px;
   padding:30px;
-  border-radius:15px;
-  width:300px;
+  border-radius:16px;
+  background:#2b2d31;
   text-align:center;
-  box-shadow:0 0 20px rgba(0,0,0,0.5);
+  box-shadow:0 0 25px rgba(0,0,0,0.6);
+  border:1px solid rgba(255,90,31,0.2);
 }
 
 #login h1 {
   color:#ff5a1f;
   margin-bottom:15px;
+  letter-spacing:1px;
 }
 
 #name-input {
@@ -42,9 +42,10 @@
   padding:12px;
   border:none;
   border-radius:10px;
-  margin-bottom:10px;
+  margin-bottom:12px;
   background:#1e1f22;
   color:white;
+  outline:none;
 }
 
 #enter-btn {
@@ -56,6 +57,12 @@
   color:white;
   font-weight:bold;
   cursor:pointer;
+  transition:0.2s;
+}
+
+#enter-btn:hover {
+  background:#ff5a1f;
+  transform:scale(1.03);
 }
 
 /* ===== APP ===== */
@@ -73,18 +80,25 @@ body {
   flex-direction:column;
   align-items:center;
   padding:10px;
+  border-right:1px solid #000;
 }
 
 .server {
   width:50px;
   height:50px;
   background:#006837;
-  border-radius:50%;
+  border-radius:14px;
   display:flex;
   align-items:center;
   justify-content:center;
   color:white;
   font-weight:bold;
+  transition:0.2s;
+}
+
+.server:hover {
+  background:#ff5a1f;
+  transform:scale(1.05);
 }
 
 /* MAIN */
@@ -96,13 +110,36 @@ body {
 
 /* HEADER */
 #header {
-  height:50px;
+  height:52px;
   background:#2b2d31;
   display:flex;
   align-items:center;
   justify-content:space-between;
   padding:0 15px;
   color:white;
+  border-bottom:1px solid #111;
+}
+
+/* CALL BUTTON (DISCORD + FEBIAS MIX) */
+#call-btn {
+  background:#006837;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+#call-btn:hover {
+  background:#ff5a1f;
+  transform:scale(1.05);
+}
+
+#call-btn.active {
+  background:#ff5a1f;
+  box-shadow:0 0 12px #ff5a1f;
 }
 
 /* VIDEO */
@@ -110,6 +147,7 @@ body {
   display:none;
   background:#000;
   padding:10px;
+  border-bottom:1px solid #111;
 }
 
 #videos {
@@ -132,6 +170,12 @@ body {
   display:flex;
   flex-direction:column;
   max-width:70%;
+  animation:pop 0.15s ease;
+}
+
+@keyframes pop {
+  from { transform:scale(0.95); opacity:0; }
+  to { transform:scale(1); opacity:1; }
 }
 
 .user { align-self:flex-end; }
@@ -146,7 +190,7 @@ body {
 
 .bubble {
   padding:10px 14px;
-  border-radius:16px;
+  border-radius:14px;
   font-size:14px;
 }
 
@@ -158,6 +202,7 @@ body {
 .other .bubble {
   background:#2b2d31;
   color:white;
+  border:1px solid #111;
 }
 
 /* INPUT */
@@ -165,6 +210,7 @@ body {
   display:flex;
   padding:10px;
   background:#2b2d31;
+  border-top:1px solid #111;
 }
 
 #message-input {
@@ -174,6 +220,7 @@ body {
   border-radius:10px;
   background:#1e1f22;
   color:white;
+  outline:none;
 }
 
 #send-btn {
@@ -184,6 +231,11 @@ body {
   color:white;
   border-radius:10px;
   cursor:pointer;
+  transition:0.2s;
+}
+
+#send-btn:hover {
+  background:#ff5a1f;
 }
 </style>
 </head>
@@ -199,16 +251,17 @@ body {
   </div>
 </div>
 
-<!-- APP -->
+<!-- SIDEBAR -->
 <div id="sidebar">
   <div class="server">Y</div>
 </div>
 
+<!-- MAIN -->
 <div id="main">
 
   <div id="header">
     <span># YLC Chat</span>
-    <button onclick="toggleVideo()">📞 Call</button>
+    <button id="call-btn" onclick="toggleVideo()">📞 Call</button>
   </div>
 
   <div id="video-section">
@@ -227,25 +280,23 @@ body {
 </div>
 
 <script>
-/* ================= CONFIG ================= */
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyTk_7LRdKUpUywWIuWlzgnTanUy2E-Ob-Caa_t5Do87MiKU602Kz_vQ0bZozgJ7rQB/exec";
 const APP_ID = "81cc7072a40b4f14a790848d6035888a";
 const CHANNEL = "ylc-room";
 
-/* ================= USER SYSTEM ================= */
 let userName = "";
 
+/* LOGIN */
 document.getElementById("enter-btn").onclick = () => {
   const name = document.getElementById("name-input").value.trim();
   if (!name) return alert("Enter your name!");
 
   userName = name;
-
   document.getElementById("login").style.display = "none";
   loadMessages();
 };
 
-/* ================= CHAT ================= */
+/* CHAT */
 function renderMessages(data){
   const box = document.getElementById("messages");
   box.innerHTML = "";
@@ -293,7 +344,7 @@ document.getElementById("message-input").addEventListener("keydown", e=>{
 
 setInterval(()=>{ if(userName) loadMessages(); }, 2000);
 
-/* ================= VIDEO ================= */
+/* VIDEO */
 let client = AgoraRTC.createClient({ mode:"rtc", codec:"vp8" });
 let localTracks = [];
 
@@ -330,9 +381,18 @@ async function leaveCall(){
   document.getElementById("videos").innerHTML="";
 }
 
+/* TOGGLE CALL BUTTON */
 function toggleVideo(){
   const v = document.getElementById("video-section");
-  v.style.display = v.style.display==="none"?"block":"none";
+  const btn = document.getElementById("call-btn");
+
+  if(v.style.display === "none" || v.style.display === ""){
+    v.style.display = "block";
+    btn.classList.add("active");
+  } else {
+    v.style.display = "none";
+    btn.classList.remove("active");
+  }
 }
 </script>
 
