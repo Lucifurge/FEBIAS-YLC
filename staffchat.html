@@ -34,7 +34,6 @@
 #login h1 {
   color:#ff5a1f;
   margin-bottom:15px;
-  letter-spacing:1px;
 }
 
 #name-input {
@@ -57,12 +56,10 @@
   color:white;
   font-weight:bold;
   cursor:pointer;
-  transition:0.2s;
 }
 
 #enter-btn:hover {
   background:#ff5a1f;
-  transform:scale(1.03);
 }
 
 /* ===== APP ===== */
@@ -80,7 +77,6 @@ body {
   flex-direction:column;
   align-items:center;
   padding:10px;
-  border-right:1px solid #000;
 }
 
 .server {
@@ -93,12 +89,6 @@ body {
   justify-content:center;
   color:white;
   font-weight:bold;
-  transition:0.2s;
-}
-
-.server:hover {
-  background:#ff5a1f;
-  transform:scale(1.05);
 }
 
 /* MAIN */
@@ -117,10 +107,9 @@ body {
   justify-content:space-between;
   padding:0 15px;
   color:white;
-  border-bottom:1px solid #111;
 }
 
-/* CALL BUTTON (DISCORD + FEBIAS MIX) */
+/* CALL BUTTON */
 #call-btn {
   background:#006837;
   color:white;
@@ -129,12 +118,6 @@ body {
   border-radius:10px;
   cursor:pointer;
   font-weight:bold;
-  transition:0.2s;
-}
-
-#call-btn:hover {
-  background:#ff5a1f;
-  transform:scale(1.05);
 }
 
 #call-btn.active {
@@ -147,13 +130,27 @@ body {
   display:none;
   background:#000;
   padding:10px;
-  border-bottom:1px solid #111;
 }
 
 #videos {
   display:flex;
   gap:10px;
   flex-wrap:wrap;
+}
+
+/* VOICE CONTROLS */
+#mic-btn, #cam-btn {
+  background:#2b2d31;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+#mic-btn.active, #cam-btn.active {
+  background:#ff5a1f;
+  box-shadow:0 0 10px #ff5a1f;
 }
 
 /* CHAT */
@@ -170,12 +167,6 @@ body {
   display:flex;
   flex-direction:column;
   max-width:70%;
-  animation:pop 0.15s ease;
-}
-
-@keyframes pop {
-  from { transform:scale(0.95); opacity:0; }
-  to { transform:scale(1); opacity:1; }
 }
 
 .user { align-self:flex-end; }
@@ -191,7 +182,6 @@ body {
 .bubble {
   padding:10px 14px;
   border-radius:14px;
-  font-size:14px;
 }
 
 .user .bubble {
@@ -210,7 +200,6 @@ body {
   display:flex;
   padding:10px;
   background:#2b2d31;
-  border-top:1px solid #111;
 }
 
 #message-input {
@@ -220,7 +209,6 @@ body {
   border-radius:10px;
   background:#1e1f22;
   color:white;
-  outline:none;
 }
 
 #send-btn {
@@ -231,11 +219,6 @@ body {
   color:white;
   border-radius:10px;
   cursor:pointer;
-  transition:0.2s;
-}
-
-#send-btn:hover {
-  background:#ff5a1f;
 }
 </style>
 </head>
@@ -264,12 +247,22 @@ body {
     <button id="call-btn" onclick="toggleVideo()">📞 Call</button>
   </div>
 
+  <!-- VIDEO -->
   <div id="video-section">
+
     <div id="videos"></div>
-    <button onclick="joinCall()">Join Call</button>
-    <button onclick="leaveCall()">Leave Call</button>
+
+    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button onclick="joinCall()">Join Call</button>
+      <button onclick="leaveCall()">Leave Call</button>
+
+      <button id="mic-btn" onclick="toggleMic()">🎤 Mic</button>
+      <button id="cam-btn" onclick="toggleCam()">📷 Cam</button>
+    </div>
+
   </div>
 
+  <!-- CHAT -->
   <div id="messages"></div>
 
   <div id="input-container">
@@ -280,6 +273,7 @@ body {
 </div>
 
 <script>
+
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyTk_7LRdKUpUywWIuWlzgnTanUy2E-Ob-Caa_t5Do87MiKU602Kz_vQ0bZozgJ7rQB/exec";
 const APP_ID = "81cc7072a40b4f14a790848d6035888a";
 const CHANNEL = "ylc-room";
@@ -344,10 +338,14 @@ document.getElementById("message-input").addEventListener("keydown", e=>{
 
 setInterval(()=>{ if(userName) loadMessages(); }, 2000);
 
-/* VIDEO */
+/* ===== VIDEO (AGORA) ===== */
 let client = AgoraRTC.createClient({ mode:"rtc", codec:"vp8" });
 let localTracks = [];
 
+let micOn = true;
+let camOn = true;
+
+/* JOIN */
 async function joinCall(){
   await client.join(APP_ID, CHANNEL, null, null);
 
@@ -374,6 +372,7 @@ async function joinCall(){
   });
 }
 
+/* LEAVE */
 async function leaveCall(){
   localTracks.forEach(t=>t.stop());
   localTracks.forEach(t=>t.close());
@@ -381,7 +380,7 @@ async function leaveCall(){
   document.getElementById("videos").innerHTML="";
 }
 
-/* TOGGLE CALL BUTTON */
+/* TOGGLE UI */
 function toggleVideo(){
   const v = document.getElementById("video-section");
   const btn = document.getElementById("call-btn");
@@ -394,6 +393,31 @@ function toggleVideo(){
     btn.classList.remove("active");
   }
 }
+
+/* MIC */
+function toggleMic(){
+  if(!localTracks[0]) return;
+
+  micOn = !micOn;
+  localTracks[0].setEnabled(micOn);
+
+  const btn = document.getElementById("mic-btn");
+  btn.classList.toggle("active", !micOn);
+  btn.innerText = micOn ? "🎤 Mic" : "🔇 Muted";
+}
+
+/* CAM */
+function toggleCam(){
+  if(!localTracks[1]) return;
+
+  camOn = !camOn;
+  localTracks[1].setEnabled(camOn);
+
+  const btn = document.getElementById("cam-btn");
+  btn.classList.toggle("active", !camOn);
+  btn.innerText = camOn ? "📷 Cam" : "🚫 Off";
+}
+
 </script>
 
 </body>
