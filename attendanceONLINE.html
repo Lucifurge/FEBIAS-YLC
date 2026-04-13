@@ -49,7 +49,6 @@ th {
 
 <h1>YLC 2026 Attendance</h1>
 
-<!-- INDICATORS -->
 <div style="text-align:center; margin-bottom: 1rem; font-size: 14px; color:#444;">
   <p><b>Attendance:</b> 🟠 ON-WAITING | ✅ ATTENDED | ❌ CANCELLED</p>
   <p><b>Payment:</b> ❌ NOT PAID | 🟠 ON-WAITING PAYMENT | ✅ PAID</p>
@@ -72,7 +71,8 @@ th {
 </table>
 
 <script>
-const BASE_URL = "https://script.google.com/macros/s/AKfycbxJD2cx3Ily5o0__SV6wFalFjf1H2glP0BV4cr_36FTDvlWMWA6EvqvswcLolcyPl0X6g/exec";
+
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxxVsfzPi6J_wR9XERZhlOt2mbcFoXycxrQ0gFLhuLC7Fg3Ia0UBi4OwHCB6fB_HZT-_w/exec";
 const SHEET_NAME = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
@@ -113,12 +113,15 @@ function renderRow(person) {
   const attendanceCell = tr.querySelector(".attendance");
 
   // ===============================
-  // PAYMENT UI (FIXED MATCH BACKEND)
+  // PAYMENT (AM COLUMN ONLY)
   // ===============================
-  let paymentState = (person.paymentStatus || "NOT PAID").toUpperCase();
+  let paymentState = (person.paymentIndicator || "NOT PAID").toUpperCase();
 
   function setPaymentUI(state) {
-    paymentCell.textContent = state;
+    paymentCell.textContent =
+      state === "PAID" ? "✅ PAID" :
+      state === "ON-WAITING PAYMENT" ? "🟠 ON-WAITING PAYMENT" :
+      "❌ NOT PAID";
 
     paymentCell.className =
       state === "PAID" ? "payment status-paid" :
@@ -221,6 +224,7 @@ async function loadAttendance() {
 document.querySelector("button").onclick = loadAttendance;
 setInterval(loadAttendance, 15000);
 loadAttendance();
+
 </script>
 
 </body>
