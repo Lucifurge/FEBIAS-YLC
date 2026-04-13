@@ -40,7 +40,7 @@ th {
 .payment, .attendance {
   cursor: pointer;
   text-align: center;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
 }
 </style>
 </head>
@@ -52,14 +52,14 @@ th {
 <!-- INDICATORS -->
 <div style="text-align:center; margin-bottom: 1rem; font-size: 14px; color:#444;">
   <p><b>Attendance:</b> 🟠 ON-WAITING | ✅ ATTENDED | ❌ CANCELLED</p>
-  <p><b>Payment:</b> ❌ NOT PAID | 🟠 ONSITE PAYMENT | ✅ ONLINE PAYMENT</p>
+  <p><b>Payment:</b> ❌ NOT PAID | 🟠 ON-WAITING PAYMENT | ✅ PAID</p>
 </div>
 
 <p style="text-align:center;">Click emojis to update Attendance and Payment separately.</p>
 
 <button onclick="loadAttendance()">🔄 Refresh Now</button>
 
-<table id="attendance-table">
+<table>
 <thead>
 <tr>
 <th>First Name</th>
@@ -72,7 +72,7 @@ th {
 </table>
 
 <script>
-const BASE_URL = "https://script.google.com/macros/s/AKfycby_9n3tO_9WiDrwWSeRgTOyt7PwG5VxcOtT-9gajQ5SUD_-ipkPEk02xd6ciO1HFM_Zgg/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxJD2cx3Ily5o0__SV6wFalFjf1H2glP0BV4cr_36FTDvlWMWA6EvqvswcLolcyPl0X6g/exec";
 const SHEET_NAME = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
@@ -81,7 +81,7 @@ let peopleMap = new Map();
 let localOverrides = new Map();
 
 const attendanceCycle = ["ON-waiting", "Attended", "Cancelled"];
-const paymentCycle = ["Not Paid", "Onsite", "Online"];
+const paymentCycle = ["NOT PAID", "ON-WAITING PAYMENT", "PAID"];
 
 // ===============================
 // RENDER ROW
@@ -113,22 +113,16 @@ function renderRow(person) {
   const attendanceCell = tr.querySelector(".attendance");
 
   // ===============================
-  // PAYMENT
+  // PAYMENT UI (FIXED MATCH BACKEND)
   // ===============================
-  let paymentState =
-    person.paymentStatus?.includes("Online") ? "Online" :
-    person.paymentStatus?.includes("Onsite") ? "Onsite" :
-    "Not Paid";
+  let paymentState = (person.paymentStatus || "NOT PAID").toUpperCase();
 
   function setPaymentUI(state) {
-    paymentCell.textContent =
-      state === "Online" ? "✅" :
-      state === "Onsite" ? "🟠" :
-      "❌";
+    paymentCell.textContent = state;
 
     paymentCell.className =
-      state === "Online" ? "payment status-paid" :
-      state === "Onsite" ? "payment status-onsite" :
+      state === "PAID" ? "payment status-paid" :
+      state === "ON-WAITING PAYMENT" ? "payment status-onsite" :
       "payment status-not";
   }
 
