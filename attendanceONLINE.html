@@ -19,23 +19,22 @@ body {
 h1 {
   text-align: center;
   color: #ff6a00;
-  letter-spacing: 1px;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
 }
 
 .sub {
   text-align: center;
   color: #bbb;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 /* STATS */
 .stats {
   display: flex;
-  justify-content: center;
   gap: 10px;
-  margin: 15px 0;
   flex-wrap: wrap;
+  justify-content: center;
+  margin: 15px 0;
 }
 
 .box {
@@ -45,97 +44,94 @@ h1 {
   border: 1px solid #333;
   text-align: center;
   flex: 1 1 120px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .box span {
   color: #ff6a00;
   font-weight: bold;
-  font-size: 16px;
 }
 
 /* BUTTON */
 button {
-  display: block;
   width: 100%;
   max-width: 320px;
   margin: 10px auto;
+  display: block;
   padding: 10px;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
   font-weight: bold;
   background: linear-gradient(45deg, #ff6a00, #ff2e00);
   color: white;
 }
 
-/* TABLE WRAPPER (FIX MOBILE OVERFLOW) */
+/* DESKTOP TABLE */
 .table-wrap {
   width: 100%;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
-/* TABLE */
 table {
   width: 100%;
-  min-width: 520px;
+  min-width: 600px;
   border-collapse: collapse;
-  margin-top: 1rem;
+  margin-top: 10px;
 }
 
 th {
   background: #1a1a1a;
   color: #ff6a00;
   padding: 10px;
-  font-size: 0.85rem;
-  position: sticky;
-  top: 0;
-  z-index: 2;
 }
 
 td {
   border: 1px solid #222;
   padding: 8px;
   background: #121212;
-  font-size: 0.85rem;
+  text-align: center;
 }
 
 .payment, .attendance, .kit {
-  text-align: center;
   font-size: 1.2rem;
   cursor: pointer;
-  transition: transform 0.1s ease;
 }
 
-.payment:active,
-.attendance:active,
-.kit:active {
-  transform: scale(0.9);
-}
-
-/* COLORS (optional future use) */
-.status-paid { color: #00ff88; font-weight: bold; }
-.status-onsite { color: #ffb000; font-weight: bold; }
-.status-not { color: #ff3b3b; font-weight: bold; }
-
-/* MOBILE TWEAKS */
+/* MOBILE CARD MODE */
 @media (max-width: 600px) {
-  h1 {
-    font-size: 1.1rem;
+
+  table, thead {
+    display: none;
   }
 
-  th, td {
-    padding: 6px;
-    font-size: 0.75rem;
+  tbody {
+    display: block;
+  }
+
+  tr {
+    display: block;
+    background: #121212;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid #222;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border: none;
+    font-size: 0.85rem;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: #aaa;
   }
 
   .payment, .attendance, .kit {
     font-size: 1.1rem;
-  }
-
-  .box {
-    font-size: 0.8rem;
   }
 }
 </style>
@@ -148,7 +144,7 @@ td {
 
 <div class="stats">
   <div class="box">Total Members<br><span id="totalCount">0</span></div>
-  <div class="box">Countdown (Apr 16–18)<br><span id="countdown">Loading...</span></div>
+  <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
 </div>
 
 <button onclick="loadAttendance()">🔥 REFRESH DATA</button>
@@ -170,25 +166,20 @@ td {
 
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbx8sCjfu06-BduZmmYE-E6W6FFzrNmWmaeJ54UVHuZPL7XsTZb6ko6NG6K6YBeH3wa1sA/exec";
+const BASE_URL = "YOUR_SCRIPT_URL_HERE";
 const SHEET_NAME = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
 
 let peopleMap = new Map();
-let localOverrides = new Map();
 
 const kitCycle = ["❌","🟠","✅"];
 
-// ===============================
-// STATS
 // ===============================
 function updateStats(data) {
   document.getElementById("totalCount").textContent = data.length;
 }
 
-// ===============================
-// COUNTDOWN
 // ===============================
 function startCountdown() {
 
@@ -196,31 +187,25 @@ function startCountdown() {
   const end = new Date("2026-04-18T23:59:59").getTime();
 
   setInterval(() => {
+    const now = Date.now();
 
-    const now = new Date().getTime();
-
-    let target;
-    let label;
+    let target, label;
 
     if (now < start) {
       target = start;
       label = "STARTS IN";
-    } 
-    else if (now <= end) {
+    } else if (now <= end) {
       target = end;
       label = "ENDS IN";
-    } 
-    else {
-      document.getElementById("countdown").textContent = "YLC COMPLETED";
+    } else {
+      document.getElementById("countdown").textContent = "DONE";
       return;
     }
 
-    const diff = target - now;
-
-    const d = Math.floor(diff / (1000*60*60*24));
-    const h = Math.floor((diff / (1000*60*60)) % 24);
-    const m = Math.floor((diff / (1000*60)) % 60);
-    const s = Math.floor((diff / 1000) % 60);
+    const d = Math.floor((target - now) / 86400000);
+    const h = Math.floor(((target - now) / 3600000) % 24);
+    const m = Math.floor(((target - now) / 60000) % 60);
+    const s = Math.floor(((target - now) / 1000) % 60);
 
     document.getElementById("countdown").textContent =
       `${label}: ${d}d ${h}h ${m}m ${s}s`;
@@ -229,106 +214,75 @@ function startCountdown() {
 }
 
 // ===============================
-// RENDER ROW
-// ===============================
-function renderRow(person) {
+function renderRow(p) {
 
-  let tr = peopleMap.get(person.rowIndex);
+  let tr = peopleMap.get(p.rowIndex);
 
   if (!tr) {
     tr = document.createElement("tr");
-    tr.dataset.row = person.rowIndex;
 
     tr.innerHTML = `
-      <td></td>
-      <td></td>
-      <td class="payment"></td>
-      <td class="attendance"></td>
-      <td class="kit"></td>
+      <td data-label="First Name"></td>
+      <td data-label="Last Name"></td>
+      <td data-label="Payment" class="payment"></td>
+      <td data-label="Attendance" class="attendance"></td>
+      <td data-label="Kit" class="kit"></td>
     `;
 
     tbody.appendChild(tr);
-    peopleMap.set(person.rowIndex, tr);
+    peopleMap.set(p.rowIndex, tr);
   }
 
-  tr.children[0].textContent = person.firstName || "";
-  tr.children[1].textContent = person.lastName || "";
-
-  // PAYMENT
-  let paymentState = (person.paymentIndicator || "NOT PAID").toUpperCase();
+  tr.children[0].textContent = p.firstName;
+  tr.children[1].textContent = p.lastName;
 
   tr.children[2].textContent =
-    paymentState === "PAID" ? "✅" :
-    paymentState === "ON-WAITING PAYMENT" ? "🟠" :
-    "❌";
-
-  // ATTENDANCE
-  let attendanceState =
-    localOverrides.get(person.rowIndex) ||
-    person.attendanceStatus ||
-    "ON-waiting";
+    p.paymentIndicator === "PAID" ? "✅" :
+    p.paymentIndicator === "ON-WAITING PAYMENT" ? "🟠" : "❌";
 
   tr.children[3].textContent =
-    attendanceState === "Attended" ? "✅" :
-    attendanceState === "Cancelled" ? "❌" :
-    "🟠";
+    p.attendanceStatus === "Attended" ? "✅" :
+    p.attendanceStatus === "Cancelled" ? "❌" : "🟠";
 
-  // KIT
-  let kitState = person.kitDistribution || "❌";
+  let kitState = p.kitDistribution || "❌";
   const kitCell = tr.children[4];
 
   kitCell.textContent = kitState;
 
   kitCell.onclick = async () => {
 
-    let idx = kitCycle.indexOf(kitState);
-    if (idx === -1) idx = 0;
+    let i = kitCycle.indexOf(kitState);
+    if (i === -1) i = 0;
 
-    kitState = kitCycle[(idx + 1) % kitCycle.length];
+    kitState = kitCycle[(i + 1) % kitCycle.length];
     kitCell.textContent = kitState;
 
-    const formData = new FormData();
-    formData.append("action", "kit");
-    formData.append("rowIndex", person.rowIndex);
-    formData.append("kit_state", kitState);
-    formData.append("sheet", SHEET_NAME);
+    const fd = new FormData();
+    fd.append("action", "kit");
+    fd.append("rowIndex", p.rowIndex);
+    fd.append("kit_state", kitState);
+    fd.append("sheet", SHEET_NAME);
 
-    try {
-      await fetch(BASE_URL, { method: "POST", body: formData });
-    } catch (err) {
-      console.error(err);
-    }
+    await fetch(BASE_URL, { method: "POST", body: fd });
   };
 }
 
 // ===============================
-// LOAD DATA
-// ===============================
 async function loadAttendance() {
-  try {
-    const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
-    const data = await res.json();
+  const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
+  const data = await res.json();
 
-    if (!Array.isArray(data)) return;
+  if (!Array.isArray(data)) return;
 
-    tbody.innerHTML = "";
-    peopleMap.clear();
+  tbody.innerHTML = "";
+  peopleMap.clear();
 
-    data.sort((a, b) => {
-      const A = ((a.lastName || "") + " " + (a.firstName || "")).toLowerCase();
-      const B = ((b.lastName || "") + " " + (b.firstName || "")).toLowerCase();
-      return A.localeCompare(B);
-    });
-
-    updateStats(data);
-    data.forEach(renderRow);
-
-  } catch (err) {
-    console.error(err);
-  }
+  updateStats(data);
+  data.forEach(renderRow);
 }
 
 document.querySelector("button").onclick = loadAttendance;
+
 setInterval(loadAttendance, 15000);
 
 loadAttendance();
