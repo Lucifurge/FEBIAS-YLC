@@ -37,7 +37,7 @@ th {
 .status-onsite { color: orange; font-weight: bold; }
 .status-not { color: red; font-weight: bold; }
 
-.attendance-check, .payment {
+.payment, .attendance-check {
   cursor: pointer;
   text-align: center;
   font-size: 1.4rem;
@@ -48,7 +48,7 @@ th {
 <body>
 
 <h1>YLC 2026 Attendance</h1>
-<p>Click emoji to update Attendance & Payment separately.</p>
+<p>Click emojis to update Attendance and Payment separately.</p>
 
 <button onclick="loadAttendance()">🔄 Refresh Now</button>
 
@@ -57,7 +57,7 @@ th {
 <tr>
 <th>First Name</th>
 <th>Last Name</th>
-<th>Payment Status</th>
+<th>Payment</th>
 <th>Attendance</th>
 </tr>
 </thead>
@@ -67,61 +67,60 @@ th {
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbw43IxCOZWnOUQrew5tjQEKsvHIKIRmzT4KgrBAJbC8oKgt08ICBtfJmZcfo8-1NDTAIA/exec";
 const SHEET_NAME = "Pre-Registration";
-const tbody = document.querySelector("#attendance-table tbody");
+const tbody = document.querySelector("tbody");
 
 let peopleMap = new Map();
 let localOverrides = new Map();
-const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
+
+const attendanceCycle = ["ON-waiting", "Attended", "Cancelled"];
 const paymentCycle = ["Not Paid", "Onsite", "Online"];
-let lastManualUpdate = 0;
 
 // ===============================
 // RENDER ROW
 // ===============================
 function renderRow(person) {
+
   let tr = peopleMap.get(person.rowIndex);
 
   if (!tr) {
     tr = document.createElement("tr");
     tr.dataset.row = person.rowIndex;
     tr.dataset.locked = "false";
+
     tr.innerHTML = `
       <td class="first"></td>
       <td class="last"></td>
       <td class="payment"></td>
-      <td class="attendance-check"></td>
+      <td class="attendance"></td>
     `;
+
     tbody.appendChild(tr);
     peopleMap.set(person.rowIndex, tr);
-  }
-
-  if (localOverrides.has(person.rowIndex)) {
-    person.attendanceStatus = localOverrides.get(person.rowIndex);
   }
 
   tr.querySelector(".first").textContent = person.firstName || "";
   tr.querySelector(".last").textContent = person.lastName || "";
 
   const paymentCell = tr.querySelector(".payment");
-  const attendanceCell = tr.querySelector(".attendance-check");
+  const attendanceCell = tr.querySelector(".attendance");
 
   // ===============================
-  // PAYMENT (SEPARATE)
+  // PAYMENT (INDEPENDENT)
   // ===============================
   let paymentState =
     person.paymentStatus?.includes("Online") ? "Online" :
     person.paymentStatus?.includes("Onsite") ? "Onsite" :
     "Not Paid";
 
-  function setPaymentUI(status) {
+  function setPaymentUI(state) {
     paymentCell.textContent =
-      status === "Online" ? "✅" :
-      status === "Onsite" ? "🟠" :
+      state === "Online" ? "✅" :
+      state === "Onsite" ? "🟠" :
       "❌";
 
     paymentCell.className =
-      status === "Online" ? "payment status-paid" :
-      status === "Onsite" ? "payment status-onsite" :
+      state === "Online" ? "payment status-paid" :
+      state === "Onsite" ? "payment status-onsite" :
       "payment status-not";
   }
 
@@ -146,46 +145,51 @@ function renderRow(person) {
     try {
       await fetch(BASE_URL, { method: "POST", body: formData });
     } catch (err) {
-      console.error("Payment error:", err);
+      console.error(err);
     } finally {
       tr.dataset.locked = "false";
     }
   };
 
   // ===============================
-  // ATTENDANCE
+  // ATTENDANCE (INDEPENDENT)
   // ===============================
-  function setEmoji(status) {
+  function setAttendanceUI(state) {
     attendanceCell.textContent =
-      status === "Attended" ? "✅" :
-      status === "Cancelled" ? "❌" : "🟠";
+      state === "Attended" ? "✅" :
+      state === "Cancelled" ? "❌" :
+      "🟠";
   }
 
-  setEmoji(person.attendanceStatus);
+  let attendanceState =
+    localOverrides.get(person.rowIndex) ||
+    person.attendanceStatus ||
+    "ON-waiting";
+
+  setAttendanceUI(attendanceState);
 
   attendanceCell.onclick = async () => {
     if (tr.dataset.locked === "true") return;
     tr.dataset.locked = "true";
 
-    let current = localOverrides.get(person.rowIndex) || person.attendanceStatus;
-    let idx = statusCycle.indexOf(current);
+    let idx = attendanceCycle.indexOf(attendanceState);
     if (idx === -1) idx = 0;
 
-    let newStatus = statusCycle[(idx + 1) % statusCycle.length];
+    attendanceState = attendanceCycle[(idx + 1) % attendanceCycle.length];
 
-    localOverrides.set(person.rowIndex, newStatus);
-    setEmoji(newStatus);
+    localOverrides.set(person.rowIndex, attendanceState);
+    setAttendanceUI(attendanceState);
 
     const formData = new FormData();
     formData.append("action", "attendance");
     formData.append("rowIndex", person.rowIndex);
-    formData.append("attendance_status", newStatus);
+    formData.append("attendance_status", attendanceState);
     formData.append("sheet", SHEET_NAME);
 
     try {
       await fetch(BASE_URL, { method: "POST", body: formData });
     } catch (err) {
-      console.error("Sync error:", err);
+      console.error(err);
     } finally {
       tr.dataset.locked = "false";
     }
@@ -199,24 +203,24 @@ async function loadAttendance() {
   try {
     const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
     const data = await res.json();
+
     if (!Array.isArray(data)) return;
-    data.forEach(person => renderRow(person));
+
+    tbody.innerHTML = "";
+    peopleMap.clear();
+
+    data.forEach(renderRow);
+
   } catch (err) {
-    console.error("Load error:", err);
+    console.error(err);
   }
 }
 
-document.querySelector("button").onclick = () => {
-  lastManualUpdate = Date.now();
-  loadAttendance();
-};
+document.querySelector("button").onclick = loadAttendance;
 
-setInterval(() => {
-  if (Date.now() - lastManualUpdate > 5000) loadAttendance();
-}, 15000);
+setInterval(loadAttendance, 15000);
 
 loadAttendance();
-
 </script>
 
 </body>
