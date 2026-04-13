@@ -19,20 +19,33 @@ h1 {
   text-align: center;
   color: #ff6a00;
   letter-spacing: 2px;
-  text-transform: uppercase;
 }
 
 .sub {
   text-align: center;
   color: #bbb;
-  margin-bottom: 1rem;
 }
 
-.indicators {
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.box {
+  background: #1a1a1a;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid #333;
   text-align: center;
-  font-size: 14px;
-  color: #ccc;
-  margin-bottom: 1rem;
+}
+
+.box span {
+  color: #ff6a00;
+  font-weight: bold;
+  font-size: 18px;
 }
 
 button {
@@ -45,19 +58,12 @@ button {
   font-weight: bold;
   background: linear-gradient(45deg, #ff6a00, #ff2e00);
   color: white;
-  transition: 0.2s;
-}
-
-button:hover {
-  transform: scale(1.05);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
-  overflow: hidden;
-  border-radius: 10px;
 }
 
 th {
@@ -70,10 +76,6 @@ td {
   border: 1px solid #222;
   padding: 10px;
   background: #121212;
-}
-
-tr:hover td {
-  background: #1b1b1b;
 }
 
 .payment, .attendance {
@@ -90,12 +92,13 @@ tr:hover td {
 
 <body>
 
-<h1>YLC 2026 Attendance</h1>
-<div class="sub">Online Delegate Management System</div>
+<h1>YLC 2026 ATTENDANCE ONLINE</h1>
+<div class="sub">FEBIAS College of Bible System</div>
 
-<div class="indicators">
-  Attendance: 🟠 ON-WAITING | ✅ ATTENDED | ❌ CANCELLED <br>
-  Payment: ❌ NOT PAID | 🟠 ON-WAITING PAYMENT | ✅ PAID
+<div class="stats">
+  <div class="box">Total Members<br><span id="totalCount">0</span></div>
+  <div class="box">YLC Eligible (16–18)<br><span id="ylcCount">0</span></div>
+  <div class="box">Countdown to YLC<br><span id="countdown">Loading...</span></div>
 </div>
 
 <button onclick="loadAttendance()">🔥 REFRESH DATA</button>
@@ -124,6 +127,44 @@ let localOverrides = new Map();
 
 const attendanceCycle = ["ON-waiting", "Attended", "Cancelled"];
 const paymentCycle = ["NOT PAID", "ON-WAITING PAYMENT", "PAID"];
+
+// ===============================
+// STATS
+// ===============================
+function updateStats(data) {
+  const total = data.length;
+
+  const ylc = data.filter(p => {
+    const age = parseInt(p.age || 0);
+    return age >= 16 && age <= 18;
+  }).length;
+
+  document.getElementById("totalCount").textContent = total;
+  document.getElementById("ylcCount").textContent = ylc;
+}
+
+// ===============================
+// COUNTDOWN (YLC 2026 - SET DATE HERE)
+// ===============================
+function startCountdown() {
+  const eventDate = new Date("2026-06-15T00:00:00"); // change if needed
+
+  setInterval(() => {
+    const now = new Date();
+    const diff = eventDate - now;
+
+    if (diff <= 0) {
+      document.getElementById("countdown").textContent = "EVENT STARTED";
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+
+    document.getElementById("countdown").textContent =
+      `${days}d ${hours}h`;
+  }, 1000);
+}
 
 // ===============================
 // RENDER ROW
@@ -171,31 +212,6 @@ function renderRow(person) {
 
   setPaymentUI(paymentState);
 
-  paymentCell.onclick = async () => {
-    if (tr.dataset.locked === "true") return;
-    tr.dataset.locked = "true";
-
-    let idx = paymentCycle.indexOf(paymentState);
-    if (idx === -1) idx = 0;
-
-    paymentState = paymentCycle[(idx + 1) % paymentCycle.length];
-    setPaymentUI(paymentState);
-
-    const formData = new FormData();
-    formData.append("action", "payment");
-    formData.append("rowIndex", person.rowIndex);
-    formData.append("payment_by", paymentState);
-    formData.append("sheet", SHEET_NAME);
-
-    try {
-      await fetch(BASE_URL, { method: "POST", body: formData });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      tr.dataset.locked = "false";
-    }
-  };
-
   // ATTENDANCE
   function setAttendanceUI(state) {
     attendanceCell.textContent =
@@ -210,37 +226,10 @@ function renderRow(person) {
     "ON-waiting";
 
   setAttendanceUI(attendanceState);
-
-  attendanceCell.onclick = async () => {
-    if (tr.dataset.locked === "true") return;
-    tr.dataset.locked = "true";
-
-    let idx = attendanceCycle.indexOf(attendanceState);
-    if (idx === -1) idx = 0;
-
-    attendanceState = attendanceCycle[(idx + 1) % attendanceCycle.length];
-
-    localOverrides.set(person.rowIndex, attendanceState);
-    setAttendanceUI(attendanceState);
-
-    const formData = new FormData();
-    formData.append("action", "attendance");
-    formData.append("rowIndex", person.rowIndex);
-    formData.append("attendance_status", attendanceState);
-    formData.append("sheet", SHEET_NAME);
-
-    try {
-      await fetch(BASE_URL, { method: "POST", body: formData });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      tr.dataset.locked = "false";
-    }
-  };
 }
 
 // ===============================
-// LOAD DATA (ALPHABETICAL)
+// LOAD DATA
 // ===============================
 async function loadAttendance() {
   try {
@@ -252,12 +241,15 @@ async function loadAttendance() {
     tbody.innerHTML = "";
     peopleMap.clear();
 
-    data
-      .sort((a, b) =>
-        (a.firstName || "").toLowerCase()
-        .localeCompare((b.firstName || "").toLowerCase())
-      )
-      .forEach(renderRow);
+    // SORT (LAST NAME + FIRST NAME)
+    data.sort((a, b) => {
+      const A = ((a.lastName || "") + " " + (a.firstName || "")).toLowerCase();
+      const B = ((b.lastName || "") + " " + (b.firstName || "")).toLowerCase();
+      return A.localeCompare(B);
+    });
+
+    updateStats(data);
+    data.forEach(renderRow);
 
   } catch (err) {
     console.error(err);
@@ -266,7 +258,9 @@ async function loadAttendance() {
 
 document.querySelector("button").onclick = loadAttendance;
 setInterval(loadAttendance, 15000);
+
 loadAttendance();
+startCountdown();
 
 </script>
 
