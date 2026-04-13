@@ -11,6 +11,7 @@
 
 <style>
 
+/* RESET */
 * {
   margin: 0;
   padding: 0;
@@ -23,7 +24,7 @@ body {
   color: #fff;
 }
 
-/* BACKGROUND */
+/* BACKGROUND SLIDESHOW */
 .bg-slideshow {
   position: fixed;
   inset: 0;
@@ -51,6 +52,7 @@ body {
   100% { opacity: 0; }
 }
 
+/* OVERLAY */
 .bg-overlay {
   position: fixed;
   inset: 0;
@@ -90,10 +92,9 @@ header h1 {
 
 header h2 {
   color: #ffb000;
-  margin-top: 5px;
 }
 
-/* STATS */
+/* STATS SECTION */
 .stats {
   display: flex;
   justify-content: center;
@@ -119,11 +120,10 @@ header h2 {
 
 .stat-box p {
   font-size: 1.3rem;
-  margin-top: 5px;
   font-weight: bold;
 }
 
-/* BUTTON */
+/* REGISTER BUTTON */
 .big-register {
   display: block;
   margin: 3rem auto;
@@ -136,25 +136,41 @@ header h2 {
   font-weight: bold;
   text-decoration: none;
   box-shadow: 0 0 30px #ff6a00;
-  transition: .3s;
 }
 
 .big-register:hover {
   transform: scale(1.05);
 }
 
-/* SECTION */
+/* INFO GRID */
 section {
-  max-width: 900px;
-  margin: 3rem auto;
-  padding: 1rem;
+  max-width: 1100px;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+  gap: 2rem;
 }
 
 .card {
-  background: rgba(255,255,255,0.05);
+  background: rgba(0,0,0,0.8);
   border: 1px solid #ff6a00;
   padding: 1.5rem;
   border-radius: 12px;
+}
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.card h3 {
+  color: #ffb000;
+  margin-bottom: 10px;
 }
 
 /* FOOTER */
@@ -165,16 +181,12 @@ footer {
   margin-top: 3rem;
 }
 
-@media (max-width: 768px) {
-  header h1 { font-size: 3rem; }
-}
-
 </style>
 </head>
 
 <body>
 
-<!-- 🔥 BACKGROUND IMAGES RESTORED -->
+<!-- BACKGROUND -->
 <div class="bg-slideshow">
   <img src="qw.jpg">
   <img src="fcb.jpg">
@@ -182,11 +194,13 @@ footer {
 </div>
 <div class="bg-overlay"></div>
 
+<!-- NAV -->
 <nav>
   <img src="logo.jpg">
   <a href="ylc.html">Register</a>
 </nav>
 
+<!-- HEADER -->
 <header>
   <h1>REFINE</h1>
   <h2>Youth Leaders Camp 2026</h2>
@@ -199,7 +213,7 @@ footer {
   <div class="stats">
 
     <div class="stat-box">
-      <h3>YLC TIMER</h3>
+      <h3>COUNTDOWN</h3>
       <p id="countdown">Loading...</p>
     </div>
 
@@ -216,55 +230,66 @@ footer {
   </div>
 </header>
 
+<!-- REGISTER -->
 <a href="ylc.html" class="big-register">🔥 REGISTER NOW</a>
 
-<section>
+<!-- ABOUT (RESTORED) -->
+<section id="about" class="info-grid">
+
   <div class="card">
-    <h3>ABOUT YLC</h3>
-    <p>Youth Leaders Camp 2026 is a spiritual leadership training camp focused on worship, growth, and discipleship.</p>
+    <img src="QD.jpg">
+    <h3>FEBIAS College of Bible</h3>
+    <p>Training faithful servants of Christ through biblical education and discipleship.</p>
   </div>
+
+  <div class="card">
+    <img src="fcb.jpg">
+    <h3>Youth Leaders Camp</h3>
+    <p>Equipping youth through worship, leadership training, and spiritual growth.</p>
+  </div>
+
 </section>
 
+<!-- FOOTER -->
 <footer>
-  © 2026 FEBIAS College of Bible — YLC
+  <p>© 2026 FEBIAS College of Bible — Youth Leaders Camp</p>
 </footer>
 
 <script>
 
-// 🔥 COUNTDOWN (APRIL 16–18 2026)
-const startDate = new Date("2026-04-16T00:00:00").getTime();
-const endDate   = new Date("2026-04-18T23:59:59").getTime();
+// ================= COUNTDOWN (APRIL 16–18) =================
+const start = new Date("2026-04-16T00:00:00").getTime();
+const end = new Date("2026-04-18T23:59:59").getTime();
 
 setInterval(() => {
   const now = new Date().getTime();
 
   let target, label;
 
-  if (now < startDate) {
-    target = startDate;
+  if (now < start) {
+    target = start;
     label = "STARTS IN";
-  } else if (now <= endDate) {
-    target = endDate;
+  } else if (now <= end) {
+    target = end;
     label = "ENDS IN";
   } else {
-    document.getElementById("countdown").innerHTML = "YLC COMPLETED ✅";
+    document.getElementById("countdown").innerText = "DONE ✅";
     return;
   }
 
   const diff = target - now;
 
-  const days = Math.floor(diff / (1000*60*60*24));
-  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-  const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
-  const secs = Math.floor((diff % (1000*60)) / 1000);
+  const d = Math.floor(diff / (1000*60*60*24));
+  const h = Math.floor((diff / (1000*60*60)) % 24);
+  const m = Math.floor((diff / (1000*60)) % 60);
+  const s = Math.floor((diff / 1000) % 60);
 
   document.getElementById("countdown").innerHTML =
-    `${label}<br>${days}d ${hours}h ${mins}m ${secs}s`;
+    `${label}<br>${d}d ${h}h ${m}m ${s}s`;
 
 }, 1000);
 
-
-// 🔥 LIVE MEMBER COUNT FROM APPSCRIPT
+// ================= MEMBER COUNT (APPS SCRIPT) =================
 const BASE_URL = "https://script.google.com/macros/s/AKfycbyCbc7zJ-nkcIcTWanli5zj1q8PV5dfz1owsK2s7vNHEcfcgWHrkwY-uEZ2J9lfetatdQ/exec";
 const SHEET_NAME = "Pre-Registration";
 
@@ -275,11 +300,11 @@ async function loadMembers() {
 
     if (!Array.isArray(data)) return;
 
-    document.getElementById("memberCount").textContent =
-      `${data.length} / 18`;
+    document.getElementById("memberCount").innerText =
+      `${data.length} / 160`;
 
   } catch (err) {
-    console.error(err);
+    console.log(err);
   }
 }
 
