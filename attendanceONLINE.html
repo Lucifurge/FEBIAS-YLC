@@ -12,46 +12,55 @@ body {
   font-family: "Segoe UI", system-ui, sans-serif;
   background: #0f0f0f;
   color: #ffffff;
-  padding: 2rem;
+  padding: 1rem;
+  margin: 0;
 }
 
 h1 {
   text-align: center;
   color: #ff6a00;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+  font-size: 1.4rem;
 }
 
 .sub {
   text-align: center;
   color: #bbb;
+  font-size: 0.9rem;
 }
 
+/* STATS */
 .stats {
   display: flex;
   justify-content: center;
-  gap: 30px;
+  gap: 10px;
   margin: 15px 0;
   flex-wrap: wrap;
 }
 
 .box {
   background: #1a1a1a;
-  padding: 10px 18px;
+  padding: 10px;
   border-radius: 10px;
   border: 1px solid #333;
   text-align: center;
+  flex: 1 1 120px;
+  font-size: 0.9rem;
 }
 
 .box span {
   color: #ff6a00;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 16px;
 }
 
+/* BUTTON */
 button {
   display: block;
-  margin: 0 auto 1rem auto;
-  padding: 10px 18px;
+  width: 100%;
+  max-width: 320px;
+  margin: 10px auto;
+  padding: 10px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -60,8 +69,17 @@ button {
   color: white;
 }
 
+/* TABLE WRAPPER (FIX MOBILE OVERFLOW) */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* TABLE */
 table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   margin-top: 1rem;
 }
@@ -69,24 +87,57 @@ table {
 th {
   background: #1a1a1a;
   color: #ff6a00;
-  padding: 12px;
+  padding: 10px;
+  font-size: 0.85rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 td {
   border: 1px solid #222;
-  padding: 10px;
+  padding: 8px;
   background: #121212;
+  font-size: 0.85rem;
 }
 
 .payment, .attendance, .kit {
   text-align: center;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   cursor: pointer;
+  transition: transform 0.1s ease;
 }
 
+.payment:active,
+.attendance:active,
+.kit:active {
+  transform: scale(0.9);
+}
+
+/* COLORS (optional future use) */
 .status-paid { color: #00ff88; font-weight: bold; }
 .status-onsite { color: #ffb000; font-weight: bold; }
 .status-not { color: #ff3b3b; font-weight: bold; }
+
+/* MOBILE TWEAKS */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.1rem;
+  }
+
+  th, td {
+    padding: 6px;
+    font-size: 0.75rem;
+  }
+
+  .payment, .attendance, .kit {
+    font-size: 1.1rem;
+  }
+
+  .box {
+    font-size: 0.8rem;
+  }
+}
 </style>
 </head>
 
@@ -102,6 +153,7 @@ td {
 
 <button onclick="loadAttendance()">🔥 REFRESH DATA</button>
 
+<div class="table-wrap">
 <table>
 <thead>
 <tr>
@@ -109,11 +161,12 @@ td {
 <th>Last Name</th>
 <th>Payment</th>
 <th>Attendance</th>
-<th>Kit</th> <!-- ✅ NEW -->
+<th>Kit</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
+</div>
 
 <script>
 
@@ -191,7 +244,7 @@ function renderRow(person) {
       <td></td>
       <td class="payment"></td>
       <td class="attendance"></td>
-      <td class="kit"></td> <!-- ✅ NEW -->
+      <td class="kit"></td>
     `;
 
     tbody.appendChild(tr);
@@ -220,10 +273,10 @@ function renderRow(person) {
     attendanceState === "Cancelled" ? "❌" :
     "🟠";
 
-  // KIT DISTRIBUTION ✅
+  // KIT
   let kitState = person.kitDistribution || "❌";
-
   const kitCell = tr.children[4];
+
   kitCell.textContent = kitState;
 
   kitCell.onclick = async () => {
