@@ -7,12 +7,10 @@
 
 <link rel="icon" href="logo.ico">
 
-<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
 
-/* ================= RESET ================= */
 * {
   margin: 0;
   padding: 0;
@@ -21,19 +19,15 @@
 
 body {
   font-family: "Montserrat", sans-serif;
-  background: #000000;
-  color: #FFFFFF; /* TEXT WHITE */
+  background: #000;
+  color: #fff;
 }
 
-/* ================= BACKGROUND SLIDESHOW ================= */
+/* BACKGROUND */
 .bg-slideshow {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: -3;
-  overflow: hidden;
 }
 
 .bg-slideshow img {
@@ -42,246 +36,234 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  animation: slideFade 18s infinite;
+  animation: fade 18s infinite;
 }
 
 .bg-slideshow img:nth-child(1) { animation-delay: 0s; }
 .bg-slideshow img:nth-child(2) { animation-delay: 6s; }
 .bg-slideshow img:nth-child(3) { animation-delay: 12s; }
 
-@keyframes slideFade {
+@keyframes fade {
   0% { opacity: 0; }
-  10% { opacity: .6; }
-  30% { opacity: .6; }
-  40% { opacity: 0; }
+  15% { opacity: .5; }
+  35% { opacity: .5; }
+  50% { opacity: 0; }
   100% { opacity: 0; }
 }
 
-/* ================= DARK OVERLAY ================= */
 .bg-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.85);
   z-index: -2;
-  border: 8px solid #FF6A00;
-  box-shadow: 0 0 40px #FF6A00, 0 0 80px #E63900 inset;
 }
 
-/* ================= NAV ================= */
+/* NAV */
 nav {
-  background: rgba(0,0,0,0.9);
-  padding: 1.2rem 2rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #FFD700;
+  padding: 1rem 2rem;
+  border-bottom: 2px solid #ff6a00;
+  background: rgba(0,0,0,0.7);
 }
 
-nav img {
-  height: 55px;
-}
-
-nav ul {
-  list-style: none;
-  display: flex;
-  gap: 2rem;
-}
+nav img { height: 50px; }
 
 nav a {
-  color: #FFFFFF;
+  color: white;
   text-decoration: none;
   font-weight: 600;
-  transition: 0.3s;
 }
 
-nav a:hover {
-  color: #FFD700;
-}
-
-/* ================= HERO ================= */
+/* HEADER */
 header {
   text-align: center;
-  padding: 6rem 1.5rem 3rem;
+  padding: 4rem 1rem 1rem;
 }
 
-/* REFINE TITLE (NOW WHITE) */
 header h1 {
-  font-family: "Bebas Neue", sans-serif;
-  font-size: 6rem;
-  letter-spacing: 8px;
-  color: #FFFFFF;
-
-  text-shadow:
-    0 0 10px rgba(255,90,0,.9),
-    0 0 20px rgba(255,120,0,.8),
-    0 0 40px rgba(255,60,0,.7),
-    0 0 80px rgba(255,120,0,.5);
+  font-family: "Bebas Neue";
+  font-size: 5rem;
+  color: #fff;
+  text-shadow: 0 0 20px #ff6a00;
 }
 
-/* Subtitle */
 header h2 {
-  margin-top: 15px;
-  font-size: 1.8rem;
-  color: #FFD700;
-  font-weight: 600;
+  color: #ffb000;
+  margin-top: 5px;
 }
 
-/* Verse */
-header p {
-  margin-top: 1.5rem;
-  font-family: "Roboto", sans-serif;
-  font-size: 1.2rem;
-  color: #FFFFFF;
-  max-width: 700px;
-  margin-inline: auto;
+/* STATS */
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
 }
 
-/* ================= REGISTER BUTTON ================= */
+.stat-box {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #ff6a00;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  min-width: 200px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(255,106,0,0.3);
+}
+
+.stat-box h3 {
+  color: #ff6a00;
+  font-size: 1rem;
+}
+
+.stat-box p {
+  font-size: 1.3rem;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+/* BUTTON */
 .big-register {
   display: block;
-  max-width: 450px;
   margin: 3rem auto;
-  padding: 1.7rem;
-  font-size: 1.9rem;
-  font-weight: 800;
   text-align: center;
-  border-radius: 20px;
-  background: #FF6A00;
-  color: #FFFFFF;
+  padding: 1.5rem;
+  width: 300px;
+  background: linear-gradient(45deg,#ff6a00,#ff2e00);
+  color: white;
+  border-radius: 15px;
+  font-weight: bold;
   text-decoration: none;
-  box-shadow: 0 0 35px rgba(255,106,0,.7);
-  transition: 0.3s ease;
+  box-shadow: 0 0 30px #ff6a00;
+  transition: .3s;
 }
 
 .big-register:hover {
-  background: #E63900;
-  box-shadow: 0 0 45px rgba(255,215,0,.9);
-  transform: translateY(-6px);
+  transform: scale(1.05);
 }
 
-/* ================= INFO SECTION ================= */
+/* SECTION */
 section {
-  max-width: 1100px;
-  margin: 4rem auto;
-  padding: 0 1.5rem;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
-  gap: 2.5rem;
+  max-width: 900px;
+  margin: 3rem auto;
+  padding: 1rem;
 }
 
 .card {
-  background: rgba(0,0,0,0.9);
-  border-radius: 18px;
-  border: 2px solid #FF6A00;
-  box-shadow: 0 0 25px rgba(255,106,0,.4);
-  padding: 1.8rem;
-  transition: 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-8px);
-  border-color: #FFD700;
-}
-
-.card img {
-  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #ff6a00;
+  padding: 1.5rem;
   border-radius: 12px;
-  margin-bottom: 1rem;
 }
 
-.card h3 {
-  font-family: "Bebas Neue", sans-serif;
-  font-size: 2.2rem;
-  color: #FFD700;
-  margin-bottom: 1rem;
-}
-
-.card p {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: #FFFFFF;
-}
-
-/* ================= FOOTER ================= */
+/* FOOTER */
 footer {
-  background: #000000;
   text-align: center;
-  padding: 2rem 1rem;
-  margin-top: 4rem;
-  border-top: 3px solid #FF6A00;
-  font-family: "Roboto", sans-serif;
-  color: #FFFFFF;
+  padding: 2rem;
+  border-top: 2px solid #ff6a00;
+  margin-top: 3rem;
 }
 
-/* ================= MOBILE ================= */
 @media (max-width: 768px) {
-
-  header h1 {
-    font-size: 4rem;
-    letter-spacing: 5px;
-  }
-
-  header h2 {
-    font-size: 1.3rem;
-  }
-
-  .big-register {
-    font-size: 1.5rem;
-    padding: 1.4rem;
-  }
-
-  nav ul {
-    gap: 1rem;
-  }
+  header h1 { font-size: 3rem; }
 }
+
 </style>
 </head>
 
 <body>
 
 <div class="bg-slideshow">
-  <img src="qw.jpg" alt="">
-  <img src="fcb.jpg" alt="">
-  <img src="f.jpg" alt="">
+  <img src="qw.jpg">
+  <img src="fcb.jpg">
+  <img src="f.jpg">
 </div>
 <div class="bg-overlay"></div>
 
 <nav>
-  <img src="logo.jpg" alt="FEBIAS Logo">
-  <ul>
-    <li><a href="#about">About</a></li>
-    <li><a href="ylc.html">Register</a></li>
-  </ul>
+  <img src="logo.jpg">
+  <a href="ylc.html">Register</a>
 </nav>
 
 <header>
   <h1>REFINE</h1>
   <h2>Youth Leaders Camp 2026</h2>
-  <p>“These trials will show that your faith is genuine.” — 1 Peter 1:7</p>
+
+  <p style="margin-top:10px;color:#ccc;">
+    “These trials will show that your faith is genuine.” — 1 Peter 1:7
+  </p>
+
+  <!-- STATS -->
+  <div class="stats">
+
+    <div class="stat-box">
+      <h3>YLC TIMER</h3>
+      <p id="countdown">Loading...</p>
+    </div>
+
+    <div class="stat-box">
+      <h3>MEMBERS</h3>
+      <p>13 / 18</p>
+    </div>
+
+    <div class="stat-box">
+      <h3>STATUS</h3>
+      <p>ACTIVE 🔥</p>
+    </div>
+
+  </div>
 </header>
 
-<a href="ylc.html" class="big-register">🔥 REGISTER NOW 🔥</a>
+<a href="ylc.html" class="big-register">🔥 REGISTER NOW</a>
 
-<section id="about" class="info-grid">
+<section>
   <div class="card">
-    <img src="QD.jpg" alt="">
-    <h3>FEBIAS College of Bible</h3>
-    <p>Training faithful servants of Christ through biblical education and discipleship.</p>
-  </div>
-
-  <div class="card">
-    <img src="fcb.jpg" alt="">
-    <h3>Youth Leaders Camp</h3>
-    <p>Equipping youth through worship, leadership training, and spiritual growth.</p>
+    <h3>ABOUT YLC</h3>
+    <p>Youth Leaders Camp 2026 is a spiritual leadership training camp focused on worship, growth, and discipleship.</p>
   </div>
 </section>
 
 <footer>
-  <p>© 2026 FEBIAS College of Bible — Youth Leaders Camp</p>
-  <p>®™ Powered by ReyDevelopment</p>
+  © 2026 FEBIAS College of Bible — YLC
 </footer>
+
+<script>
+
+// 🔥 YLC DATES
+const startDate = new Date("April 16, 2026 00:00:00").getTime();
+const endDate = new Date("April 18, 2026 23:59:59").getTime();
+
+setInterval(() => {
+  const now = new Date().getTime();
+
+  let target;
+  let label;
+
+  if (now < startDate) {
+    target = startDate;
+    label = "STARTS IN";
+  } else if (now >= startDate && now <= endDate) {
+    target = endDate;
+    label = "ENDS IN";
+  } else {
+    document.getElementById("countdown").innerHTML = "YLC COMPLETED ✅";
+    return;
+  }
+
+  const diff = target - now;
+
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const secs = Math.floor((diff % (1000*60)) / 1000);
+
+  document.getElementById("countdown").innerHTML =
+    `${label}<br>${days}d ${hours}h ${mins}m ${secs}s`;
+
+}, 1000);
+
+</script>
+
 </body>
 </html>
