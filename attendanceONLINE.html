@@ -133,7 +133,7 @@ function updateStats(data) {
 
   const ylc = data.filter(p => {
     const age = parseInt(p.age || 0);
-    return age >= 16 && age <= 18;
+    return age >= 16 && age <= 21;
   }).length;
 
   document.getElementById("totalCount").textContent = total;
