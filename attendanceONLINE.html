@@ -79,7 +79,6 @@ td {
 }
 
 .payment, .attendance {
-  cursor: pointer;
   text-align: center;
   font-size: 1.3rem;
 }
@@ -98,7 +97,7 @@ td {
 <div class="stats">
   <div class="box">Total Members<br><span id="totalCount">0</span></div>
   <div class="box">YLC Eligible (16–18)<br><span id="ylcCount">0</span></div>
-  <div class="box">Countdown to YLC<br><span id="countdown">Loading...</span></div>
+  <div class="box">Countdown (Apr 16–18)<br><span id="countdown">Loading...</span></div>
 </div>
 
 <button onclick="loadAttendance()">🔥 REFRESH DATA</button>
@@ -125,11 +124,9 @@ const tbody = document.querySelector("tbody");
 let peopleMap = new Map();
 let localOverrides = new Map();
 
-const attendanceCycle = ["ON-waiting", "Attended", "Cancelled"];
-const paymentCycle = ["NOT PAID", "ON-WAITING PAYMENT", "PAID"];
 
 // ===============================
-// STATS
+// STATS (FIXED 16–18 ONLY)
 // ===============================
 function updateStats(data) {
   const total = data.length;
@@ -143,31 +140,51 @@ function updateStats(data) {
   document.getElementById("ylcCount").textContent = ylc;
 }
 
+
 // ===============================
-// COUNTDOWN (YLC 2026 - SET DATE HERE)
+// COUNTDOWN (APRIL 16–18 FIXED)
 // ===============================
 function startCountdown() {
-  const eventDate = new Date("2026-06-15T00:00:00"); // change if needed
+
+  const start = new Date("2026-04-16T00:00:00").getTime();
+  const end = new Date("2026-04-18T23:59:59").getTime();
 
   setInterval(() => {
-    const now = new Date();
-    const diff = eventDate - now;
 
-    if (diff <= 0) {
-      document.getElementById("countdown").textContent = "EVENT STARTED";
+    const now = new Date().getTime();
+
+    let target;
+    let label;
+
+    if (now < start) {
+      target = start;
+      label = "STARTS IN";
+    } 
+    else if (now >= start && now <= end) {
+      target = end;
+      label = "ENDS IN";
+    } 
+    else {
+      document.getElementById("countdown").textContent = "YLC COMPLETED";
       return;
     }
 
+    const diff = target - now;
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const mins = Math.floor((diff / (1000 * 60)) % 60);
+    const secs = Math.floor((diff / 1000) % 60);
 
     document.getElementById("countdown").textContent =
-      `${days}d ${hours}h`;
+      `${label}: ${days}d ${hours}h ${mins}m ${secs}s`;
+
   }, 1000);
 }
 
+
 // ===============================
-// RENDER ROW
+// RENDER ROW (NO SYSTEM CHANGE)
 // ===============================
 function renderRow(person) {
 
@@ -176,57 +193,37 @@ function renderRow(person) {
   if (!tr) {
     tr = document.createElement("tr");
     tr.dataset.row = person.rowIndex;
-    tr.dataset.locked = "false";
-
     tr.innerHTML = `
-      <td class="first"></td>
-      <td class="last"></td>
-      <td class="payment"></td>
-      <td class="attendance"></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
     `;
-
     tbody.appendChild(tr);
     peopleMap.set(person.rowIndex, tr);
   }
 
-  tr.querySelector(".first").textContent = person.firstName || "";
-  tr.querySelector(".last").textContent = person.lastName || "";
+  tr.children[0].textContent = person.firstName || "";
+  tr.children[1].textContent = person.lastName || "";
 
-  const paymentCell = tr.querySelector(".payment");
-  const attendanceCell = tr.querySelector(".attendance");
-
-  // PAYMENT
   let paymentState = (person.paymentIndicator || "NOT PAID").toUpperCase();
 
-  function setPaymentUI(state) {
-    paymentCell.textContent =
-      state === "PAID" ? "✅ PAID" :
-      state === "ON-WAITING PAYMENT" ? "🟠 ON-WAITING PAYMENT" :
-      "❌ NOT PAID";
-
-    paymentCell.className =
-      state === "PAID" ? "payment status-paid" :
-      state === "ON-WAITING PAYMENT" ? "payment status-onsite" :
-      "payment status-not";
-  }
-
-  setPaymentUI(paymentState);
-
-  // ATTENDANCE
-  function setAttendanceUI(state) {
-    attendanceCell.textContent =
-      state === "Attended" ? "✅" :
-      state === "Cancelled" ? "❌" :
-      "🟠";
-  }
+  tr.children[2].textContent =
+    paymentState === "PAID" ? "✅ PAID" :
+    paymentState === "ON-WAITING PAYMENT" ? "🟠 ON-WAITING PAYMENT" :
+    "❌ NOT PAID";
 
   let attendanceState =
     localOverrides.get(person.rowIndex) ||
     person.attendanceStatus ||
     "ON-waiting";
 
-  setAttendanceUI(attendanceState);
+  tr.children[3].textContent =
+    attendanceState === "Attended" ? "✅" :
+    attendanceState === "Cancelled" ? "❌" :
+    "🟠";
 }
+
 
 // ===============================
 // LOAD DATA
@@ -241,7 +238,7 @@ async function loadAttendance() {
     tbody.innerHTML = "";
     peopleMap.clear();
 
-    // SORT (LAST NAME + FIRST NAME)
+    // SORT: LAST NAME FIRST
     data.sort((a, b) => {
       const A = ((a.lastName || "") + " " + (a.firstName || "")).toLowerCase();
       const B = ((b.lastName || "") + " " + (b.firstName || "")).toLowerCase();
