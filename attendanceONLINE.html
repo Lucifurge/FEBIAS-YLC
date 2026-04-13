@@ -37,7 +37,7 @@ th {
 .status-onsite { color: orange; font-weight: bold; }
 .status-not { color: red; font-weight: bold; }
 
-.payment, .attendance-check {
+.payment, .attendance {
   cursor: pointer;
   text-align: center;
   font-size: 1.4rem;
@@ -48,7 +48,25 @@ th {
 <body>
 
 <h1>YLC 2026 Attendance</h1>
-<p>Click emojis to update Attendance and Payment separately.</p>
+
+<!-- 🔥 INDICATORS ADDED -->
+<div style="text-align:center; margin-bottom: 1rem; font-size: 14px; color:#444;">
+
+  <p><b>Attendance:</b> 
+    🟠 ON-WAITING | 
+    ✅ ATTENDED | 
+    ❌ CANCELLED
+  </p>
+
+  <p><b>Payment:</b> 
+    ❌ NOT PAID | 
+    🟠 ONSITE PAYMENT | 
+    ✅ ONLINE PAYMENT
+  </p>
+
+</div>
+
+<p style="text-align:center;">Click emojis to update Attendance and Payment separately.</p>
 
 <button onclick="loadAttendance()">🔄 Refresh Now</button>
 
@@ -217,9 +235,7 @@ async function loadAttendance() {
 }
 
 document.querySelector("button").onclick = loadAttendance;
-
 setInterval(loadAttendance, 15000);
-
 loadAttendance();
 </script>
 
