@@ -125,18 +125,10 @@ let localOverrides = new Map();
 
 
 // ===============================
-// STATS (FIXED 16–18 ONLY)
+// STATS (TOTAL ONLY)
 // ===============================
 function updateStats(data) {
-  const total = data.length;
-
-  const ylc = data.filter(p => {
-    const age = parseInt(p.age || 0);
-    return age >= 16 && age <= 21;
-  }).length;
-
-  document.getElementById("totalCount").textContent = total;
-  document.getElementById("ylcCount").textContent = ylc;
+  document.getElementById("totalCount").textContent = data.length;
 }
 
 
@@ -183,7 +175,7 @@ function startCountdown() {
 
 
 // ===============================
-// RENDER ROW (NO SYSTEM CHANGE)
+// RENDER ROW
 // ===============================
 function renderRow(person) {
 
@@ -237,7 +229,6 @@ async function loadAttendance() {
     tbody.innerHTML = "";
     peopleMap.clear();
 
-    // SORT: LAST NAME FIRST
     data.sort((a, b) => {
       const A = ((a.lastName || "") + " " + (a.firstName || "")).toLowerCase();
       const B = ((b.lastName || "") + " " + (b.firstName || "")).toLowerCase();
