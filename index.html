@@ -174,6 +174,7 @@ footer {
 
 <body>
 
+<!-- 🔥 BACKGROUND IMAGES RESTORED -->
 <div class="bg-slideshow">
   <img src="qw.jpg">
   <img src="fcb.jpg">
@@ -204,7 +205,7 @@ footer {
 
     <div class="stat-box">
       <h3>MEMBERS</h3>
-      <p>13 / 18</p>
+      <p id="memberCount">Loading...</p>
     </div>
 
     <div class="stat-box">
@@ -230,20 +231,19 @@ footer {
 
 <script>
 
-// 🔥 YLC DATES
-const startDate = new Date("April 16, 2026 00:00:00").getTime();
-const endDate = new Date("April 18, 2026 23:59:59").getTime();
+// 🔥 COUNTDOWN (APRIL 16–18 2026)
+const startDate = new Date("2026-04-16T00:00:00").getTime();
+const endDate   = new Date("2026-04-18T23:59:59").getTime();
 
 setInterval(() => {
   const now = new Date().getTime();
 
-  let target;
-  let label;
+  let target, label;
 
   if (now < startDate) {
     target = startDate;
     label = "STARTS IN";
-  } else if (now >= startDate && now <= endDate) {
+  } else if (now <= endDate) {
     target = endDate;
     label = "ENDS IN";
   } else {
@@ -262,6 +262,29 @@ setInterval(() => {
     `${label}<br>${days}d ${hours}h ${mins}m ${secs}s`;
 
 }, 1000);
+
+
+// 🔥 LIVE MEMBER COUNT FROM APPSCRIPT
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyCbc7zJ-nkcIcTWanli5zj1q8PV5dfz1owsK2s7vNHEcfcgWHrkwY-uEZ2J9lfetatdQ/exec";
+const SHEET_NAME = "Pre-Registration";
+
+async function loadMembers() {
+  try {
+    const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
+    const data = await res.json();
+
+    if (!Array.isArray(data)) return;
+
+    document.getElementById("memberCount").textContent =
+      `${data.length} / 18`;
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+loadMembers();
+setInterval(loadMembers, 15000);
 
 </script>
 
