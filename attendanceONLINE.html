@@ -49,21 +49,10 @@ th {
 
 <h1>YLC 2026 Attendance</h1>
 
-<!-- 🔥 INDICATORS ADDED -->
+<!-- INDICATORS -->
 <div style="text-align:center; margin-bottom: 1rem; font-size: 14px; color:#444;">
-
-  <p><b>Attendance:</b> 
-    🟠 ON-WAITING | 
-    ✅ ATTENDED | 
-    ❌ CANCELLED
-  </p>
-
-  <p><b>Payment:</b> 
-    ❌ NOT PAID | 
-    🟠 ONSITE PAYMENT | 
-    ✅ ONLINE PAYMENT
-  </p>
-
+  <p><b>Attendance:</b> 🟠 ON-WAITING | ✅ ATTENDED | ❌ CANCELLED</p>
+  <p><b>Payment:</b> ❌ NOT PAID | 🟠 ONSITE PAYMENT | ✅ ONLINE PAYMENT</p>
 </div>
 
 <p style="text-align:center;">Click emojis to update Attendance and Payment separately.</p>
@@ -85,6 +74,7 @@ th {
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbzaecw9qr0DVujJZyj89u-PnoXKlwhfEMlmdpciQrssRl6fVd26iLicJuzMhqHyob98ew/exec";
 const SHEET_NAME = "Pre-Registration";
+
 const tbody = document.querySelector("tbody");
 
 let peopleMap = new Map();
@@ -123,7 +113,7 @@ function renderRow(person) {
   const attendanceCell = tr.querySelector(".attendance");
 
   // ===============================
-  // PAYMENT (INDEPENDENT)
+  // PAYMENT
   // ===============================
   let paymentState =
     person.paymentStatus?.includes("Online") ? "Online" :
@@ -170,7 +160,7 @@ function renderRow(person) {
   };
 
   // ===============================
-  // ATTENDANCE (INDEPENDENT)
+  // ATTENDANCE
   // ===============================
   function setAttendanceUI(state) {
     attendanceCell.textContent =
