@@ -229,6 +229,7 @@ If you paid online, please screenshot your receipt and present it during registr
 </footer>
 
 <script>
+<script>
 const sheetUrl = "https://script.google.com/macros/s/AKfycbyUmPbXLVWTDs3peBSZRH95MWA8xNegVvoMkB5WfRxBi6ItRM1R4wZJxHaIAv4tVIdE/exec";
 const drivesurl = "https://script.google.com/macros/s/AKfycbzUuUYbHJdFAPtKc--MWy9B93cl4X--TtMc3IsaA3IR3Q0JBaEominP9t9nFxRVIYcR/exec";
 
@@ -245,9 +246,7 @@ if(!rowIndex){
   window.location.href="ylc.html";
 }
 
-console.log("Row Index:", rowIndex);
-
-/* Show/hide online payment section */
+/* SHOW/HIDE UI */
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
     if(radio.value === "Online"){
@@ -262,7 +261,7 @@ paymentRadios.forEach(radio=>{
   });
 });
 
-/* Select payment method */
+/* SELECT PAYMENT METHOD */
 paymentBoxes.forEach(box=>{
   box.addEventListener('click',()=>{
     paymentBoxes.forEach(b=>b.classList.remove('selected'));
@@ -270,19 +269,19 @@ paymentBoxes.forEach(box=>{
   });
 });
 
-/* Lock receipt to 1 file */
+/* LIMIT FILE */
 receiptInput.addEventListener("change", function(){
-  if(this.files.length>1){
-    alert("Only ONE receipt is allowed.");
+  if(this.files.length > 1){
+    alert("Only ONE receipt allowed");
     this.value="";
     return;
   }
-  if(this.files.length===1){
+  if(this.files.length === 1){
     this.disabled = true;
   }
 });
 
-/* SUBMIT */
+/* FORM SUBMIT */
 document.getElementById('payment-form').addEventListener('submit', async e=>{
   e.preventDefault();
 
@@ -292,112 +291,114 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
   const method = selectedBox?.dataset.method;
 
   if(!paymentBy){
-    alert("Please select payment type");
+    alert("Select payment type");
     return;
   }
 
-  if(paymentBy==="Online"){
+  if(paymentBy === "Online"){
     if(!method){
       alert("Select payment method");
       return;
     }
-    if(receiptInput.files.length===0){
+    if(receiptInput.files.length === 0){
       alert("Upload receipt first");
       return;
     }
   }
 
-  loader.style.display="block";
-  submitBtn.disabled=true;
-  submitBtn.innerText="Processing...";
+  loader.style.display = "block";
+  submitBtn.disabled = true;
 
   try{
-    let receiptDriveUrl = "";
+
+    let receiptUrl = "";
     let receiptName = "";
 
-    /* ===== UPLOAD FILE IF ONLINE ===== */
-    if(paymentBy==="Online"){
+    /* =========================
+       UPLOAD RECEIPT (ONLINE ONLY)
+    ========================= */
+    if(paymentBy === "Online"){
       const file = receiptInput.files[0];
       receiptName = file.name;
 
-      const reader = new FileReader();
-
       const base64 = await new Promise((resolve,reject)=>{
+        const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = ()=>{
-          resolve(reader.result.replace(/^data:.+;base64,/, ''));
-        };
+        reader.onload = () => resolve(reader.result.split(',')[1]);
         reader.onerror = reject;
       });
 
       const driveData = new URLSearchParams();
-      driveData.append('action','upload');
-      driveData.append('filename', receiptName);
-      driveData.append('file', base64);
-      driveData.append('fileType', file.type);
+      driveData.append("action","upload");
+      driveData.append("filename",receiptName);
+      driveData.append("file",base64);
+      driveData.append("fileType",file.type);
 
       const driveRes = await fetch(drivesurl,{
-        method:'POST',
+        method:"POST",
         body:driveData
       });
 
       const driveText = await driveRes.text();
 
       let driveResult;
-      try{
+      try {
         driveResult = JSON.parse(driveText);
-      }catch{
-        console.error("Drive not JSON:", driveText);
-        throw new Error("Upload failed (invalid response)");
+      } catch {
+        throw new Error("Drive upload failed (invalid response)");
       }
 
-      if(driveResult.result!=="success"){
+      if(driveResult.result !== "success"){
         throw new Error("Receipt upload failed");
       }
 
-      receiptDriveUrl = driveResult.url;
+      receiptUrl = driveResult.url;
     }
 
-    /* ===== SEND TO SHEET ===== */
+    /* =========================
+       SEND PAYMENT TO SHEET
+    ========================= */
     const postData = new URLSearchParams();
-    postData.append('action','payment');
-    postData.append('rowIndex',rowIndex);
-    postData.append('sheet','WALK-IN'); // ✅ FIXED
-    postData.append('payment_by', paymentBy==="Online" ? `Online (${method})` : 'Onsite');
-    postData.append('receipt', receiptDriveUrl);
-    postData.append('receipt_name', receiptName);
+    postData.append("action","payment");
+    postData.append("rowIndex",rowIndex);
+    postData.append("sheet","WALK-IN"); // IMPORTANT FIX
+    postData.append("payment_by", paymentBy === "Online"
+      ? `Online (${method})`
+      : "Onsite"
+    );
+    postData.append("receipt",receiptUrl);
+    postData.append("receipt_name",receiptName);
 
     const res = await fetch(sheetUrl,{
-      method:'POST',
+      method:"POST",
       body:postData
     });
 
     const text = await res.text();
 
     let result;
-    try{
+    try {
       result = JSON.parse(text);
-    }catch{
-      console.error("Not JSON:", text);
-      throw new Error("Server error (invalid response)");
+    } catch {
+      throw new Error("Sheet error (not JSON response)");
     }
 
-    if(result.result !== 'success'){
+    if(result.result !== "success"){
       throw new Error(result.error || "Payment failed");
     }
 
     /* SUCCESS */
     window.location.href = "thankyou.html?rowIndex=" + rowIndex;
 
-  }catch(err){
+  } catch(err){
     console.error(err);
     alert(err.message || "Something went wrong");
 
-    loader.style.display="none";
-    submitBtn.disabled=false;
-    submitBtn.innerText="Confirm Payment";
+    loader.style.display = "none";
+    submitBtn.disabled = false;
   }
 });
+</script>
 </script>
 </body>
 </html>
