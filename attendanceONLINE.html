@@ -240,6 +240,8 @@ Loading...
 
 
 <script>
+<script>
+
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
@@ -257,55 +259,51 @@ const AC_ROOMS = [
 
 let tbody = document.querySelector("tbody");
 let allData = [];
-
-/* 🔥 LOCAL OVERRIDES (FIX FOR RESET BUG) */
-let overrides = {};
+let roomCount = {};
+let isUpdating = false; // prevents UI overwrite while editing
 
 /* CLEAN */
-function clean(v){
-  return (v || "").toString().trim();
-}
+const clean = v => (v || "").toString().trim();
 
-/* ================= PAYMENT (FIXED: ONLY 2 STATES) ================= */
+/* ======================
+   ICONS (CLEANED)
+====================== */
 function payIcon(v){
   if (v === "PAID") return "✅ PAID";
   return "❌ NOT PAID";
 }
 
-/* ================= ATTENDANCE ================= */
 function attIcon(v){
   if (v === "Attended") return "✔ ATTENDED";
-  return "❌ NOT ATTENDED";
+  if (v === "ON-waiting") return "🟠 WAITING";
+  return "❌ CANCELLED";
 }
 
-/* ================= APPLY OVERRIDES ================= */
-function getData(rowIndex, field, fallback){
-  return (overrides[rowIndex] && overrides[rowIndex][field] !== undefined)
-    ? overrides[rowIndex][field]
-    : fallback;
-}
-
-/* ================= STATS ================= */
+/* ======================
+   STATS
+====================== */
 function updateStats(data){
   let paid = 0;
 
   data.forEach(p => {
-    let pay = getData(p.rowIndex, "paymentIndicator", p.paymentIndicator);
-    if (pay === "PAID") paid++;
+    if (p.paymentIndicator === "PAID") paid++;
   });
 
   document.querySelectorAll(".stats .box span")[0].textContent = data.length;
   document.querySelectorAll(".stats .box span")[1].textContent = paid;
+  document.querySelectorAll(".stats .box span")[2].textContent = data.length - paid;
 }
 
-/* ================= ROOM COUNT ================= */
+/* ======================
+   ROOM COUNT FIXED
+====================== */
 function updateRoomStats(data){
-  let roomCount = {};
+  roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
   data.forEach(p => {
-    let room = getData(p.rowIndex, "room_ac", p.room_ac);
-    if (roomCount.hasOwnProperty(room)) {
+    const room = clean(p.room_ac);
+    if (roomCount[room] !== undefined) {
       roomCount[room]++;
     }
   });
@@ -320,7 +318,7 @@ function updateRoomStats(data){
     html += `
       ${r}
       <span class="badge ${full ? "full" : "available"}">
-        ${c}/18
+        ${c}/18 ${full ? "FULL" : ""}
       </span><br>
     `;
   });
@@ -328,61 +326,56 @@ function updateRoomStats(data){
   box.innerHTML = html;
 }
 
-/* ================= RENDER ================= */
+/* ======================
+   RENDER ROW
+====================== */
 function render(p){
-  let rowIndex = p.rowIndex;
-
-  let payment = getData(rowIndex, "paymentIndicator", p.paymentIndicator);
-  let room_ac = getData(rowIndex, "room_ac", p.room_ac);
-  let mode = getData(rowIndex, "modeOfPayment", p.modeOfPayment);
-  let shirt = getData(rowIndex, "shirt", p.shirt);
-  let kit = getData(rowIndex, "kit", p.kit);
-  let aircon = getData(rowIndex, "aircon", p.aircon);
-
   let tr = document.createElement("tr");
 
   tr.innerHTML = `
-    <td>${rowIndex}</td>
+    <td>${p.rowIndex}</td>
     <td>${p.firstName} ${p.lastName}</td>
     <td>${p.gender}</td>
     <td>${p.room}</td>
 
-    <td class="paytxt">${payIcon(payment)}</td>
+    <td class="paytxt">${payIcon(p.paymentIndicator)}</td>
 
-    <td class="amt">${payment === "PAID" ? "₱1500" : ""}</td>
+    <td class="amt">
+      ${p.paymentIndicator === "PAID" ? "₱1500" : ""}
+    </td>
 
     <td>
       <select class="mode">
-        <option ${mode==="Onsite"?"selected":""}>Onsite</option>
-        <option ${mode==="GCASH"?"selected":""}>GCASH</option>
-        <option ${mode==="BANK"?"selected":""}>BANK</option>
+        <option ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
+        <option ${p.modeOfPayment==="GCASH"?"selected":""}>GCASH</option>
+        <option ${p.modeOfPayment==="BANK"?"selected":""}>BANK</option>
       </select>
     </td>
 
-    <td class="pay">${payIcon(payment)}</td>
-    <td class="att">${attIcon(p.attendanceStatus)}</td>
+    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
     <td>
       <select class="shirt">
-        <option ${shirt==="S"?"selected":""}>S</option>
-        <option ${shirt==="M"?"selected":""}>M</option>
-        <option ${shirt==="L"?"selected":""}>L</option>
-        <option ${shirt==="XL"?"selected":""}>XL</option>
-        <option ${shirt==="XXL"?"selected":""}>XXL</option>
-        <option ${shirt==="3XL"?"selected":""}>3XL</option>
+        <option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>3XL</option>
       </select>
     </td>
 
-    <td class="kit">${kit || "❌"}</td>
-    <td class="aircon">${aircon || "❌"}</td>
+    <td class="kit">${p.kit || "❌"}</td>
+    <td class="aircon">${p.aircon || "❌"}</td>
 
     <td>
       <select class="roomac">
         <option value="">ROOM AC</option>
         ${AC_ROOMS.map(r => {
+          let count = roomCount[r] || 0;
+          let full = count >= 18;
+
           return `
-            <option value="${r}" ${room_ac===r?"selected":""}>
-              ${r}
+            <option value="${r}"
+              ${p.room_ac === r ? "selected" : ""}
+              ${full && p.room_ac !== r ? "disabled" : ""}>
+              ${r} ${full ? "(FULL)" : ""}
             </option>
           `;
         }).join("")}
@@ -392,128 +385,139 @@ function render(p){
 
   tbody.appendChild(tr);
 
-  /* ================= PAYMENT (SMOOTH 2 STATE) ================= */
-  tr.querySelector(".pay").onclick = () => {
+  /* ======================
+     PAYMENT (FAST + SMOOTH FIX)
+  ====================== */
+  const payBtn = tr.querySelector(".pay");
+  const amt = tr.querySelector(".amt");
 
-    let next = (payment === "PAID") ? "NOT PAID" : "PAID";
+  payBtn.onclick = () => {
 
-    overrides[rowIndex] = overrides[rowIndex] || {};
-    overrides[rowIndex].paymentIndicator = next;
+    // instant UI update (NO WAIT)
+    let next = (p.paymentIndicator === "PAID") ? "NOT PAID" : "PAID";
+    p.paymentIndicator = next;
 
-    tr.querySelector(".pay").textContent = payIcon(next);
+    payBtn.textContent = payIcon(next);
     tr.querySelector(".paytxt").textContent = payIcon(next);
-    tr.querySelector(".amt").textContent = next === "PAID" ? "₱1500" : "";
+    amt.textContent = next === "PAID" ? "₱1500" : "";
 
-    send("payment", { rowIndex, value: next });
+    // send async (no blocking)
+    send("payment", { rowIndex: p.rowIndex, value: next });
+
+    updateStats(allData);
   };
 
   /* MODE */
   tr.querySelector(".mode").onchange = (e) => {
-    let val = e.target.value;
-    overrides[rowIndex] = overrides[rowIndex] || {};
-    overrides[rowIndex].modeOfPayment = val;
-
-    send("mode", { rowIndex, value: val });
+    send("mode", { rowIndex: p.rowIndex, value: e.target.value });
   };
 
   /* KIT */
   tr.querySelector(".kit").onclick = () => {
-    let next = kit === "❌" ? "🟠" : kit === "🟠" ? "✅" : "❌";
-
-    overrides[rowIndex] = overrides[rowIndex] || {};
-    overrides[rowIndex].kit = next;
-
+    let next = p.kit === "❌" ? "🟠" : p.kit === "🟠" ? "✅" : "❌";
+    p.kit = next;
     tr.querySelector(".kit").textContent = next;
-
-    send("kit", { rowIndex, state: next });
+    send("kit", { rowIndex: p.rowIndex, state: next });
   };
 
   /* AIRCON */
   tr.querySelector(".aircon").onclick = () => {
-    let next = aircon === "❌" ? "🟠" : aircon === "🟠" ? "✅" : "❌";
-
-    overrides[rowIndex] = overrides[rowIndex] || {};
-    overrides[rowIndex].aircon = next;
-
+    let next = p.aircon === "❌" ? "🟠" : p.aircon === "🟠" ? "✅" : "❌";
+    p.aircon = next;
     tr.querySelector(".aircon").textContent = next;
-
-    send("aircon", { rowIndex, state: next });
+    send("aircon", { rowIndex: p.rowIndex, state: next });
   };
 
-  /* ROOM AC (FIXED + NO RESET BUG) */
+  /* ======================
+     ROOM AC (ANTI-BUG + SAFE)
+  ====================== */
   tr.querySelector(".roomac").onchange = (e) => {
-    let val = e.target.value;
 
-    let tempCount = {};
-    AC_ROOMS.forEach(r => tempCount[r] = 0);
+    let newRoom = clean(e.target.value);
+    let oldRoom = clean(p.room_ac);
 
-    allData.forEach(x => {
-      let r = getData(x.rowIndex, "room_ac", x.room_ac);
-      if (tempCount[r] !== undefined) tempCount[r]++;
-    });
+    // prevent overwrite bug
+    updateRoomStats(allData);
 
-    let currentRoomCount = tempCount[val] || 0;
-
-    let old = room_ac;
-
-    if (val && currentRoomCount >= 18 && val !== old) {
+    if (newRoom && roomCount[newRoom] >= 18 && newRoom !== oldRoom) {
       alert("ROOM IS FULL (18 LIMIT)");
-      e.target.value = old;
+      e.target.value = oldRoom;
       return;
     }
 
-    overrides[rowIndex] = overrides[rowIndex] || {};
-    overrides[rowIndex].room_ac = val;
+    p.room_ac = newRoom;
 
-    send("room_ac", { rowIndex, value: val });
+    send("room_ac", {
+      rowIndex: p.rowIndex,
+      value: newRoom
+    });
 
     updateRoomStats(allData);
   };
 
   /* SHIRT */
-  tr.querySelector(".shirt").onchange = (e) => {
-    let val = e.target.value;
+  const shirt = tr.querySelector(".shirt");
+  shirt.value = p.shirt || "";
 
-    overrides[rowIndex] = overrides[rowIndex] || {};
-    overrides[rowIndex].shirt = val;
-
-    send("shirt", { rowIndex, value: val });
+  shirt.onchange = (e) => {
+    send("shirt", {
+      rowIndex: p.rowIndex,
+      value: e.target.value
+    });
   };
 }
 
-/* ================= SEND ================= */
+/* ======================
+   SEND (FAST)
+====================== */
 function send(action, data){
-  let fd = new FormData();
+  const fd = new FormData();
   fd.append("action", action);
 
   for (let k in data) {
     fd.append(k, data[k]);
   }
 
-  fetch(BASE_URL, { method: "POST", body: fd });
+  fetch(BASE_URL, {
+    method: "POST",
+    body: fd
+  });
 }
 
-/* ================= LOAD ================= */
+/* ======================
+   LOAD (ANTI-FLICKER FIX)
+====================== */
 async function loadData(){
-  let res = await fetch(BASE_URL + "?sheet=" + SHEET);
-  allData = await res.json();
+
+  if (isUpdating) return;
+  isUpdating = true;
+
+  const res = await fetch(BASE_URL + "?sheet=" + SHEET);
+  const data = await res.json();
+
+  // only update if not user editing
+  allData = data;
 
   tbody.innerHTML = "";
   allData.forEach(render);
 
   updateStats(allData);
   updateRoomStats(allData);
+
+  isUpdating = false;
 }
 
 loadData();
-setInterval(loadData, 5000);
+setInterval(loadData, 8000);
 
-/* ================= SEARCH ================= */
+/* ======================
+   SEARCH
+====================== */
 const searchInput = document.querySelector(".search-bar input");
 
 if (searchInput) {
   searchInput.addEventListener("input", e => {
-    let q = e.target.value.toLowerCase();
+    const q = e.target.value.toLowerCase();
 
     document.querySelectorAll("tbody tr").forEach(row => {
       row.style.display = row.innerText.toLowerCase().includes(q)
@@ -523,6 +527,7 @@ if (searchInput) {
   });
 }
 
+</script>
 </script>
 
 </body>
