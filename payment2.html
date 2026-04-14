@@ -239,10 +239,13 @@ const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
 const uploadSection = document.getElementById("online-upload");
 
 const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
+
 if(!rowIndex){
   alert("Invalid access. Please register first.");
   window.location.href="ylc.html";
 }
+
+console.log("Row Index:", rowIndex);
 
 /* Show/hide online payment section */
 paymentRadios.forEach(radio=>{
@@ -270,19 +273,19 @@ paymentBoxes.forEach(box=>{
 /* Lock receipt to 1 file */
 receiptInput.addEventListener("change", function(){
   if(this.files.length>1){
-    alert("Only ONE receipt is allowed per registration.");
+    alert("Only ONE receipt is allowed.");
     this.value="";
     return;
   }
   if(this.files.length===1){
-    alert("Receipt uploaded successfully.");
     this.disabled = true;
   }
 });
 
-/* Form submit */
+/* SUBMIT */
 document.getElementById('payment-form').addEventListener('submit', async e=>{
   e.preventDefault();
+
   const submitBtn = e.target.querySelector('button[type="submit"]');
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   const selectedBox = document.querySelector('.payment-box.selected');
@@ -292,13 +295,14 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
     alert("Please select payment type");
     return;
   }
+
   if(paymentBy==="Online"){
     if(!method){
-      alert("Please select a payment method");
+      alert("Select payment method");
       return;
     }
     if(receiptInput.files.length===0){
-      alert("Please upload your receipt before continuing.");
+      alert("Upload receipt first");
       return;
     }
   }
@@ -311,52 +315,84 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
     let receiptDriveUrl = "";
     let receiptName = "";
 
+    /* ===== UPLOAD FILE IF ONLINE ===== */
     if(paymentBy==="Online"){
       const file = receiptInput.files[0];
       receiptName = file.name;
+
       const reader = new FileReader();
-      const receiptBase64 = await new Promise((resolve,reject)=>{
+
+      const base64 = await new Promise((resolve,reject)=>{
         reader.readAsDataURL(file);
         reader.onload = ()=>{
-          // strip "data:image/png;base64," prefix
-          const base64Str = reader.result.replace(/^data:.+;base64,/, '');
-          resolve(base64Str);
+          resolve(reader.result.replace(/^data:.+;base64,/, ''));
         };
-        reader.onerror = err=>reject(err);
+        reader.onerror = reject;
       });
 
-      // Send to Drive Apps Script
       const driveData = new URLSearchParams();
       driveData.append('action','upload');
       driveData.append('filename', receiptName);
-      driveData.append('file', receiptBase64);
-      driveData.append('fileType', file.type || 'image/png');
+      driveData.append('file', base64);
+      driveData.append('fileType', file.type);
 
-      const driveRes = await fetch(drivesurl,{method:'POST',body:driveData});
-      const driveResult = await driveRes.json();
-      if(driveResult.result!=="success") throw new Error("Receipt upload failed");
+      const driveRes = await fetch(drivesurl,{
+        method:'POST',
+        body:driveData
+      });
+
+      const driveText = await driveRes.text();
+
+      let driveResult;
+      try{
+        driveResult = JSON.parse(driveText);
+      }catch{
+        console.error("Drive not JSON:", driveText);
+        throw new Error("Upload failed (invalid response)");
+      }
+
+      if(driveResult.result!=="success"){
+        throw new Error("Receipt upload failed");
+      }
+
       receiptDriveUrl = driveResult.url;
     }
 
-    // Submit payment to sheet
+    /* ===== SEND TO SHEET ===== */
     const postData = new URLSearchParams();
     postData.append('action','payment');
     postData.append('rowIndex',rowIndex);
-    postData.append('sheet','ylc');
-    postData.append('payment_by', paymentBy==='Online'?`Online (${method})`:'Onsite');
+    postData.append('sheet','WALK-IN'); // ✅ FIXED
+    postData.append('payment_by', paymentBy==="Online" ? `Online (${method})` : 'Onsite');
     postData.append('receipt', receiptDriveUrl);
     postData.append('receipt_name', receiptName);
 
-    const res = await fetch(sheetUrl,{method:'POST',body:postData});
-    const result = await res.json();
-    if(result.result!=='success') throw new Error("Payment submission failed");
+    const res = await fetch(sheetUrl,{
+      method:'POST',
+      body:postData
+    });
 
-    // Success redirect
-    window.location.href = "thankyou.html?rowIndex="+rowIndex;
+    const text = await res.text();
 
-  } catch(err){
+    let result;
+    try{
+      result = JSON.parse(text);
+    }catch{
+      console.error("Not JSON:", text);
+      throw new Error("Server error (invalid response)");
+    }
+
+    if(result.result !== 'success'){
+      throw new Error(result.error || "Payment failed");
+    }
+
+    /* SUCCESS */
+    window.location.href = "thankyou.html?rowIndex=" + rowIndex;
+
+  }catch(err){
     console.error(err);
-    alert(err.message || "Payment submission failed. Please try again.");
+    alert(err.message || "Something went wrong");
+
     loader.style.display="none";
     submitBtn.disabled=false;
     submitBtn.innerText="Confirm Payment";
