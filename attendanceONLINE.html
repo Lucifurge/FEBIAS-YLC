@@ -139,10 +139,11 @@ button{
 
   <div class="legend-box">
     <b>TIP</b><br>
-    Click icons → instant update (no reload needed)
+    Click icons → instant update
   </div>
 </div>
 
+<!-- 🔥 STATS FIXED -->
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
@@ -182,15 +183,17 @@ const SHEET = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
 const searchBox = document.getElementById("searchBox");
-const countdownEl = document.getElementById("countdown");
+
+const totalEl = document.getElementById("total");
+const paidEl = document.getElementById("paid");
+const waitingEl = document.getElementById("waiting");
 
 let map = new Map();
 let allData = [];
 
-/* 🔥 CRITICAL FIX: local cache prevents flicker rollback */
 let localCache = new Map();
 
-/* queue system */
+/* queue */
 let queue = [];
 let running = false;
 
@@ -205,15 +208,13 @@ async function processQueue(){
 
   while(queue.length){
     const fd = queue.shift();
-    try{
-      await fetch(BASE_URL,{method:"POST",body:fd});
-    }catch(e){}
+    try{ await fetch(BASE_URL,{method:"POST",body:fd}); }catch(e){}
   }
 
   running = false;
 }
 
-/* ICONS (FIXED) */
+/* ICONS */
 function payIcon(v){
   if(v==="PAID") return "✅ PAID";
   if(v==="ON-WAITING PAYMENT") return "🟠 WAITING";
@@ -224,6 +225,23 @@ function attIcon(v){
   if(v==="Attended") return "✅ ATTENDED";
   if(v==="ON-waiting") return "🟠 WAITING";
   return "❌ CANCELLED";
+}
+
+/* 🔥 FIXED COUNTER FUNCTION */
+function updateStats(data){
+
+  let total = data.length;
+  let paid = 0;
+  let waiting = 0;
+
+  data.forEach(p=>{
+    if(p.paymentIndicator === "PAID") paid++;
+    if(p.paymentIndicator === "ON-WAITING PAYMENT") waiting++;
+  });
+
+  totalEl.textContent = total;
+  paidEl.textContent = paid;
+  waitingEl.textContent = waiting;
 }
 
 /* RENDER */
@@ -287,9 +305,11 @@ function render(p){
     fd.append("sheet",SHEET);
 
     sendUpdate(fd);
+
+    updateStats(allData); // 🔥 LIVE UPDATE
   };
 
-  /* ATTENDANCE (FIXED ICON SYNC) */
+  /* ATTENDANCE */
   c[13].textContent = attIcon(p.attendanceStatus);
 
   c[13].onclick = () => {
@@ -312,7 +332,7 @@ function render(p){
     sendUpdate(fd);
   };
 
-  /* ICON COLUMNS (NOW FIXED) */
+  /* ICON COLUMNS */
   c[14].textContent = p.attendedIcon || "";
   c[15].textContent = p.waitingIcon || "";
   c[16].textContent = p.cancelledIcon || "";
@@ -350,7 +370,7 @@ function render(p){
   };
 }
 
-/* LOAD (SMOOTH + CACHE SAFE) */
+/* LOAD */
 async function loadData(){
 
   const res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -369,6 +389,8 @@ async function loadData(){
 
     render(p);
   });
+
+  updateStats(allData); // 🔥 FIX COUNTERS HERE TOO
 }
 
 /* FILTER */
@@ -389,11 +411,11 @@ setInterval(()=>{
   const d = Math.floor((t-now)/86400000);
   const h = Math.floor((t-now)/3600000)%24;
 
-  countdownEl.textContent =
+  document.getElementById("countdown").textContent =
     now < start ? `STARTS IN ${d}d ${h}h` : `ENDS IN ${d}d ${h}h`;
 },1000);
 
-/* REFRESH (SLOW = SMOOTH) */
+/* REFRESH */
 setInterval(loadData, 60000);
 
 loadData();
