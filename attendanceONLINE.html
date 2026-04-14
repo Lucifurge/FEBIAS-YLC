@@ -144,6 +144,7 @@ const AC_ROOMS = [
 
 let tbody = document.querySelector("tbody");
 let allData = [];
+let roomCount = {};
 
 /* ICONS */
 function payIcon(v){
@@ -172,26 +173,29 @@ function updateStats(data){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* ROOM AC */
+/* ROOM AC COUNT */
 function updateRoomStats(data){
-  let map = {};
-  AC_ROOMS.forEach(r=>map[r]=0);
+
+  roomCount = {};
+  AC_ROOMS.forEach(r => roomCount[r] = 0);
 
   data.forEach(p=>{
-    if(map[p.room_ac] !== undefined){
-      map[p.room_ac]++;
+    if(roomCount[p.room_ac] !== undefined){
+      roomCount[p.room_ac]++;
     }
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
+
   AC_ROOMS.forEach(r=>{
-    html += `${r}: ${map[r]||0}/18<br>`;
+    let c = roomCount[r] || 0;
+    html += `${r}: ${c}/18 ${c>=18 ? "❌ FULL" : ""}<br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* RENDER */
+/* RENDER ROW */
 function render(p){
   let tr = document.createElement("tr");
 
@@ -217,7 +221,7 @@ function render(p){
 
     <td>
       <select class="shirt">
-        <option>S</option><option>M</option><option>L</option>
+        <option>S</option><option>M</option><option>L</option><option>XL</option>
       </select>
     </td>
 
@@ -227,7 +231,16 @@ function render(p){
     <td>
       <select class="roomac">
         <option value="">ROOM AC</option>
-        ${AC_ROOMS.map(r=>`<option ${p.room_ac===r?"selected":""}>${r}</option>`).join("")}
+        ${AC_ROOMS.map(r=>{
+          let disabled = roomCount[r] >= 18 && p.room_ac !== r;
+          return `
+            <option value="${r}"
+              ${p.room_ac===r?"selected":""}
+              ${disabled?"disabled":""}>
+              ${r} ${disabled?"(FULL)":""}
+            </option>
+          `;
+        }).join("")}
       </select>
     </td>
   `;
@@ -237,18 +250,13 @@ function render(p){
   const payBtn = tr.querySelector(".pay");
   const amt = tr.querySelector(".amt");
 
-  /* PAYMENT (INSTANT ₱1500) */
+  /* PAYMENT TOGGLE */
   payBtn.onclick = ()=>{
     let next = p.paymentIndicator==="PAID" ? "NOT PAID" : "PAID";
     p.paymentIndicator = next;
 
     payBtn.textContent = payIcon(next);
-
-    if(next==="PAID"){
-      amt.textContent = "₱1500";
-    } else {
-      amt.textContent = "";
-    }
+    amt.textContent = next==="PAID" ? "₱1500" : "";
 
     send("payment",{rowIndex:p.rowIndex,value:next});
   };
@@ -274,19 +282,35 @@ function render(p){
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  /* ROOM AC */
+  /* ROOM AC WITH LIMIT BLOCK */
   tr.querySelector(".roomac").onchange = (e)=>{
-    send("room_ac",{rowIndex:p.rowIndex,value:e.target.value});
+
+    let selected = e.target.value;
+
+    if(roomCount[selected] >= 18){
+      alert("ROOM IS FULL (18/18)");
+      e.target.value = p.room_ac || "";
+      return;
+    }
+
+    p.room_ac = selected;
+
+    send("room_ac",{
+      rowIndex:p.rowIndex,
+      value:selected
+    });
+
+    updateRoomStats(allData);
   };
 
   /* SHIRT */
-  tr.querySelector(".shirt").value = p.shirt||"";
+  tr.querySelector(".shirt").value = p.shirt || "";
   tr.querySelector(".shirt").onchange = (e)=>{
     send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
 }
 
-/* SEND */
+/* SEND TO APPS SCRIPT */
 function send(action,data){
   let fd = new FormData();
   fd.append("action",action);
@@ -298,7 +322,7 @@ function send(action,data){
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
-/* LOAD */
+/* LOAD DATA */
 async function loadData(){
   const res = await fetch(BASE_URL+"?sheet="+SHEET);
   allData = await res.json();
@@ -312,7 +336,6 @@ async function loadData(){
 
 loadData();
 setInterval(loadData,60000);
-
 </script>
 
 </body>
