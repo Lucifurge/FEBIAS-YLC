@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="refine.ico">
-<title>YLC 2026 Attendance System</title>
+<title>YLC 2026 Admin Attendance System</title>
 
 <style>
 body{
@@ -12,18 +12,57 @@ body{
   background:#0f0f0f;
   color:white;
   margin:0;
-  padding:10px;
+  padding:12px;
 }
 
-h1{ text-align:center; color:#ff6a00; }
+h1{
+  text-align:center;
+  color:#ff6a00;
+  margin-bottom:5px;
+  letter-spacing:1px;
+}
 
-.sub{ text-align:center; color:#aaa; }
+.sub{
+  text-align:center;
+  color:#aaa;
+  margin-bottom:10px;
+}
+
+.instructions{
+  max-width:1100px;
+  margin:10px auto;
+  background:#151515;
+  border:1px solid #333;
+  padding:12px;
+  border-radius:10px;
+  color:#ccc;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.search-bar{
+  display:flex;
+  justify-content:center;
+  margin:12px 0;
+}
+
+.search-bar input{
+  width:100%;
+  max-width:500px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #333;
+  background:#111;
+  color:white;
+  outline:none;
+}
 
 .stats{
   display:flex;
   justify-content:center;
   gap:10px;
   flex-wrap:wrap;
+  margin:10px 0;
 }
 
 .box{
@@ -35,13 +74,31 @@ h1{ text-align:center; color:#ff6a00; }
   border:1px solid #333;
 }
 
-.box span{ color:#ff6a00; font-weight:bold; }
+.box span{
+  color:#ff6a00;
+  font-weight:bold;
+  font-size:18px;
+}
 
-.table-wrap{ overflow-x:auto; }
+.room-box{
+  max-width:1100px;
+  margin:10px auto;
+  background:#151515;
+  border:1px solid #333;
+  padding:10px;
+  border-radius:10px;
+  font-size:13px;
+  color:#ccc;
+}
+
+.table-wrap{
+  overflow-x:auto;
+  margin-top:10px;
+}
 
 table{
   width:100%;
-  min-width:1800px;
+  min-width:1600px;
   border-collapse:collapse;
 }
 
@@ -51,6 +108,7 @@ th{
   padding:10px;
   position:sticky;
   top:0;
+  z-index:2;
 }
 
 td{
@@ -61,40 +119,76 @@ td{
   font-size:13px;
 }
 
-.clickable{
-  cursor:pointer;
-  font-size:16px;
-  transition:0.1s;
-}
-
-.clickable:active{
-  transform:scale(0.9);
-}
-
-select{
-  background:#1a1a1a;
-  color:white;
-  border:1px solid #333;
-  padding:5px;
+.badge{
+  padding:4px 8px;
   border-radius:6px;
+  font-size:12px;
+  display:inline-block;
+}
+
+.full{
+  background:#ff2e2e;
+  color:white;
+}
+
+.available{
+  background:#1db954;
+  color:white;
+}
+
+button{
+  display:block;
+  margin:10px auto;
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<h1>YLC 2026 ATTENDANCE SYSTEM</h1>
+<h1>YLC 2026 ADMIN ATTENDANCE SYSTEM</h1>
 <div class="sub">FEBIAS College of Bible System</div>
 
-<div class="stats">
-  <div class="box">Total<br><span id="total">0</span></div>
-  <div class="box">Paid<br><span id="paid">0</span></div>
-  <div class="box">Waiting<br><span id="waiting">0</span></div>
+<div class="instructions">
+<b>HOW TO USE SYSTEM:</b><br>
+1. Use search bar to find campers instantly.<br>
+2. Click PAY to mark payment (₱1500 auto display).<br>
+3. Click ATT to change attendance status.<br>
+4. Use Mode dropdown (Onsite / GCASH / BANK).<br>
+5. ROOM_AC has limit of 18 people per room.<br>
+6. FULL rooms are disabled automatically.<br>
 </div>
 
-<div id="roomStats" style="margin:10px 0;background:#1a1a1a;padding:10px;border-radius:10px;"></div>
+<div class="search-bar">
+  <input type="text" placeholder="Search camper name, room, church...">
+</div>
 
-<button onclick="loadData()">🔄 REFRESH</button>
+<div class="stats">
+  <div class="box">Total<br><span>0</span></div>
+  <div class="box">Paid<br><span>0</span></div>
+  <div class="box">Waiting<br><span>0</span></div>
+</div>
+
+<div class="room-box">
+<b>ROOM AC STATUS</b><br>
+Berean Area <span class="badge available">0/18</span><br>
+Berean – Abraham 2 <span class="badge available">0/18</span><br>
+Berean – Joshua 3 <span class="badge available">0/18</span><br>
+Berean – Elijah 3 <span class="badge available">0/18</span><br>
+Berean – Elisha 3 <span class="badge available">0/18</span><br>
+Sharon – Deborah 2 <span class="badge available">0/18</span><br>
+Sharon – Martha 3 <span class="badge available">0/18</span><br>
+Sharon – Abigail 2 <span class="badge available">0/18</span><br>
+Sharon – Eve 2 <span class="badge available">0/18</span><br>
+</div>
+
+<button>🔄 REFRESH</button>
 
 <div class="table-wrap">
 <table>
@@ -104,23 +198,17 @@ select{
   <th>Name</th>
   <th>Gender</th>
   <th>Room</th>
-
   <th>Payment</th>
   <th>Amount</th>
-
   <th>Mode</th>
-
   <th>PAY</th>
   <th>ATT</th>
-
   <th>Shirt</th>
   <th>Kit</th>
   <th>Aircon</th>
-
   <th>ROOM_AC</th>
 </tr>
 </thead>
-
 <tbody></tbody>
 </table>
 </div>
@@ -148,24 +236,24 @@ let roomCount = {};
 
 /* ICONS */
 function payIcon(v){
-  if(v==="PAID") return "✅ PAID";
-  if(v==="ON-WAITING PAYMENT") return "🟠 WAITING";
+  if(v === "PAID") return "✅ PAID";
+  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
   return "❌ NOT PAID";
 }
 
 function attIcon(v){
-  if(v==="Attended") return "✔ ATTENDED";
-  if(v==="ON-waiting") return "🟠 WAITING";
+  if(v === "Attended") return "✔ ATTENDED";
+  if(v === "ON-waiting") return "🟠 WAITING";
   return "❌ CANCELLED";
 }
 
 /* STATS */
 function updateStats(data){
-  let paid=0, waiting=0;
+  let paid = 0, waiting = 0;
 
-  data.forEach(p=>{
-    if(p.paymentIndicator==="PAID") paid++;
-    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+  data.forEach(p => {
+    if(p.paymentIndicator === "PAID") paid++;
+    if(p.paymentIndicator === "ON-WAITING PAYMENT") waiting++;
   });
 
   document.getElementById("total").textContent = data.length;
@@ -173,13 +261,12 @@ function updateStats(data){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* ROOM AC COUNT */
+/* ROOM COUNTS */
 function updateRoomStats(data){
-
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
-  data.forEach(p=>{
+  data.forEach(p => {
     if(roomCount[p.room_ac] !== undefined){
       roomCount[p.room_ac]++;
     }
@@ -187,9 +274,9 @@ function updateRoomStats(data){
 
   let html = "<b>ROOM AC STATUS</b><br>";
 
-  AC_ROOMS.forEach(r=>{
+  AC_ROOMS.forEach(r => {
     let c = roomCount[r] || 0;
-    html += `${r}: ${c}/18 ${c>=18 ? "❌ FULL" : ""}<br>`;
+    html += `${r}: ${c}/18 ${c >= 18 ? "❌ FULL" : ""}<br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -205,39 +292,41 @@ function render(p){
     <td>${p.gender}</td>
     <td>${p.room}</td>
 
-    <td class="paytxt">${payIcon(p.paymentIndicator)}</td>
+    <td>${payIcon(p.paymentIndicator)}</td>
     <td class="amt">${p.amount || ""}</td>
 
     <td>
       <select class="mode">
-        <option ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
-        <option ${p.modeOfPayment==="GCASH"?"selected":""}>GCASH</option>
-        <option ${p.modeOfPayment==="BANK"?"selected":""}>BANK</option>
+        <option ${p.modeOfPayment === "Onsite" ? "selected" : ""}>Onsite</option>
+        <option ${p.modeOfPayment === "GCASH" ? "selected" : ""}>GCASH</option>
+        <option ${p.modeOfPayment === "BANK" ? "selected" : ""}>BANK</option>
       </select>
     </td>
 
-    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
-    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
+    <td class="pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="att">${attIcon(p.attendanceStatus)}</td>
 
     <td>
       <select class="shirt">
-        <option>S</option><option>M</option><option>L</option><option>XL</option>
+        <option>S</option><option>M</option><option>L</option>
       </select>
     </td>
 
-    <td class="clickable kit">${p.kit||"❌"}</td>
-    <td class="clickable aircon">${p.aircon||"❌"}</td>
+    <td class="kit">${p.kit || "❌"}</td>
+    <td class="aircon">${p.aircon || "❌"}</td>
 
     <td>
       <select class="roomac">
         <option value="">ROOM AC</option>
-        ${AC_ROOMS.map(r=>{
-          let disabled = roomCount[r] >= 18 && p.room_ac !== r;
+        ${AC_ROOMS.map(r => {
+          let full = roomCount[r] >= 18;
+          let disabled = full && p.room_ac !== r;
+
           return `
             <option value="${r}"
-              ${p.room_ac===r?"selected":""}
-              ${disabled?"disabled":""}>
-              ${r} ${disabled?"(FULL)":""}
+              ${p.room_ac === r ? "selected" : ""}
+              ${disabled ? "disabled" : ""}>
+              ${r}${full ? " (FULL)" : ""}
             </option>
           `;
         }).join("")}
@@ -251,83 +340,77 @@ function render(p){
   const amt = tr.querySelector(".amt");
 
   /* PAYMENT TOGGLE */
-  payBtn.onclick = ()=>{
-    let next = p.paymentIndicator==="PAID" ? "NOT PAID" : "PAID";
+  payBtn.onclick = () => {
+    let next = p.paymentIndicator === "PAID" ? "NOT PAID" : "PAID";
     p.paymentIndicator = next;
 
     payBtn.textContent = payIcon(next);
-    amt.textContent = next==="PAID" ? "₱1500" : "";
+    amt.textContent = next === "PAID" ? "₱1500" : "";
 
-    send("payment",{rowIndex:p.rowIndex,value:next});
+    send("payment", { rowIndex: p.rowIndex, value: next });
   };
 
   /* MODE */
-  tr.querySelector(".mode").onchange = (e)=>{
-    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
+  tr.querySelector(".mode").onchange = (e) => {
+    send("mode", { rowIndex: p.rowIndex, value: e.target.value });
   };
 
   /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+  tr.querySelector(".kit").onclick = () => {
+    let next = p.kit === "❌" ? "🟠" : p.kit === "🟠" ? "✅" : "❌";
     p.kit = next;
     tr.querySelector(".kit").textContent = next;
-    send("kit",{rowIndex:p.rowIndex,state:next});
+    send("kit", { rowIndex: p.rowIndex, state: next });
   };
 
   /* AIRCON */
-  tr.querySelector(".aircon").onclick = ()=>{
-    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+  tr.querySelector(".aircon").onclick = () => {
+    let next = p.aircon === "❌" ? "🟠" : p.aircon === "🟠" ? "✅" : "❌";
     p.aircon = next;
     tr.querySelector(".aircon").textContent = next;
-    send("aircon",{rowIndex:p.rowIndex,state:next});
+    send("aircon", { rowIndex: p.rowIndex, state: next });
   };
 
-  /* ROOM AC WITH LIMIT BLOCK */
-  tr.querySelector(".roomac").onchange = (e)=>{
+  /* ROOM AC LIMIT CHECK */
+  tr.querySelector(".roomac").onchange = (e) => {
+    let val = e.target.value;
 
-    let selected = e.target.value;
-
-    if(roomCount[selected] >= 18){
-      alert("ROOM IS FULL (18/18)");
+    if (roomCount[val] >= 18) {
+      alert("ROOM IS FULL");
       e.target.value = p.room_ac || "";
       return;
     }
 
-    p.room_ac = selected;
-
-    send("room_ac",{
-      rowIndex:p.rowIndex,
-      value:selected
-    });
-
+    p.room_ac = val;
+    send("room_ac", { rowIndex: p.rowIndex, value: val });
     updateRoomStats(allData);
   };
 
   /* SHIRT */
   tr.querySelector(".shirt").value = p.shirt || "";
-  tr.querySelector(".shirt").onchange = (e)=>{
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  tr.querySelector(".shirt").onchange = (e) => {
+    send("shirt", { rowIndex: p.rowIndex, value: e.target.value });
   };
 }
 
-/* SEND TO APPS SCRIPT */
-function send(action,data){
+/* SEND TO SHEETS */
+function send(action, data){
   let fd = new FormData();
-  fd.append("action",action);
+  fd.append("action", action);
 
-  for(let k in data){
-    fd.append(k,data[k]);
+  for (let k in data) {
+    fd.append(k, data[k]);
   }
 
-  fetch(BASE_URL,{method:"POST",body:fd});
+  fetch(BASE_URL, { method: "POST", body: fd });
 }
 
 /* LOAD DATA */
 async function loadData(){
-  const res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let res = await fetch(BASE_URL + "?sheet=" + SHEET);
   allData = await res.json();
 
-  tbody.innerHTML="";
+  tbody.innerHTML = "";
   allData.forEach(render);
 
   updateStats(allData);
@@ -335,7 +418,16 @@ async function loadData(){
 }
 
 loadData();
-setInterval(loadData,60000);
+setInterval(loadData, 60000);
+
+/* SEARCH */
+document.querySelector(".search-bar input").addEventListener("input", e => {
+  let q = e.target.value.toLowerCase();
+
+  document.querySelectorAll("tbody tr").forEach(row => {
+    row.style.display = row.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+});
 </script>
 
 </body>
