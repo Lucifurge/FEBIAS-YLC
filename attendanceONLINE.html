@@ -241,6 +241,8 @@ Loading...
 
 <script>
 
+
+
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
@@ -259,39 +261,54 @@ const AC_ROOMS = [
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
-let lastEditTime = 0;
+let lastEdit = 0;
 
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* ICONS */
+/* =========================
+   ICONS
+========================= */
 function payIcon(v){
-  return v === "PAID" ? "✅ PAID" : "❌ NOT PAID";
+  if(v === "PAID") return "✅ PAID";
+  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
+  return "❌ NOT PAID";
 }
 
 function attIcon(v){
-  if (v === "Attended") return "✔ ATTENDED";
-  if (v === "ON-waiting") return "🟠 WAITING";
+  if(v === "Attended") return "✔ ATTENDED";
+  if(v === "ON-waiting") return "🟠 WAITING";
   return "❌ CANCELLED";
 }
 
-/* STATS */
+/* =========================
+   STATS
+========================= */
 function updateStats(){
-  let paid = allData.filter(p => p.paymentIndicator === "PAID").length;
+  let paid = 0, waiting = 0;
+
+  allData.forEach(p=>{
+    if(p.paymentIndicator === "PAID") paid++;
+    if(p.paymentIndicator === "ON-WAITING PAYMENT") waiting++;
+  });
 
   document.getElementById("total").textContent = allData.length;
   document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = allData.length - paid;
+  document.getElementById("waiting").textContent = waiting;
 }
 
-/* ROOM COUNT */
+/* =========================
+   ROOM COUNT
+========================= */
 function updateRoomStats(){
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
-  allData.forEach(p => {
+  allData.forEach(p=>{
     let r = clean(p.room_ac);
-    if(roomCount[r] !== undefined) roomCount[r]++;
+    if(roomCount[r] !== undefined){
+      roomCount[r]++;
+    }
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
@@ -306,16 +323,9 @@ function updateRoomStats(){
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* UPDATE ROW (NO RECREATE = SMOOTH) */
-function updateRow(tr, p){
-
-  tr.querySelector(".paytxt").textContent = payIcon(p.paymentIndicator);
-  tr.querySelector(".pay").textContent = payIcon(p.paymentIndicator);
-  tr.querySelector(".amt").textContent = p.paymentIndicator==="PAID"?"₱1500":"";
-
-}
-
-/* CREATE ROW */
+/* =========================
+   CREATE ROW
+========================= */
 function createRow(p){
 
   let tr = document.createElement("tr");
@@ -338,8 +348,8 @@ function createRow(p){
       </select>
     </td>
 
-    <td class="pay">${payIcon(p.paymentIndicator)}</td>
-    <td class="att">${attIcon(p.attendanceStatus)}</td>
+    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
     <td>
       <select class="shirt">
@@ -348,33 +358,86 @@ function createRow(p){
       </select>
     </td>
 
-    <td class="kit">${p.kit||"❌"}</td>
-    <td class="aircon">${p.aircon||"❌"}</td>
+    <td class="clickable kit">${p.kit || "❌"}</td>
+    <td class="clickable aircon">${p.aircon || "❌"}</td>
 
     <td>
-      <select class="roomac">
-        <option value="">ROOM AC</option>
-      </select>
+      <select class="roomac"></select>
     </td>
   `;
 
   tbody.appendChild(tr);
 
-  /* PAYMENT */
-  tr.querySelector(".pay").onclick = ()=>{
-    lastEditTime = Date.now();
+  /* ===== ROOM OPTIONS (FIXED) ===== */
+  const roomSelect = tr.querySelector(".roomac");
 
-    let next = p.paymentIndicator==="PAID"?"NOT PAID":"PAID";
+  function refreshRoomOptions(){
+    roomSelect.innerHTML = `<option value="">ROOM AC</option>` +
+      AC_ROOMS.map(r=>{
+        let count = roomCount[r] || 0;
+        let full = count >= 18;
+
+        return `
+          <option value="${r}"
+            ${p.room_ac===r?"selected":""}
+            ${full && p.room_ac!==r?"disabled":""}>
+            ${r} ${full?"(FULL)":""}
+          </option>
+        `;
+      }).join("");
+  }
+
+  refreshRoomOptions();
+
+  /* =========================
+     PAYMENT (3 STATE FIX)
+  ========================= */
+  tr.querySelector(".pay").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next;
+    if(p.paymentIndicator === "NOT PAID" || !p.paymentIndicator){
+      next = "ON-WAITING PAYMENT";
+    } else if(p.paymentIndicator === "ON-WAITING PAYMENT"){
+      next = "PAID";
+    } else {
+      next = "NOT PAID";
+    }
+
     p.paymentIndicator = next;
 
-    updateRow(tr,p);
+    tr.querySelector(".pay").textContent = payIcon(next);
+    tr.querySelector(".paytxt").textContent = payIcon(next);
+    tr.querySelector(".amt").textContent = next==="PAID"?"₱1500":"";
+
     send("payment",{rowIndex:p.rowIndex,value:next});
     updateStats();
   };
 
+  /* =========================
+     ATTENDANCE (FIXED)
+  ========================= */
+  tr.querySelector(".att").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next;
+    if(p.attendanceStatus === "Cancelled"){
+      next = "ON-waiting";
+    } else if(p.attendanceStatus === "ON-waiting"){
+      next = "Attended";
+    } else {
+      next = "Cancelled";
+    }
+
+    p.attendanceStatus = next;
+    tr.querySelector(".att").textContent = attIcon(next);
+
+    send("attendance",{rowIndex:p.rowIndex,status:next});
+  };
+
   /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
-    lastEditTime = Date.now();
+    lastEdit = Date.now();
 
     let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
     p.kit = next;
@@ -385,7 +448,7 @@ function createRow(p){
 
   /* AIRCON */
   tr.querySelector(".aircon").onclick = ()=>{
-    lastEditTime = Date.now();
+    lastEdit = Date.now();
 
     let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
     p.aircon = next;
@@ -394,41 +457,69 @@ function createRow(p){
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  return tr;
+  /* ROOM AC */
+  roomSelect.onchange = (e)=>{
+    lastEdit = Date.now();
+
+    let newRoom = clean(e.target.value);
+    let oldRoom = clean(p.room_ac);
+
+    if(newRoom && roomCount[newRoom] >= 18 && newRoom !== oldRoom){
+      alert("ROOM FULL (18)");
+      e.target.value = oldRoom;
+      return;
+    }
+
+    p.room_ac = newRoom;
+
+    send("room_ac",{rowIndex:p.rowIndex,value:newRoom});
+
+    updateRoomStats();
+    refreshRoomOptions();
+  };
+
+  /* SHIRT */
+  const shirt = tr.querySelector(".shirt");
+  shirt.value = p.shirt || "";
+
+  shirt.onchange = (e)=>{
+    lastEdit = Date.now();
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
 }
 
-/* SEND */
+/* =========================
+   SEND
+========================= */
 function send(action,data){
   let fd = new FormData();
   fd.append("action",action);
-  for(let k in data) fd.append(k,data[k]);
+
+  for(let k in data){
+    fd.append(k,data[k]);
+  }
 
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
-/* LOAD (SMART MERGE FIX) */
+/* =========================
+   LOAD (NO SNAP BACK)
+========================= */
 async function loadData(){
 
-  // ⛔ DO NOT REFRESH if user just edited (3 sec buffer)
-  if(Date.now() - lastEditTime < 3000) return;
+  if(Date.now() - lastEdit < 5000) return;
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
   allData = data;
 
-  data.forEach(p=>{
-    let existing = tbody.querySelector(`tr[data-id='${p.rowIndex}']`);
-
-    if(existing){
-      updateRow(existing,p);
-    }else{
-      createRow(p);
-    }
-  });
+  tbody.innerHTML="";
+  updateRoomStats();
+  allData.forEach(createRow);
 
   updateStats();
-  updateRoomStats();
 }
 
 loadData();
@@ -442,6 +533,7 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
     r.style.display = r.innerText.toLowerCase().includes(q)?"":"none";
   });
 });
+
 
 </script>
 
