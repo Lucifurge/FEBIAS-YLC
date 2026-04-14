@@ -163,14 +163,21 @@ button {
 
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbypORBAP4XTi-aM6l84FI1VG27ZYVr-8iRpJ3RMDh9nmvTIpN8IafXzhhESVVcmWTUITg/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwWmWuLWg-httkGe4-s7jXmKVftXBnGrN2dSoXhc5mQm7AbSRHj_5dH-pWtImuJHdIdDA/exec";
 const SHEET = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
 let map = new Map();
 let allData = [];
 
-/* STATS */
+/* =========================
+   REQUEST LOCK (IMPORTANT)
+========================= */
+let isUpdating = false;
+
+/* =========================
+   STATS
+========================= */
 function updateStats(data){
   let paid = 0, waiting = 0;
 
@@ -184,24 +191,60 @@ function updateStats(data){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* SORT */
+/* =========================
+   SORT
+========================= */
 function sortData(data){
   return data.sort((a,b)=>
     (a.lastName||"").localeCompare(b.lastName||"")
   );
 }
 
-/* RENDER */
+/* =========================
+   SAFE POST (NO LAG QUEUE)
+========================= */
+const queue = [];
+let processing = false;
+
+async function sendUpdate(fd){
+  return new Promise(resolve=>{
+    queue.push({fd,resolve});
+    processQueue();
+  });
+}
+
+async function processQueue(){
+  if(processing) return;
+  processing = true;
+
+  while(queue.length){
+    const {fd,resolve} = queue.shift();
+
+    try {
+      await fetch(BASE_URL,{method:"POST",body:fd});
+    } catch(e){}
+
+    resolve();
+  }
+
+  processing = false;
+}
+
+/* =========================
+   RENDER
+========================= */
 function render(p){
 
   let tr = map.get(p.rowIndex);
 
   if(!tr){
     tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td></td><td></td><td></td><td></td><td></td>
       <td></td><td></td><td></td><td></td>
-      <td></td><td></td><td class="clickable"></td>
+      <td></td><td></td>
+      <td class="clickable"></td>
       <td></td>
       <td class="clickable"></td>
       <td class="clickable"></td>
@@ -211,6 +254,7 @@ function render(p){
       <td class="clickable"></td>
       <td class="clickable"></td>
     `;
+
     tbody.appendChild(tr);
     map.set(p.rowIndex,tr);
   }
@@ -227,21 +271,31 @@ function render(p){
   c[7].textContent = p.classification;
   c[8].textContent = p.room;
 
-  /* PAYMENT CATEGORY FIX */
   c[9].textContent = p.paymentCategory || "";
   c[10].textContent = p.amount || "";
 
-  /* MODE OF PAYMENT FIX */
-  c[11].textContent = p.modeOfPayment || "";
-
-  c[12].textContent =
+  /* =========================
+     PAYMENT (INSTANT UI UPDATE)
+  ========================== */
+  c[11].textContent =
     p.paymentIndicator === "PAID" ? "✅" :
     p.paymentIndicator === "ON-WAITING PAYMENT" ? "🟠" : "❌";
 
-  c[12].onclick = async ()=>{
-    const next =
+  c[11].onclick = async ()=>{
+
+    if(c[11].dataset.locked === "1") return;
+    c[11].dataset.locked = "1";
+
+    let next =
       p.paymentIndicator === "PAID" ? "NOT PAID" :
       p.paymentIndicator === "NOT PAID" ? "WAITING" : "PAID";
+
+    // INSTANT UI CHANGE (NO WAIT)
+    p.paymentIndicator = next;
+
+    c[11].textContent =
+      next === "PAID" ? "✅" :
+      next === "ON-WAITING PAYMENT" ? "🟠" : "❌";
 
     const fd = new FormData();
     fd.append("action","payment");
@@ -249,16 +303,29 @@ function render(p){
     fd.append("value",next);
     fd.append("sheet",SHEET);
 
-    await fetch(BASE_URL,{method:"POST",body:fd});
-    loadData();
+    await sendUpdate(fd);
+
+    c[11].dataset.locked = "0";
   };
 
-  /* ATTENDANCE */
+  c[12].textContent = p.paymentIndicator;
+
+  /* =========================
+     ATTENDANCE (INSTANT)
+  ========================== */
   c[13].textContent = p.attendanceStatus;
+
   c[13].onclick = async ()=>{
-    const next =
+
+    if(c[13].dataset.locked === "1") return;
+    c[13].dataset.locked = "1";
+
+    let next =
       p.attendanceStatus === "Attended" ? "Cancelled" :
       p.attendanceStatus === "Cancelled" ? "ON-waiting" : "Attended";
+
+    p.attendanceStatus = next;
+    c[13].textContent = next;
 
     const fd = new FormData();
     fd.append("action","attendance");
@@ -266,8 +333,9 @@ function render(p){
     fd.append("status",next);
     fd.append("sheet",SHEET);
 
-    await fetch(BASE_URL,{method:"POST",body:fd});
-    loadData();
+    await sendUpdate(fd);
+
+    c[13].dataset.locked = "0";
   };
 
   c[14].textContent = p.attendedIcon;
@@ -276,12 +344,22 @@ function render(p){
 
   c[17].textContent = p.shirt;
 
-  /* KIT */
-  c[18].textContent = p.kit;
+  /* =========================
+     KIT (INSTANT)
+  ========================== */
+  c[18].textContent = p.kit || "❌";
+
   c[18].onclick = async ()=>{
-    const next =
+
+    if(c[18].dataset.locked === "1") return;
+    c[18].dataset.locked = "1";
+
+    let next =
       p.kit === "❌" ? "🟠" :
       p.kit === "🟠" ? "✅" : "❌";
+
+    p.kit = next;
+    c[18].textContent = next;
 
     const fd = new FormData();
     fd.append("action","kit");
@@ -289,16 +367,27 @@ function render(p){
     fd.append("state",next);
     fd.append("sheet",SHEET);
 
-    await fetch(BASE_URL,{method:"POST",body:fd});
-    loadData();
+    await sendUpdate(fd);
+
+    c[18].dataset.locked = "0";
   };
 
-  /* AIRCON (NEW) */
-  c[19].textContent = p.aircon;
+  /* =========================
+     AIRCON (NEW SMOOTH FIX)
+  ========================== */
+  c[19].textContent = p.aircon || "❌";
+
   c[19].onclick = async ()=>{
-    const next =
+
+    if(c[19].dataset.locked === "1") return;
+    c[19].dataset.locked = "1";
+
+    let next =
       p.aircon === "❌" ? "🟠" :
       p.aircon === "🟠" ? "✅" : "❌";
+
+    p.aircon = next;
+    c[19].textContent = next;
 
     const fd = new FormData();
     fd.append("action","aircon");
@@ -306,12 +395,15 @@ function render(p){
     fd.append("state",next);
     fd.append("sheet",SHEET);
 
-    await fetch(BASE_URL,{method:"POST",body:fd});
-    loadData();
+    await sendUpdate(fd);
+
+    c[19].dataset.locked = "0";
   };
 }
 
-/* FILTER */
+/* =========================
+   FILTER
+========================= */
 function filterTable(){
   const q = searchBox.value.toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
@@ -319,7 +411,9 @@ function filterTable(){
   });
 }
 
-/* COUNTDOWN */
+/* =========================
+   COUNTDOWN
+========================= */
 function countdown(){
   const start = new Date("2026-04-16").getTime();
   const end = new Date("2026-04-18").getTime();
@@ -331,28 +425,40 @@ function countdown(){
     const d = Math.floor((target-now)/86400000);
     const h = Math.floor((target-now)/3600000)%24;
 
-    countdown.textContent =
+    countdownEl.textContent =
       now < start ? `STARTS IN ${d}d ${h}h` : `ENDS IN ${d}d ${h}h`;
   },1000);
 }
 
-/* LOAD */
+/* =========================
+   LOAD (SLOW REFRESH ONLY)
+========================= */
 async function loadData(){
-  const res = await fetch(BASE_URL+"?sheet="+SHEET);
-  const data = await res.json();
+  if(isUpdating) return;
+  isUpdating = true;
 
-  if(!Array.isArray(data)) return;
+  try {
+    const res = await fetch(BASE_URL+"?sheet="+SHEET);
+    const data = await res.json();
 
-  allData = sortData(data);
+    if(!Array.isArray(data)) return;
 
-  tbody.innerHTML = "";
-  map.clear();
+    allData = sortData(data);
 
-  updateStats(allData);
-  allData.forEach(render);
+    tbody.innerHTML = "";
+    map.clear();
+
+    updateStats(allData);
+    allData.forEach(render);
+
+  } catch(e){
+    console.log(e);
+  }
+
+  isUpdating = false;
 }
 
-setInterval(loadData,15000);
+setInterval(loadData, 20000);
 
 loadData();
 countdown();
