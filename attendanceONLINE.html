@@ -143,13 +143,15 @@ button{
   </div>
 </div>
 
-<!-- 🔥 STATS FIXED -->
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
   <div class="box">Waiting<br><span id="waiting">0</span></div>
   <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
 </div>
+
+<!-- ROOM STATS -->
+<div id="roomStats" style="margin:10px 0; background:#1a1a1a; padding:10px; border-radius:10px;"></div>
 
 <button onclick="loadData()">🔄 REFRESH</button>
 
@@ -178,8 +180,22 @@ button{
 
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbx7AMQmqsh2gHzZMorosZFlkQpc8xOLPVQ4nWDHVEJrgk2C6raVd9Z4WZq0UuYj-NMh/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxNQDvbtcnYF0Bhw0xwEp_2diIT6my0Z-YdUjD45G1mhdtkTc1eYFfH6kgMm_sPISt76g/exec";
 const SHEET = "Pre-Registration";
+
+const AC_ROOMS = [
+  "Berean Area",
+  "Berean – Abraham 2",
+  "Berean – Joshua 3",
+  "Berean – Elijah 3",
+  "Berean – Elisha 3",
+  "Sharon – Deborah 2",
+  "Sharon – Martha 3",
+  "Sharon – Abigail 2",
+  "Sharon – Eve 2"
+];
+
+let roomMap = {};
 
 const tbody = document.querySelector("tbody");
 const searchBox = document.getElementById("searchBox");
@@ -190,10 +206,8 @@ const waitingEl = document.getElementById("waiting");
 
 let map = new Map();
 let allData = [];
-
 let localCache = new Map();
 
-/* queue */
 let queue = [];
 let running = false;
 
@@ -227,9 +241,8 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* 🔥 FIXED COUNTER FUNCTION */
+/* STATS */
 function updateStats(data){
-
   let total = data.length;
   let paid = 0;
   let waiting = 0;
@@ -242,6 +255,28 @@ function updateStats(data){
   totalEl.textContent = total;
   paidEl.textContent = paid;
   waitingEl.textContent = waiting;
+}
+
+/* ROOM STATS */
+function updateRoomStats(data){
+
+  roomMap = {};
+  AC_ROOMS.forEach(r => roomMap[r] = 0);
+
+  data.forEach(p=>{
+    if(roomMap[p.room] !== undefined){
+      roomMap[p.room]++;
+    }
+  });
+
+  let html = "<b>ROOM CAPACITY (A/C ROOMS)</b><br>";
+
+  AC_ROOMS.forEach(r=>{
+    let count = roomMap[r] || 0;
+    html += `${r}: ${count}/18 ${count>=18?"❌ FULL":""}<br>`;
+  });
+
+  document.getElementById("roomStats").innerHTML = html;
 }
 
 /* RENDER */
@@ -278,25 +313,45 @@ function render(p){
   c[5].textContent = p.contact;
   c[6].textContent = p.church;
   c[7].textContent = p.classification;
-  c[8].textContent = p.room;
+
+  /* ROOM DROPDOWN */
+  c[8].innerHTML = `
+    <select>
+      <option value="">--Room--</option>
+      ${AC_ROOMS.map(r=>`
+        <option value="${r}" ${p.room===r?"selected":""}>
+          ${r}
+        </option>
+      `).join("")}
+    </select>
+  `;
+
+  c[8].querySelector("select").onchange = (e)=>{
+    let val = e.target.value;
+    p.room = val;
+
+    let fd = new FormData();
+    fd.append("action","room");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("value",val);
+    fd.append("sheet",SHEET);
+
+    sendUpdate(fd);
+    updateRoomStats(allData);
+  };
 
   c[9].textContent = p.paymentCategory;
   c[10].textContent = p.amount;
   c[11].textContent = p.modeOfPayment;
 
-  /* PAYMENT */
   c[12].textContent = payIcon(p.paymentIndicator);
 
-  c[12].onclick = () => {
-
+  c[12].onclick = ()=>{
     let next =
       p.paymentIndicator==="PAID" ? "NOT PAID" :
       p.paymentIndicator==="NOT PAID" ? "ON-WAITING PAYMENT" : "PAID";
 
     p.paymentIndicator = next;
-    localCache.set(p.rowIndex, p);
-
-    c[12].textContent = payIcon(next);
 
     let fd = new FormData();
     fd.append("action","payment");
@@ -305,23 +360,16 @@ function render(p){
     fd.append("sheet",SHEET);
 
     sendUpdate(fd);
-
-    updateStats(allData); // 🔥 LIVE UPDATE
   };
 
-  /* ATTENDANCE */
   c[13].textContent = attIcon(p.attendanceStatus);
 
-  c[13].onclick = () => {
-
+  c[13].onclick = ()=>{
     let next =
       p.attendanceStatus==="Attended" ? "Cancelled" :
       p.attendanceStatus==="Cancelled" ? "ON-waiting" : "Attended";
 
     p.attendanceStatus = next;
-    localCache.set(p.rowIndex, p);
-
-    c[13].textContent = attIcon(next);
 
     let fd = new FormData();
     fd.append("action","attendance");
@@ -332,18 +380,34 @@ function render(p){
     sendUpdate(fd);
   };
 
-  /* ICON COLUMNS */
-  c[14].textContent = p.attendedIcon || "";
-  c[15].textContent = p.waitingIcon || "";
-  c[16].textContent = p.cancelledIcon || "";
+  /* SHIRT SIZE */
+  c[17].innerHTML = `
+    <select>
+      <option>XS</option>
+      <option>S</option>
+      <option>M</option>
+      <option>L</option>
+      <option>XL</option>
+      <option>XXL</option>
+    </select>
+  `;
 
-  /* KIT */
+  c[17].querySelector("select").value = p.shirt || "";
+
+  c[17].querySelector("select").onchange = (e)=>{
+    let fd = new FormData();
+    fd.append("action","shirt");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("value",e.target.value);
+    fd.append("sheet",SHEET);
+    sendUpdate(fd);
+  };
+
   c[18].textContent = p.kit;
 
-  c[18].onclick = () => {
+  c[18].onclick = ()=>{
     let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
     p.kit = next;
-    c[18].textContent = next;
 
     let fd = new FormData();
     fd.append("action","kit");
@@ -353,13 +417,11 @@ function render(p){
     sendUpdate(fd);
   };
 
-  /* AIRCON */
   c[19].textContent = p.aircon;
 
-  c[19].onclick = () => {
+  c[19].onclick = ()=>{
     let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
     p.aircon = next;
-    c[19].textContent = next;
 
     let fd = new FormData();
     fd.append("action","aircon");
@@ -381,16 +443,10 @@ async function loadData(){
   tbody.innerHTML = "";
   map.clear();
 
-  allData.forEach(p => {
+  allData.forEach(render);
 
-    if(localCache.has(p.rowIndex)){
-      p = localCache.get(p.rowIndex);
-    }
-
-    render(p);
-  });
-
-  updateStats(allData); // 🔥 FIX COUNTERS HERE TOO
+  updateStats(allData);
+  updateRoomStats(allData);
 }
 
 /* FILTER */
@@ -415,9 +471,7 @@ setInterval(()=>{
     now < start ? `STARTS IN ${d}d ${h}h` : `ENDS IN ${d}d ${h}h`;
 },1000);
 
-/* REFRESH */
 setInterval(loadData, 60000);
-
 loadData();
 
 </script>
