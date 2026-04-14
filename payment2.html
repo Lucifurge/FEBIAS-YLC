@@ -230,13 +230,10 @@ If you paid online, please screenshot your receipt and present it during registr
 
 <script>
 const sheetUrl = "https://script.google.com/macros/s/AKfycbyUmPbXLVWTDs3peBSZRH95MWA8xNegVvoMkB5WfRxBi6ItRM1R4wZJxHaIAv4tVIdE/exec";
-const drivesurl = "https://script.google.com/macros/s/AKfycbxPZNYdzibgYGspJtRmcgdcaio5eFD_zSsF3Ef1S51zjoiAxk-UMjfGTPm4FPa0LCAp/exec";
 
 const loader = document.getElementById('loader');
-const receiptInput = document.getElementById("receipt");
 const paymentBoxes = document.querySelectorAll('.payment-box');
 const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
-const uploadSection = document.getElementById("online-upload");
 
 const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
 
@@ -245,17 +242,13 @@ if(!rowIndex){
   window.location.href="ylc.html";
 }
 
-/* UI TOGGLE */
+/* SHOW PAYMENT METHODS ONLY FOR ONLINE */
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
     if(radio.value === "Online"){
-      uploadSection.style.display="block";
       document.querySelector('.payment-methods').style.display="flex";
     } else {
-      uploadSection.style.display="none";
       document.querySelector('.payment-methods').style.display="none";
-      receiptInput.value = "";
-      receiptInput.disabled = false;
     }
   });
 });
@@ -266,15 +259,6 @@ paymentBoxes.forEach(box=>{
     paymentBoxes.forEach(b=>b.classList.remove('selected'));
     box.classList.add('selected');
   });
-});
-
-/* LIMIT FILE */
-receiptInput.addEventListener("change", function(){
-  if(this.files.length > 1){
-    alert("Only ONE receipt allowed");
-    this.value="";
-    return;
-  }
 });
 
 /* SUBMIT */
@@ -291,15 +275,9 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
     return;
   }
 
-  if(paymentBy === "Online"){
-    if(!method){
-      alert("Select payment method");
-      return;
-    }
-    if(receiptInput.files.length === 0){
-      alert("Upload receipt first");
-      return;
-    }
+  if(paymentBy === "Online" && !method){
+    alert("Select payment method (GCash or Bank)");
+    return;
   }
 
   loader.style.display = "block";
@@ -307,58 +285,22 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
   submitBtn.innerText = "Processing...";
 
   try{
-    let receiptUrl = "";
-    let receiptName = "";
 
-    /* ===== UPLOAD RECEIPT ===== */
-    if(paymentBy === "Online"){
-      const file = receiptInput.files[0];
-      receiptName = file.name;
-
-      const base64 = await new Promise((resolve,reject)=>{
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-      });
-
-      const driveData = new URLSearchParams();
-      driveData.append("action","upload");
-      driveData.append("filename",receiptName);
-      driveData.append("file",base64);
-      driveData.append("fileType",file.type);
-
-      const driveRes = await fetch(drivesurl,{
-        method:"POST",
-        body:driveData
-      });
-
-      const driveResult = await driveRes.json();
-
-      if(driveResult.result !== "success"){
-        throw new Error("Receipt upload failed");
-      }
-
-      receiptUrl = driveResult.url;
-    }
-
-    /* ===== SEND PAYMENT ===== */
     const postData = new URLSearchParams();
     postData.append("action","payment");
     postData.append("rowIndex",rowIndex);
 
-    // 🔥 IMPORTANT: send BOTH fields
-    postData.append("payment_by", paymentBy === "Online"
-      ? `Online (${method})`
-      : "Onsite"
+    postData.append("payment_by",
+      paymentBy === "Online"
+        ? `Online (${method})`
+        : "Onsite"
     );
 
     postData.append("payment_status",
-      paymentBy === "Online" ? "Paid (Online)" : "To Pay Onsite"
+      paymentBy === "Online"
+        ? "Paid (Online - QR)"
+        : "To Pay Onsite"
     );
-
-    postData.append("receipt",receiptUrl);
-    postData.append("receipt_name",receiptName);
 
     const res = await fetch(sheetUrl,{
       method:"POST",
