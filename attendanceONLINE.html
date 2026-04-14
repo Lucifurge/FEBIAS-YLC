@@ -3,132 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Attendance Online</title>
-
-<link rel="icon" href="logo.ico">
+<title>YLC 2026 Full Records</title>
 
 <style>
 body {
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: #0f0f0f;
-  color: #fff;
-  padding: 1rem;
-  margin: 0;
-}
-
-h1 { text-align:center; color:#ff6a00; font-size:1.3rem; }
-.sub { text-align:center; color:#bbb; font-size:0.85rem; }
-
-.stats {
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:center;
-  margin:15px 0;
-}
-
-.box {
-  background:#1a1a1a;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #333;
-  flex:1 1 120px;
-  text-align:center;
-  font-size:0.85rem;
-}
-
-.box span { color:#ff6a00; font-weight:bold; }
-
-button {
-  width:100%;
-  max-width:320px;
-  margin:10px auto;
-  display:block;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  font-family: "Segoe UI", sans-serif;
+  background:#0f0f0f;
   color:#fff;
+  margin:0;
+  padding:1rem;
 }
 
-.table-wrap { width:100%; overflow-x:auto; }
+h1 {
+  text-align:center;
+  color:#ff6a00;
+  font-size:1.3rem;
+}
+
+.table-wrap {
+  overflow-x:auto;
+}
 
 table {
   width:100%;
-  min-width:650px;
+  min-width:2200px; /* important for FULL columns */
   border-collapse:collapse;
-  margin-top:10px;
 }
 
 th {
   background:#1a1a1a;
   color:#ff6a00;
   padding:10px;
+  font-size:0.75rem;
+  position:sticky;
+  top:0;
 }
 
 td {
   border:1px solid #222;
-  padding:8px;
+  padding:6px;
+  font-size:0.75rem;
   text-align:center;
   background:#121212;
+  white-space:nowrap;
 }
 
-.kit { cursor:pointer; font-size:1.2rem; }
-
-/* MOBILE */
-@media(max-width:600px){
-  table,thead{display:none;}
-  tbody{display:block;}
-
-  tr{
-    display:block;
-    background:#121212;
-    margin-bottom:10px;
-    border-radius:10px;
-    padding:10px;
-    border:1px solid #222;
-  }
-
-  td{
-    display:flex;
-    justify-content:space-between;
-    padding:6px 0;
-    border:none;
-    font-size:0.85rem;
-  }
-
-  td::before{
-    content:attr(data-label);
-    color:#aaa;
-  }
+button {
+  padding:8px 12px;
+  margin:10px 0;
+  border:none;
+  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  color:#fff;
+  border-radius:6px;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<h1>YLC 2026 ATTENDANCE ONLINE</h1>
-<div class="sub">FEBIAS College of Bible System</div>
+<h1>YLC 2026 — FULL SHEET VIEW</h1>
 
-<!-- STATS -->
-<div class="stats">
-  <div class="box">Total<br><span id="totalCount">0</span></div>
-  <div class="box">Paid<br><span id="paidCount">0</span></div>
-  <div class="box">Pending<br><span id="pendingCount">0</span></div>
-  <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
-</div>
-
-<button onclick="loadAttendance()">🔥 REFRESH</button>
+<button onclick="loadData()">🔄 Refresh</button>
 
 <div class="table-wrap">
 <table>
 <thead>
 <tr>
-<th>First Name</th>
+<th>#</th>
+<th>Name</th>
 <th>Last Name</th>
-<th>Payment</th>
-<th>Attendance</th>
+<th>First Name</th>
+<th>Gender</th>
+<th>Age</th>
+<th>Number/Email</th>
+<th>Church</th>
+<th>Classification</th>
+<th>Room</th>
+<th>Payment Category</th>
+<th>Amount</th>
+<th>Payment Status</th>
+<th>Attendance Status</th>
+<th>Attended</th>
+<th>Waiting</th>
+<th>Cancelled</th>
+<th>Shirt Size</th>
+<th>Payment Indicator</th>
 <th>Kit</th>
 </tr>
 </thead>
@@ -142,119 +102,92 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbwWmWuLWg-httkGe4-s7jX
 const SHEET_NAME = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
-let peopleMap = new Map();
+let map = new Map();
 
 const kitCycle = ["❌","🟠","✅"];
 
-/* STATS */
-function updateStats(data){
-
-  let paid = 0;
-  let pending = 0;
-
-  data.forEach(p=>{
-    const pay = (p.paymentIndicator || "").toUpperCase();
-    if(pay === "PAID") paid++;
-    else pending++;
-  });
-
-  document.getElementById("totalCount").textContent = data.length;
-  document.getElementById("paidCount").textContent = paid;
-  document.getElementById("pendingCount").textContent = pending;
-}
-
-/* COUNTDOWN */
-function startCountdown(){
-  const start = new Date("2026-04-16T00:00:00").getTime();
-  const end = new Date("2026-04-18T23:59:59").getTime();
-
-  setInterval(()=>{
-
-    const now = Date.now();
-
-    let target, label;
-
-    if(now < start){
-      target = start;
-      label = "STARTS IN";
-    } else if(now <= end){
-      target = end;
-      label = "ENDS IN";
-    } else {
-      document.getElementById("countdown").textContent = "DONE";
-      return;
-    }
-
-    const diff = target - now;
-
-    const d = Math.floor(diff/86400000);
-    const h = Math.floor((diff/3600000)%24);
-    const m = Math.floor((diff/60000)%60);
-    const s = Math.floor((diff/1000)%60);
-
-    document.getElementById("countdown").textContent =
-      `${label}: ${d}d ${h}h ${m}m ${s}s`;
-
-  },1000);
-}
-
-/* SORT A–Z LAST NAME */
+/* SORT A–Z */
 function sortData(data){
   return data.sort((a,b)=>{
     return (a.lastName||"").localeCompare(b.lastName||"");
   });
 }
 
-/* RENDER */
-function renderRow(p){
+/* RENDER FULL ROW */
+function render(p){
 
-  let tr = peopleMap.get(p.rowIndex);
+  let tr = map.get(p.rowIndex);
 
   if(!tr){
     tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td data-label="First Name"></td>
-      <td data-label="Last Name"></td>
-      <td data-label="Payment"></td>
-      <td data-label="Attendance"></td>
-      <td data-label="Kit" class="kit"></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td class="kit" style="cursor:pointer;"></td>
     `;
 
     tbody.appendChild(tr);
-    peopleMap.set(p.rowIndex,tr);
+    map.set(p.rowIndex,tr);
   }
 
-  tr.children[0].textContent = p.firstName || "";
-  tr.children[1].textContent = p.lastName || "";
+  const c = tr.children;
 
-  const pay = (p.paymentIndicator || "").toUpperCase();
+  c[0].textContent = p.sheetRow || "";
+  c[1].textContent = (p.lastName || "") + ", " + (p.firstName || "");
+  c[2].textContent = p.lastName || "";
+  c[3].textContent = p.firstName || "";
+  c[4].textContent = p.gender || "";
+  c[5].textContent = p.age || "";
+  c[6].textContent = p.numberEmail || "";
+  c[7].textContent = p.church || "";
+  c[8].textContent = p.classification || "";
+  c[9].textContent = p.room || "";
+  c[10].textContent = p.paymentCategory || "";
+  c[11].textContent = p.amount || "";
+  c[12].textContent = p.paymentStatus || "";
+  c[13].textContent = p.attendanceStatus || "";
 
-  tr.children[2].textContent =
-    pay === "PAID" ? "✅" :
-    pay === "ON-WAITING PAYMENT" ? "🟠" : "❌";
+  c[14].textContent = p.attendedIcon || "";
+  c[15].textContent = p.waitingIcon || "";
+  c[16].textContent = p.cancelledIcon || "";
 
-  tr.children[3].textContent =
-    p.attendanceStatus === "Attended" ? "✅" :
-    p.attendanceStatus === "Cancelled" ? "❌" : "🟠";
+  c[17].textContent = p.shirtSize || "";
+  c[18].textContent = p.paymentIndicator || "";
 
-  let kitState = p.kitDistribution || "❌";
-  const kitCell = tr.children[4];
+  let kit = p.kitDistribution || "❌";
+  c[19].textContent = kit;
 
-  kitCell.textContent = kitState;
+  // KIT TOGGLE
+  c[19].onclick = async ()=>{
 
-  kitCell.onclick = async ()=>{
-
-    let i = kitCycle.indexOf(kitState);
+    let i = kitCycle.indexOf(kit);
     if(i === -1) i = 0;
 
-    kitState = kitCycle[(i+1)%kitCycle.length];
-    kitCell.textContent = kitState;
+    kit = kitCycle[(i+1)%kitCycle.length];
+    c[19].textContent = kit;
 
     const fd = new FormData();
     fd.append("action","kit");
     fd.append("rowIndex",p.rowIndex);
-    fd.append("kit_state",kitState);
+    fd.append("kit_state",kit);
     fd.append("sheet",SHEET_NAME);
 
     await fetch(BASE_URL,{method:"POST",body:fd});
@@ -262,7 +195,7 @@ function renderRow(p){
 }
 
 /* LOAD */
-async function loadAttendance(){
+async function loadData(){
 
   const res = await fetch(BASE_URL+"?sheet="+SHEET_NAME);
   const data = await res.json();
@@ -270,20 +203,14 @@ async function loadAttendance(){
   if(!Array.isArray(data)) return;
 
   tbody.innerHTML = "";
-  peopleMap.clear();
+  map.clear();
 
   const sorted = sortData(data);
 
-  updateStats(sorted);
-  sorted.forEach(renderRow);
+  sorted.forEach(render);
 }
 
-document.querySelector("button").onclick = loadAttendance;
-
-setInterval(loadAttendance,15000);
-
-loadAttendance();
-startCountdown();
+loadData();
 
 </script>
 
