@@ -118,7 +118,6 @@ select:hover{border-color:#ff6a00}
 const BASE_URL="https://script.google.com/macros/s/AKfycbxNQDvbtcnYF0Bhw0xwEp_2diIT6my0Z-YdUjD45G1mhdtkTc1eYFfH6kgMm_sPISt76g/exec";
 const SHEET="Pre-Registration";
 
-/* A/C ROOMS */
 const AC_ROOMS=[
 "Berean – Abraham 2",
 "Berean – Joshua 3",
@@ -131,22 +130,20 @@ const AC_ROOMS=[
 ];
 
 let dataStore=[];
-let map=new Map();
 let roomCount={};
 
 let queue=[],running=false;
 
-/* QUEUE (NO LAG SYSTEM) */
 function send(fd){
   queue.push(fd);
   process();
 }
+
 async function process(){
   if(running) return;
   running=true;
   while(queue.length){
-    try{ await fetch(BASE_URL,{method:"POST",body:queue.shift()}); }
-    catch(e){}
+    try{ await fetch(BASE_URL,{method:"POST",body:queue.shift()}); }catch(e){}
   }
   running=false;
 }
@@ -180,12 +177,11 @@ function updateRoomStats(){
     }
   });
 
-  let html="<b>A/C ROOM CAPACITY</b><br>";
+  let html="<b>A/C ROOMS</b><br>";
 
   AC_ROOMS.forEach(r=>{
     let n=roomCount[r]||0;
-    let color=n>=18?"🔴":n>=15?"🟠":"🟢";
-    html+=`${color} ${r}: ${n}/18 ${n>=18?"FULL":""}<br>`;
+    html+=`${r}: ${n}/18 ${n>=18?"❌ FULL":""}<br>`;
   });
 
   roomStats.innerHTML=html;
@@ -196,110 +192,117 @@ function isFull(room){
   return (roomCount[room]||0)>=18;
 }
 
-/* FAST RENDER */
+/* RENDER */
 function renderAll(){
+
   tbody.innerHTML="";
-  map.clear();
-  dataStore.forEach(renderRow);
-  updateStats();
-  updateRoomStats();
-}
 
-/* RENDER ROW */
-function renderRow(p){
+  dataStore.forEach(p=>{
 
-  let tr=document.createElement("tr");
+    let tr=document.createElement("tr");
 
-  tr.innerHTML=`
-  <td>${p.rowIndex}</td>
-  <td>${p.firstName} ${p.lastName}</td>
-  <td>${p.room||""}</td>
+    tr.innerHTML=`
+      <td>${p.rowIndex}</td>
+      <td>${p.firstName||""} ${p.lastName||""}</td>
+      <td>${p.room||""}</td>
+      <td></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td>${p.attendedIcon||""}</td>
+      <td>${p.waitingIcon||""}</td>
+      <td>${p.cancelledIcon||""}</td>
+    `;
 
-  <td></td>
-  <td class="clickable"></td>
-  <td class="clickable"></td>
-  <td>${p.attendedIcon||""}</td>
-  <td>${p.waitingIcon||""}</td>
-  <td>${p.cancelledIcon||""}</td>
-  `;
+    const c=tr.children;
 
-  const c=tr.children;
-
-  /* ROOM_AC DROPDOWN */
-  c[3].innerHTML=`
-  <select>
-    <option value="">--A/C ROOM--</option>
-    ${AC_ROOMS.map(r=>`
-      <option value="${r}" 
+    /* ROOM_AC DROPDOWN */
+    c[3].innerHTML=`
+    <select>
+      <option value="">--A/C ROOM--</option>
+      ${AC_ROOMS.map(r=>`
+        <option value="${r}" 
         ${p.room_ac===r?"selected":""}
         ${isFull(r)&&p.room_ac!==r?"disabled":""}>
         ${r} ${isFull(r)&&p.room_ac!==r?"(FULL)":""}
       </option>
-    `).join("")}
-  </select>`;
+      `).join("")}
+    </select>`;
 
-  c[3].querySelector("select").onchange=(e)=>{
-    let val=e.target.value;
+    c[3].querySelector("select").onchange=(e)=>{
+      let val=e.target.value;
+      p.room_ac=val;
 
-    p.room_ac=val;
-    renderAll(); // instant UI
+      renderAll(); // instant update
 
-    send(fd("room_ac",p.rowIndex,val));
-  };
+      let fd=new FormData();
+      fd.append("action","room_ac");
+      fd.append("rowIndex",p.rowIndex);
+      fd.append("value",val);
+      fd.append("sheet",SHEET);
 
-  /* PAYMENT CLICK */
-  c[4].textContent=pay(p.paymentIndicator);
-  c[4].onclick=()=>{
-    let next=
-      p.paymentIndicator==="PAID"?"NOT PAID":
-      p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
+      send(fd);
+    };
 
-    p.paymentIndicator=next;
-    c[4].textContent=pay(next);
+    /* PAYMENT */
+    c[4].textContent=pay(p.paymentIndicator);
+    c[4].onclick=()=>{
+      let next=
+        p.paymentIndicator==="PAID"?"NOT PAID":
+        p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
 
-    send(fd("payment",p.rowIndex,next));
-    updateStats();
-  };
+      p.paymentIndicator=next;
+      c[4].textContent=pay(next);
 
-  /* ATTENDANCE CLICK */
-  c[5].textContent=att(p.attendanceStatus);
-  c[5].onclick=()=>{
-    let next=
-      p.attendanceStatus==="Attended"?"Cancelled":
-      p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
+      let fd=new FormData();
+      fd.append("action","payment");
+      fd.append("rowIndex",p.rowIndex);
+      fd.append("value",next);
+      fd.append("sheet",SHEET);
 
-    p.attendanceStatus=next;
-    c[5].textContent=att(next);
+      send(fd);
+      updateStats();
+    };
 
-    send(fd("attendance",p.rowIndex,next));
-  };
+    /* ATTENDANCE */
+    c[5].textContent=att(p.attendanceStatus);
+    c[5].onclick=()=>{
+      let next=
+        p.attendanceStatus==="Attended"?"Cancelled":
+        p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
 
-  tbody.appendChild(tr);
-}
+      p.attendanceStatus=next;
+      c[5].textContent=att(next);
 
-/* FORM */
-function fd(a,r,v){
-  let f=new FormData();
-  f.append("action",a);
-  f.append("rowIndex",r);
-  f.append("value",v);
-  f.append("status",v);
-  f.append("sheet",SHEET);
-  return f;
+      let fd=new FormData();
+      fd.append("action","attendance");
+      fd.append("rowIndex",p.rowIndex);
+      fd.append("status",next);
+      fd.append("sheet",SHEET);
+
+      send(fd);
+    };
+
+    tbody.appendChild(tr);
+  });
+
+  updateStats();
+  updateRoomStats();
 }
 
 /* LOAD */
 async function loadData(){
-  const res=await fetch(BASE_URL+"?sheet="+SHEET);
-  dataStore=await res.json();
-  renderAll();
+  try{
+    const res=await fetch(BASE_URL+"?sheet="+SHEET);
+    dataStore=await res.json();
+    renderAll();
+  }catch(e){
+    console.error("LOAD ERROR",e);
+  }
 }
 
-/* AUTO REFRESH */
-setInterval(loadData,60000);
 loadData();
+setInterval(loadData,60000);
 
 </script>
-
 </body>
 </html>
