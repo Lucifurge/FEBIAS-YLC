@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="refine.ico">
 <title>YLC 2026 Attendance System</title>
 
 <style>
@@ -15,13 +16,28 @@ body {
 }
 
 h1 { text-align: center; color: #ff6a00; }
-.sub { text-align: center; color: #aaa; }
+.sub { text-align: center; color: #aaa; margin-bottom: 10px; }
+
+.legend{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+  margin:10px 0 20px;
+}
+
+.legend-box{
+  background:#1a1a1a;
+  border-left:4px solid #ff6a00;
+  padding:10px;
+  border-radius:10px;
+  font-size:13px;
+}
 
 .stats{
   display:flex;
   gap:10px;
-  justify-content:center;
   flex-wrap:wrap;
+  justify-content:center;
 }
 
 .box{
@@ -30,53 +46,137 @@ h1 { text-align: center; color: #ff6a00; }
   border-radius:10px;
   min-width:140px;
   text-align:center;
+  border:1px solid #333;
+}
+
+.box span{ color:#ff6a00; font-weight:bold; }
+
+.search{
+  display:flex;
+  justify-content:center;
+  margin:10px 0;
+}
+
+.search input{
+  width:100%;
+  max-width:400px;
+  padding:10px;
+  border-radius:8px;
+  background:#1a1a1a;
+  border:1px solid #333;
+  color:white;
 }
 
 .table-wrap{ overflow-x:auto; }
 
 table{
   width:100%;
-  min-width:2000px;
+  min-width:1800px;
   border-collapse:collapse;
 }
 
-th, td{
-  padding:8px;
-  border:1px solid #222;
-  text-align:center;
+th{
+  background:#1a1a1a;
+  color:#ff6a00;
+  padding:10px;
+  position:sticky;
+  top:0;
 }
 
-.clickable{ cursor:pointer; }
+td{
+  padding:8px;
+  border:1px solid #222;
+  background:#121212;
+  text-align:center;
+  font-size:13px;
+}
+
+.clickable{
+  cursor:pointer;
+  font-size:18px;
+  transition:0.15s;
+  user-select:none;
+}
+
+.clickable:hover{
+  transform:scale(1.15);
+}
+
+button{
+  width:100%;
+  max-width:300px;
+  margin:10px auto;
+  display:block;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  color:white;
+  font-weight:bold;
+}
+
+#roomStats{
+  margin:10px 0;
+  background:#1a1a1a;
+  padding:10px;
+  border-radius:10px;
+}
 </style>
 </head>
 
 <body>
 
 <h1>YLC 2026 ATTENDANCE SYSTEM</h1>
-<div class="sub">FEBIAS College of Bible</div>
+<div class="sub">FEBIAS College of Bible System</div>
+
+<div class="legend">
+  <div class="legend-box">
+    <b>PAYMENT</b><br>
+    ❌ Not Paid<br>
+    🟠 Waiting / DownPayment<br>
+    ✅ Paid
+  </div>
+
+  <div class="legend-box">
+    <b>ATTENDANCE</b><br>
+    ❌ Cancelled<br>
+    🟠 On Waiting<br>
+    ✅ Attended
+  </div>
+
+  <div class="legend-box">
+    Click icons → instant update
+  </div>
+</div>
 
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
   <div class="box">Waiting<br><span id="waiting">0</span></div>
+  <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
 </div>
 
-<!-- ROOM STATS -->
-<div id="roomStats" style="margin:10px; background:#1a1a1a; padding:10px;"></div>
+<div id="roomStats"></div>
+
+<button onclick="loadData()">🔄 REFRESH</button>
+
+<div class="search">
+  <input id="searchBox" placeholder="Search..." oninput="filterTable()" />
+</div>
 
 <div class="table-wrap">
 <table>
 <thead>
 <tr>
   <th>#</th><th>Last</th><th>First</th><th>Gender</th><th>Age</th>
-  <th>Contact</th><th>Church</th><th>Class</th><th>Room</th>
+  <th>Contact</th><th>Church</th><th>Class</th><th>Room AC</th>
 
   <th>Payment Cat</th><th>Amount</th><th>Mode</th>
 
   <th>PAY</th><th>ATT</th>
   <th>✔</th><th>🟠</th><th>❌</th>
 
-  <th>Shirt</th><th>Kit</th><th>Aircon</th><th>Room A/C</th>
+  <th>Shirt</th><th>Kit</th><th>Aircon</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -88,8 +188,8 @@ th, td{
 const BASE_URL = "https://script.google.com/macros/s/AKfycbxNQDvbtcnYF0Bhw0xwEp_2diIT6my0Z-YdUjD45G1mhdtkTc1eYFfH6kgMm_sPISt76g/exec";
 const SHEET = "Pre-Registration";
 
-/* ✅ AC ROOMS */
 const AC_ROOMS = [
+  "Berean Area",
   "Berean – Abraham 2",
   "Berean – Joshua 3",
   "Berean – Elijah 3",
@@ -100,238 +200,264 @@ const AC_ROOMS = [
   "Sharon – Eve 2"
 ];
 
-let roomMap = {};
-
 const tbody = document.querySelector("tbody");
 
+let map = new Map();
 let allData = [];
+let roomMap = {};
 
-/* ===================== */
+/* QUEUE */
+let queue = [];
+let running = false;
+
+function sendUpdate(fd){
+  queue.push(fd);
+  processQueue();
+}
+
+async function processQueue(){
+  if(running) return;
+  running = true;
+
+  while(queue.length){
+    const fd = queue.shift();
+    try{
+      await fetch(BASE_URL,{method:"POST",body:fd});
+    }catch(e){}
+  }
+
+  running = false;
+}
+
 /* ICONS */
-/* ===================== */
 function payIcon(v){
-  if(v==="PAID") return "✅";
-  if(v==="ON-WAITING PAYMENT") return "🟠";
-  return "❌";
+  if(v==="PAID") return "✅ PAID";
+  if(v==="ON-WAITING PAYMENT") return "🟠 WAITING";
+  return "❌ NOT PAID";
 }
 
 function attIcon(v){
-  if(v==="Attended") return "✅";
-  if(v==="ON-waiting") return "🟠";
-  return "❌";
+  if(v==="Attended") return "✅ ATTENDED";
+  if(v==="ON-waiting") return "🟠 WAITING";
+  return "❌ CANCELLED";
 }
 
-/* ===================== */
 /* STATS */
-/* ===================== */
 function updateStats(data){
-  let paid = 0, waiting = 0;
+  let total=0,paid=0,waiting=0;
 
   data.forEach(p=>{
+    total++;
     if(p.paymentIndicator==="PAID") paid++;
     if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
   });
 
-  total.textContent = data.length;
-  paid.textContent = paid;
-  waiting.textContent = waiting;
+  totalEl.textContent=total;
+  paidEl.textContent=paid;
+  waitingEl.textContent=waiting;
 }
 
-/* ===================== */
-/* ROOM COUNTS */
-/* ===================== */
+/* ROOM STATS */
 function updateRoomStats(data){
-
-  roomMap = {};
-  AC_ROOMS.forEach(r => roomMap[r] = 0);
+  roomMap={};
+  AC_ROOMS.forEach(r=>roomMap[r]=0);
 
   data.forEach(p=>{
-    if(roomMap[p.room_ac] !== undefined){
-      roomMap[p.room_ac]++;
+    if(roomMap[p.room]!==undefined){
+      roomMap[p.room]++;
     }
   });
 
-  let html = "<b>A/C ROOM CAPACITY</b><br>";
+  let html="<b>ROOM CAPACITY (A/C)</b><br>";
 
   AC_ROOMS.forEach(r=>{
-    let c = roomMap[r];
-    html += `${r}: ${c}/18 ${c>=18?"❌ FULL":""}<br>`;
+    let c=roomMap[r]||0;
+    html+=`${r}: ${c}/18 ${c>=18?"❌ FULL":""}<br>`;
   });
 
-  roomStats.innerHTML = html;
+  document.getElementById("roomStats").innerHTML=html;
 }
 
-/* ===================== */
 /* RENDER */
-/* ===================== */
 function render(p){
 
-  let tr = document.createElement("tr");
+  let tr=map.get(p.rowIndex);
 
-  tr.innerHTML = `
-    <td>${p.rowIndex}</td>
-    <td>${p.lastName}</td>
-    <td>${p.firstName}</td>
-    <td>${p.gender}</td>
-    <td>${p.age}</td>
-    <td>${p.contact}</td>
-    <td>${p.church}</td>
-    <td>${p.classification}</td>
+  if(!tr){
+    tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td></td><td></td><td></td><td></td><td></td>
+      <td></td><td></td><td></td><td></td>
+      <td></td><td></td><td></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+    `;
+    tbody.appendChild(tr);
+    map.set(p.rowIndex,tr);
+  }
 
-    <td>${p.room}</td>
+  const c=tr.children;
 
-    <td>${p.paymentCategory}</td>
-    <td>${p.amount}</td>
-    <td>${p.modeOfPayment}</td>
+  c[0].textContent=p.rowIndex;
+  c[1].textContent=p.lastName;
+  c[2].textContent=p.firstName;
+  c[3].textContent=p.gender;
+  c[4].textContent=p.age;
+  c[5].textContent=p.contact;
+  c[6].textContent=p.church;
+  c[7].textContent=p.classification;
 
-    <td class="clickable"></td>
-    <td class="clickable"></td>
-
-    <td>${p.attendedIcon||""}</td>
-    <td>${p.waitingIcon||""}</td>
-    <td>${p.cancelledIcon||""}</td>
-
-    <td></td>
-    <td class="clickable"></td>
-    <td class="clickable"></td>
-    <td></td>
-  `;
-
-  const c = tr.children;
-
-  /* PAYMENT */
-  c[12].textContent = payIcon(p.paymentIndicator);
-  c[12].onclick = ()=>{
-    let next =
-      p.paymentIndicator==="PAID"?"NOT PAID":
-      p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
-
-    let fd = new FormData();
-    fd.append("action","payment");
-    fd.append("rowIndex",p.rowIndex);
-    fd.append("value",next);
-    fd.append("sheet",SHEET);
-
-    fetch(BASE_URL,{method:"POST",body:fd});
-  };
-
-  /* ATTENDANCE */
-  c[13].textContent = attIcon(p.attendanceStatus);
-  c[13].onclick = ()=>{
-    let next =
-      p.attendanceStatus==="Attended"?"Cancelled":
-      p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
-
-    let fd = new FormData();
-    fd.append("action","attendance");
-    fd.append("rowIndex",p.rowIndex);
-    fd.append("status",next);
-    fd.append("sheet",SHEET);
-
-    fetch(BASE_URL,{method:"POST",body:fd});
-  };
-
-  /* SHIRT */
-  c[17].innerHTML = `
+  /* ROOM AC */
+  c[8].innerHTML=`
     <select>
-      <option>XS</option><option>S</option><option>M</option>
-      <option>L</option><option>XL</option><option>XXL</option>
-    </select>
-  `;
-  c[17].querySelector("select").value = p.shirt || "";
-
-  c[17].querySelector("select").onchange = (e)=>{
-    let fd = new FormData();
-    fd.append("action","shirt");
-    fd.append("rowIndex",p.rowIndex);
-    fd.append("value",e.target.value);
-    fd.append("sheet",SHEET);
-    fetch(BASE_URL,{method:"POST",body:fd});
-  };
-
-  /* KIT */
-  c[18].textContent = p.kit;
-  c[18].onclick = ()=>{
-    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-
-    let fd = new FormData();
-    fd.append("action","kit");
-    fd.append("rowIndex",p.rowIndex);
-    fd.append("state",next);
-    fd.append("sheet",SHEET);
-
-    fetch(BASE_URL,{method:"POST",body:fd});
-  };
-
-  /* AIRCON */
-  c[19].textContent = p.aircon;
-  c[19].onclick = ()=>{
-    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-
-    let fd = new FormData();
-    fd.append("action","aircon");
-    fd.append("rowIndex",p.rowIndex);
-    fd.append("state",next);
-    fd.append("sheet",SHEET);
-
-    fetch(BASE_URL,{method:"POST",body:fd});
-  };
-
-  /* ROOM_AC */
-  c[20].innerHTML = `
-    <select>
-      <option value="">--A/C Room--</option>
-      ${AC_ROOMS.map(r=>{
-        let count = roomMap[r] || 0;
-        let full = count >= 18;
-
-        return `<option value="${r}"
-          ${p.room_ac===r?"selected":""}
-          ${full?"disabled":""}>
-          ${r} (${count}/18)
-        </option>`;
-      }).join("")}
+      <option value="">--</option>
+      ${AC_ROOMS.map(r=>`<option ${p.room===r?"selected":""}>${r}</option>`).join("")}
     </select>
   `;
 
-  c[20].querySelector("select").onchange = (e)=>{
-    let val = e.target.value;
+  c[8].querySelector("select").onchange=(e)=>{
+    p.room=e.target.value;
 
-    let fd = new FormData();
-    fd.append("action","room_ac");
+    let fd=new FormData();
+    fd.append("action","room");
     fd.append("rowIndex",p.rowIndex);
-    fd.append("value",val);
-    fd.append("sheet",SHEET);
+    fd.append("value",p.room);
+    sendUpdate(fd);
 
-    fetch(BASE_URL,{method:"POST",body:fd});
-
-    p.room_ac = val;
     updateRoomStats(allData);
   };
 
-  tbody.appendChild(tr);
+  c[9].textContent=p.paymentCategory;
+  c[10].textContent=p.amount;
+
+  /* MODE OF PAYMENT */
+  c[11].innerHTML=`
+    <select>
+      <option ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
+      <option ${p.modeOfPayment==="Online (GCash)"?"selected":""}>Online (GCash)</option>
+      <option ${p.modeOfPayment==="Online (Bank)"?"selected":""}>Online (Bank)</option>
+    </select>
+  `;
+
+  c[11].querySelector("select").onchange=(e)=>{
+    let fd=new FormData();
+    fd.append("action","mode");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("value",e.target.value);
+    sendUpdate(fd);
+  };
+
+  /* PAYMENT */
+  c[12].textContent=payIcon(p.paymentIndicator);
+
+  c[12].onclick=()=>{
+    let next=
+      p.paymentIndicator==="PAID"?"NOT PAID":
+      p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
+
+    p.paymentIndicator=next;
+
+    let fd=new FormData();
+    fd.append("action","payment");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("value",next);
+    sendUpdate(fd);
+  };
+
+  /* ATT */
+  c[13].textContent=attIcon(p.attendanceStatus);
+
+  c[13].onclick=()=>{
+    let next=
+      p.attendanceStatus==="Attended"?"Cancelled":
+      p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
+
+    p.attendanceStatus=next;
+
+    let fd=new FormData();
+    fd.append("action","attendance");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("status",next);
+    sendUpdate(fd);
+  };
+
+  /* SHIRT (TEXT ONLY) */
+  c[17].textContent=p.shirt||"";
+
+  /* KIT */
+  c[18].textContent=p.kit;
+
+  c[18].onclick=()=>{
+    let next=p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+    p.kit=next;
+
+    let fd=new FormData();
+    fd.append("action","kit");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("state",next);
+    sendUpdate(fd);
+  };
+
+  /* AIRCON */
+  c[19].textContent=p.aircon;
+
+  c[19].onclick=()=>{
+    let next=p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+    p.aircon=next;
+
+    let fd=new FormData();
+    fd.append("action","aircon");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("state",next);
+    sendUpdate(fd);
+  };
 }
 
-/* ===================== */
 /* LOAD */
-/* ===================== */
 async function loadData(){
+  const res=await fetch(BASE_URL+"?sheet="+SHEET);
+  const data=await res.json();
 
-  const res = await fetch(BASE_URL+"?sheet="+SHEET);
-  const data = await res.json();
+  allData=data;
+  tbody.innerHTML="";
+  map.clear();
 
-  allData = data;
-
-  updateRoomStats(allData);
-
-  tbody.innerHTML = "";
   allData.forEach(render);
 
   updateStats(allData);
+  updateRoomStats(allData);
 }
 
-loadData();
+/* FILTER */
+function filterTable(){
+  let q=searchBox.value.toLowerCase();
+  document.querySelectorAll("tbody tr").forEach(tr=>{
+    tr.style.display=tr.innerText.toLowerCase().includes(q)?"":"none";
+  });
+}
+
+/* COUNTDOWN */
+setInterval(()=>{
+  const start=new Date("2026-04-16").getTime();
+  const end=new Date("2026-04-18").getTime();
+  const now=Date.now();
+  const t=now<start?start:end;
+
+  const d=Math.floor((t-now)/86400000);
+  const h=Math.floor((t-now)/3600000)%24;
+
+  document.getElementById("countdown").textContent=
+    now<start?`STARTS IN ${d}d ${h}h`:`ENDS IN ${d}d ${h}h`;
+},1000);
+
 setInterval(loadData,60000);
+loadData();
 
 </script>
 
