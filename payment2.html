@@ -245,7 +245,7 @@ if(!rowIndex){
   window.location.href="ylc.html";
 }
 
-/* SHOW/HIDE UI */
+/* UI TOGGLE */
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
     if(radio.value === "Online"){
@@ -260,7 +260,7 @@ paymentRadios.forEach(radio=>{
   });
 });
 
-/* SELECT PAYMENT METHOD */
+/* SELECT METHOD */
 paymentBoxes.forEach(box=>{
   box.addEventListener('click',()=>{
     paymentBoxes.forEach(b=>b.classList.remove('selected'));
@@ -275,12 +275,9 @@ receiptInput.addEventListener("change", function(){
     this.value="";
     return;
   }
-  if(this.files.length === 1){
-    this.disabled = true;
-  }
 });
 
-/* FORM SUBMIT */
+/* SUBMIT */
 document.getElementById('payment-form').addEventListener('submit', async e=>{
   e.preventDefault();
 
@@ -307,15 +304,13 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
 
   loader.style.display = "block";
   submitBtn.disabled = true;
+  submitBtn.innerText = "Processing...";
 
   try{
-
     let receiptUrl = "";
     let receiptName = "";
 
-    /* =========================
-       UPLOAD RECEIPT (ONLINE ONLY)
-    ========================= */
+    /* ===== UPLOAD RECEIPT ===== */
     if(paymentBy === "Online"){
       const file = receiptInput.files[0];
       receiptName = file.name;
@@ -338,14 +333,7 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
         body:driveData
       });
 
-      const driveText = await driveRes.text();
-
-      let driveResult;
-      try {
-        driveResult = JSON.parse(driveText);
-      } catch {
-        throw new Error("Drive upload failed (invalid response)");
-      }
+      const driveResult = await driveRes.json();
 
       if(driveResult.result !== "success"){
         throw new Error("Receipt upload failed");
@@ -354,17 +342,21 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
       receiptUrl = driveResult.url;
     }
 
-    /* =========================
-       SEND PAYMENT TO SHEET
-    ========================= */
+    /* ===== SEND PAYMENT ===== */
     const postData = new URLSearchParams();
     postData.append("action","payment");
     postData.append("rowIndex",rowIndex);
-    postData.append("sheet","WALK-IN"); // IMPORTANT FIX
+
+    // 🔥 IMPORTANT: send BOTH fields
     postData.append("payment_by", paymentBy === "Online"
       ? `Online (${method})`
       : "Onsite"
     );
+
+    postData.append("payment_status",
+      paymentBy === "Online" ? "Paid (Online)" : "To Pay Onsite"
+    );
+
     postData.append("receipt",receiptUrl);
     postData.append("receipt_name",receiptName);
 
@@ -373,20 +365,12 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
       body:postData
     });
 
-    const text = await res.text();
-
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch {
-      throw new Error("Sheet error (not JSON response)");
-    }
+    const result = await res.json();
 
     if(result.result !== "success"){
       throw new Error(result.error || "Payment failed");
     }
 
-    /* SUCCESS */
     window.location.href = "thankyou2.html?rowIndex=" + rowIndex;
 
   } catch(err){
@@ -395,6 +379,7 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
 
     loader.style.display = "none";
     submitBtn.disabled = false;
+    submitBtn.innerText = "Confirm Payment";
   }
 });
 </script>
