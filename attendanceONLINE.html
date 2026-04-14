@@ -28,7 +28,6 @@ h1 {
   font-size: 0.85rem;
 }
 
-/* STATS */
 .stats {
   display: flex;
   gap: 10px;
@@ -52,7 +51,6 @@ h1 {
   font-weight: bold;
 }
 
-/* BUTTON */
 button {
   width: 100%;
   max-width: 320px;
@@ -66,7 +64,6 @@ button {
   color: white;
 }
 
-/* DESKTOP TABLE */
 .table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -97,16 +94,12 @@ td {
   cursor: pointer;
 }
 
-/* MOBILE CARD MODE */
+/* MOBILE */
 @media (max-width: 600px) {
 
-  table, thead {
-    display: none;
-  }
+  table, thead { display: none; }
 
-  tbody {
-    display: block;
-  }
+  tbody { display: block; }
 
   tr {
     display: block;
@@ -128,10 +121,6 @@ td {
   td::before {
     content: attr(data-label);
     color: #aaa;
-  }
-
-  .payment, .attendance, .kit {
-    font-size: 1.1rem;
   }
 }
 </style>
@@ -170,19 +159,17 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbx8sCjfu06-BduZmmYE-E6
 const SHEET_NAME = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
-
 let peopleMap = new Map();
 
 const kitCycle = ["❌","🟠","✅"];
 
-// ===============================
-function updateStats(data) {
+/* STATS */
+function updateStats(data){
   document.getElementById("totalCount").textContent = data.length;
 }
 
-// ===============================
-function startCountdown() {
-
+/* COUNTDOWN */
+function startCountdown(){
   const start = new Date("2026-04-16T00:00:00").getTime();
   const end = new Date("2026-04-18T23:59:59").getTime();
 
@@ -191,10 +178,10 @@ function startCountdown() {
 
     let target, label;
 
-    if (now < start) {
+    if(now < start){
       target = start;
       label = "STARTS IN";
-    } else if (now <= end) {
+    } else if(now <= end){
       target = end;
       label = "ENDS IN";
     } else {
@@ -202,10 +189,12 @@ function startCountdown() {
       return;
     }
 
-    const d = Math.floor((target - now) / 86400000);
-    const h = Math.floor(((target - now) / 3600000) % 24);
-    const m = Math.floor(((target - now) / 60000) % 60);
-    const s = Math.floor(((target - now) / 1000) % 60);
+    const diff = target - now;
+
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff / 3600000) % 24);
+    const m = Math.floor((diff / 60000) % 60);
+    const s = Math.floor((diff / 1000) % 60);
 
     document.getElementById("countdown").textContent =
       `${label}: ${d}d ${h}h ${m}m ${s}s`;
@@ -213,12 +202,21 @@ function startCountdown() {
   }, 1000);
 }
 
-// ===============================
-function renderRow(p) {
+/* SORTING (LAST NAME A–Z) */
+function sortData(data){
+  return data.sort((a,b)=>{
+    const A = (a.lastName || "").toLowerCase();
+    const B = (b.lastName || "").toLowerCase();
+    return A.localeCompare(B);
+  });
+}
+
+/* RENDER */
+function renderRow(p){
 
   let tr = peopleMap.get(p.rowIndex);
 
-  if (!tr) {
+  if(!tr){
     tr = document.createElement("tr");
 
     tr.innerHTML = `
@@ -233,8 +231,8 @@ function renderRow(p) {
     peopleMap.set(p.rowIndex, tr);
   }
 
-  tr.children[0].textContent = p.firstName;
-  tr.children[1].textContent = p.lastName;
+  tr.children[0].textContent = p.firstName || "";
+  tr.children[1].textContent = p.lastName || "";
 
   tr.children[2].textContent =
     p.paymentIndicator === "PAID" ? "✅" :
@@ -252,38 +250,40 @@ function renderRow(p) {
   kitCell.onclick = async () => {
 
     let i = kitCycle.indexOf(kitState);
-    if (i === -1) i = 0;
+    if(i === -1) i = 0;
 
     kitState = kitCycle[(i + 1) % kitCycle.length];
     kitCell.textContent = kitState;
 
     const fd = new FormData();
-    fd.append("action", "kit");
-    fd.append("rowIndex", p.rowIndex);
-    fd.append("kit_state", kitState);
-    fd.append("sheet", SHEET_NAME);
+    fd.append("action","kit");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("kit_state",kitState);
+    fd.append("sheet",SHEET_NAME);
 
-    await fetch(BASE_URL, { method: "POST", body: fd });
+    await fetch(BASE_URL,{method:"POST",body:fd});
   };
 }
 
-// ===============================
-async function loadAttendance() {
-  const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
+/* LOAD */
+async function loadAttendance(){
+  const res = await fetch(BASE_URL+"?sheet="+SHEET_NAME);
   const data = await res.json();
 
-  if (!Array.isArray(data)) return;
+  if(!Array.isArray(data)) return;
 
   tbody.innerHTML = "";
   peopleMap.clear();
 
-  updateStats(data);
-  data.forEach(renderRow);
+  const sorted = sortData(data);
+
+  updateStats(sorted);
+  sorted.forEach(renderRow);
 }
 
 document.querySelector("button").onclick = loadAttendance;
 
-setInterval(loadAttendance, 15000);
+setInterval(loadAttendance,15000);
 
 loadAttendance();
 startCountdown();
