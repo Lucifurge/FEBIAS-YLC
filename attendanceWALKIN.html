@@ -3,195 +3,755 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Attendance | FEBIAS College of Bible</title>
-
-<link rel="icon" href="logo.ico">
+<link rel="icon" href="refine.ico">
+<title>YLC 2026 Admin Attendance System</title>
 
 <style>
-body {
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: #f8f8f8;
-  color: #1f2937;
-  padding: 2rem;
+body{
+  font-family:Segoe UI,sans-serif;
+  background: radial-gradient(circle at top, #1a1a1a, #0f0f0f);
+  color:white;
+  margin:0;
+  padding:15px;
 }
 
-h1 { text-align: center; color: #0b3d2e; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1.5rem;
+/* TITLE */
+h1{
+  text-align:center;
+  color:#ff6a00;
+  margin-bottom:5px;
+  letter-spacing:2px;
+  font-size:28px;
+  text-transform:uppercase;
 }
 
-th, td {
-  border: 1px solid #ccc;
-  padding: 0.8rem;
+.sub{
+  text-align:center;
+  color:#999;
+  margin-bottom:10px;
+  font-size:13px;
 }
 
-th {
-  background: #0b3d2e;
-  color: white;
+/* INSTRUCTIONS */
+.instructions{
+  max-width:1100px;
+  margin:12px auto;
+  background:linear-gradient(145deg,#151515,#101010);
+  border:1px solid #2a2a2a;
+  padding:14px;
+  border-radius:12px;
+  color:#ccc;
+  font-size:13px;
+  line-height:1.6;
 }
 
-.status-paid { color: green; font-weight: bold; }
-.status-onsite { color: orange; font-weight: bold; }
-.status-not { color: red; font-weight: bold; }
+/* SEARCH */
+.search-bar{
+  display:flex;
+  justify-content:center;
+  margin:15px 0;
+}
 
-.attendance-check {
-  cursor: pointer;
-  text-align: center;
-  font-size: 1.4rem;
+.search-bar input{
+  width:100%;
+  max-width:500px;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #333;
+  background:#111;
+  color:white;
+  outline:none;
+}
+
+/* STATS */
+.stats{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:15px 0;
+}
+
+.box{
+  background:linear-gradient(145deg,#1a1a1a,#141414);
+  padding:12px;
+  border-radius:12px;
+  min-width:140px;
+  text-align:center;
+  border:1px solid #2a2a2a;
+}
+
+.box span{
+  color:#ff6a00;
+  font-weight:bold;
+  font-size:20px;
+}
+
+/* ROOM BOX */
+.room-box{
+  max-width:1100px;
+  margin:12px auto;
+  background:linear-gradient(145deg,#151515,#101010);
+  border:1px solid #2a2a2a;
+  padding:12px;
+  border-radius:12px;
+  font-size:13px;
+  color:#ccc;
+}
+
+/* BADGES */
+.badge{
+  padding:4px 10px;
+  border-radius:8px;
+  font-size:12px;
+  margin-left:8px;
+  font-weight:bold;
+}
+
+.full{
+  background:#ff2e2e;
+  color:white;
+}
+
+.available{
+  background:#1db954;
+  color:white;
+}
+
+/* BUTTON */
+button{
+  display:block;
+  margin:15px auto;
+  padding:12px 22px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.2s;
+  box-shadow:0 0 10px rgba(255,106,0,0.3);
+  font-size:14px;
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 18px rgba(255,106,0,0.5);
+}
+
+/* TABLE */
+.table-wrap{
+  overflow-x:auto;
+  margin-top:15px;
+}
+
+table{
+  width:100%;
+  min-width:1600px;
+  border-collapse:collapse;
+}
+
+th{
+  background:linear-gradient(145deg,#1a1a1a,#111);
+  color:#ff6a00;
+  padding:12px;
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+
+td{
+  padding:10px;
+  border:1px solid #1f1f1f;
+  background:#121212;
+  text-align:center;
+  font-size:13px;
+}
+
+/* SELECT */
+select{
+  background:#111;
+  color:white;
+  border:1px solid #333;
+  padding:6px;
+  border-radius:8px;
 }
 </style>
 </head>
+
 <body>
 
-<h1>YLC 2026 Attendance</h1>
-<p>Click the emoji to update attendance (✅ = Attended, 🟠 = Waiting, ❌ = Cancelled).</p>
+<h1>YLC 2026 ADMIN ATTENDANCE SYSTEM</h1>
+<div class="sub">FEBIAS College of Bible System</div>
 
-<button onclick="loadAttendance()">🔄 Refresh Now</button>
+<div class="instructions">
+<b>HOW TO USE SYSTEM:</b><br>
+1. Search campers instantly using the search bar.<br>
+2. Click PAY → toggles PAID / NOT PAID (₱1500 auto display).<br>
+3. Click ATT → updates attendance status.<br>
+4. Choose Mode (Onsite / GCASH / BANK).<br>
+5. ROOM_AC has max 18 campers per room.<br>
+6. Full rooms are disabled automatically.<br>
+7. Shirt sizes now include up to 3XL.<br>
+</div>
 
-<table id="attendance-table">
+<div class="search-bar">
+  <input type="text" placeholder="Search camper name, room, church...">
+</div>
+
+<div class="stats">
+  <div class="box">Total<br><span id="total">0</span></div>
+  <div class="box">Paid<br><span id="paid">0</span></div>
+  <div class="box">Waiting<br><span id="waiting">0</span></div>
+</div>
+
+<div class="room-box" id="roomStats">
+<b>ROOM AC STATUS</b><br>
+Loading...
+</div>
+
+<button>🔄 REFRESH</button>
+
+<div class="table-wrap">
+<table>
 <thead>
 <tr>
-<th>First Name</th>
-<th>Last Name</th>
-<th>Payment Status</th>
-<th>Attendance</th>
+  <th>#</th>
+  <th>Name</th>
+  <th>Gender</th>
+  <th>Room</th>
+  <th>Payment</th>
+  <th>Amount</th>
+  <th>Mode</th>
+  <th>PAY</th>
+  <th>ATT</th>
+  <th>Shirt</th>
+  <th>Kit</th>
+  <th>Aircon</th>
+  <th>ROOM_AC</th>
 </tr>
 </thead>
+
 <tbody></tbody>
 </table>
+</div>
+
+
+
 
 <script>
-const BASE_URL = "https://script.google.com/macros/s/AKfycbww2ngKYi48M1wtwoOXhhE4uP71mFCT7DFa8PneyfS-NKJGaVi1Lc9er5o5qKsWa36UBg/exec";
-const SHEET_NAME = "Walk-in"; // ✅ target sheet
-const tbody = document.querySelector("#attendance-table tbody");
 
-let peopleMap = new Map();
-let localOverrides = new Map();
-const statusCycle = ["ON-waiting", "Attended", "Cancelled"];
-let lastManualUpdate = 0;
 
-// Render or update a row
-function renderRow(person) {
-  let tr = peopleMap.get(person.rowIndex);
 
-  if (!tr) {
-    tr = document.createElement("tr");
-    tr.dataset.row = person.rowIndex;
-    tr.dataset.locked = "false";
-    tr.innerHTML = `
-      <td class="first"></td>
-      <td class="last"></td>
-      <td class="payment"></td>
-      <td class="attendance-check"></td>
-    `;
-    tbody.appendChild(tr);
-    peopleMap.set(person.rowIndex, tr);
-  }
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyUmPbXLVWTDs3peBSZRH95MWA8xNegVvoMkB5WfRxBi6ItRM1R4wZJxHaIAv4tVIdE/exec";
+const SHEET = "WALK-IN";
 
-  // Use local override if exists
-  if (localOverrides.has(person.rowIndex)) {
-    person.attendanceStatus = localOverrides.get(person.rowIndex);
-  }
+const AC_ROOMS = [
+  "Berean Area",
+  "Berean – Abraham 2",
+  "Berean – Joshua 3",
+  "Berean – Elijah 3",
+  "Berean – Elisha 3",
+  "Sharon – Deborah 2",
+  "Sharon – Martha 3",
+  "Sharon – Abigail 2",
+  "Sharon – Eve 2"
+];
 
-  tr.querySelector(".first").textContent = person.firstName || "";
-  tr.querySelector(".last").textContent = person.lastName || "";
+let tbody = document.querySelector("tbody");
+let allData = [];
+let roomCount = {};
+let lastEdit = 0;
 
-  const paymentCell = tr.querySelector(".payment");
-  const attendanceCell = tr.querySelector(".attendance-check");
+const clean = v => (v || "").toString().trim();
 
-  // Payment UI helper
-  function updatePaymentUI(status) {
-    const lower = (status || "").toLowerCase();
-    if (lower.includes("online")) {
-      paymentCell.textContent = "✅ Paid";
-      paymentCell.className = "payment status-paid";
-    } else if (lower.includes("onsite")) {
-      paymentCell.textContent = "⚠️ On-Waiting";
-      paymentCell.className = "payment status-onsite";
-    } else {
-      paymentCell.textContent = "❌ Not Paid";
-      paymentCell.className = "payment status-not";
+// =========================
+// ICONS (EMOJI MATCHED TO APPSCRIPT)
+// =========================
+function payIcon(v){
+  if(v?.includes("PAID")) return "PAID ✅";
+  if(v?.includes("ONSITE")) return "ONSITE 🟠";
+  return "NOT PAID ❌";
+}
+
+function attIcon(v){
+  if(v === "Attended") return "✔ ATTENDED";
+  if(v === "ON-waiting") return "🟠 WAITING";
+  return "❌ CANCELLED";
+}
+
+// =========================
+// STATS (FIXED COLUMN)
+// =========================
+function updateStats(){
+  let paid = 0, waiting = 0;
+
+  allData.forEach(p=>{
+    if((p.payment_status || "").includes("PAID")) paid++;
+    if((p.payment_status || "").includes("ONSITE")) waiting++;
+  });
+
+  document.getElementById("total").textContent = allData.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+}
+
+// =========================
+// ROOM COUNT
+// =========================
+function updateRoomStats(){
+  roomCount = {};
+  AC_ROOMS.forEach(r => roomCount[r] = 0);
+
+  allData.forEach(p=>{
+    let r = clean(p.room_ac);
+    if(roomCount[r] !== undefined){
+      roomCount[r]++;
     }
+  });
+
+  let html = "<b>ROOM AC STATUS</b><br>";
+
+  AC_ROOMS.forEach(r=>{
+    let c = roomCount[r];
+    let full = c >= 18;
+
+    html += `${r} <span class="badge ${full?"full":"available"}">${c}/18</span><br>`;
+  });
+
+  document.getElementById("roomStats").innerHTML = html;
+}
+
+// =========================
+// ROW BUILD
+// =========================
+function createRow(p){
+
+  let tr = document.createElement("tr");
+  tr.dataset.id = p.rowIndex;
+
+  tr.innerHTML = `
+    <td>${p.rowIndex}</td>
+    <td>${p.firstName || ""} ${p.lastName || ""}</td>
+    <td>${p.gender || ""}</td>
+    <td>${p.room_ac || ""}</td>
+
+    <td class="paytxt">${payIcon(p.payment_status)}</td>
+    <td>${p.payment_status?.includes("PAID") ? "₱1500" : ""}</td>
+
+    <td>
+      <select class="mode">
+        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
+        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
+      </select>
+    </td>
+
+    <td class="clickable pay">${payIcon(p.payment_indicator)}</td>
+    <td class="clickable att">${attIcon(p.attendance_status)}</td>
+
+    <td>
+      <select class="shirt">
+        <option>S</option><option>M</option><option>L</option>
+        <option>XL</option><option>XXL</option><option>3XL</option>
+      </select>
+    </td>
+
+    <td class="clickable kit">${p.kit_distribution || "❌"}</td>
+    <td class="clickable aircon">${p.aircon_pref || "❌"}</td>
+
+    <td>
+      <select class="roomac"></select>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+
+  const roomSelect = tr.querySelector(".roomac");
+
+  function refreshRooms(){
+    roomSelect.innerHTML =
+      `<option value="">ROOM AC</option>` +
+      AC_ROOMS.map(r=>{
+        let count = roomCount[r] || 0;
+        let full = count >= 18;
+
+        return `
+          <option value="${r}"
+            ${p.room_ac===r?"selected":""}
+            ${full && p.room_ac!==r?"disabled":""}>
+            ${r} ${full?"(FULL)":""}
+          </option>
+        `;
+      }).join("");
   }
 
-  // Attendance emoji helper
-  function setEmoji(status) {
-    attendanceCell.textContent =
-      status === "Attended" ? "✅" :
-      status === "Cancelled" ? "❌" : "🟠";
-  }
+  refreshRooms();
 
-  updatePaymentUI(person.paymentStatus);
-  setEmoji(person.attendanceStatus);
+  // =========================
+  // PAYMENT TOGGLE
+  // =========================
+  tr.querySelector(".pay").onclick = ()=>{
+    lastEdit = Date.now();
 
-  attendanceCell.onclick = async () => {
-    if (tr.dataset.locked === "true") return; // prevent double click
-    tr.dataset.locked = "true";
+    let next;
+    if(!p.payment_indicator || p.payment_indicator.includes("NOT")) next = "ON-WAITING PAYMENT 🟠";
+    else if(p.payment_indicator.includes("ON-WAITING")) next = "PAID ✅";
+    else next = "NOT PAID ❌";
 
-    let current = localOverrides.get(person.rowIndex) || person.attendanceStatus;
-    let idx = statusCycle.indexOf(current);
-    if (idx === -1) idx = 0;
-    let newStatus = statusCycle[(idx + 1) % statusCycle.length];
+    p.payment_indicator = next;
 
-    // Save locally first
-    localOverrides.set(person.rowIndex, newStatus);
-    setEmoji(newStatus);
+    tr.querySelector(".pay").textContent = payIcon(next);
+    tr.querySelector(".paytxt").textContent = payIcon(next);
 
-    if (newStatus === "Attended") updatePaymentUI("Online Payment");
-    else if (newStatus === "ON-waiting") updatePaymentUI("Onsite Payment");
-    else updatePaymentUI("Not Paid");
+    send("payment_toggle",{
+      rowIndex:p.rowIndex,
+      value:next
+    });
 
-    // Send update to backend
-    const formData = new FormData();
-    formData.append("action", "attendance");
-    formData.append("rowIndex", person.rowIndex);
-    formData.append("attendance_status", newStatus);
-    formData.append("sheet", SHEET_NAME);
+    updateStats();
+  };
 
-    try {
-      const res = await fetch(BASE_URL, { method: "POST", body: formData });
-      const json = await res.json();
-      if (json.success) {
-        localOverrides.set(person.rowIndex, newStatus);
-        lastManualUpdate = Date.now();
-        // clear override after 5s to allow auto-refresh
-        setTimeout(() => localOverrides.delete(person.rowIndex), 5000);
-      }
-    } catch (err) {
-      console.error("Sync error:", err);
-    } finally {
-      tr.dataset.locked = "false";
+  // =========================
+  // ATTENDANCE
+  // =========================
+  tr.querySelector(".att").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next;
+    if(p.attendance_status === "Cancelled") next = "ON-waiting";
+    else if(p.attendance_status === "ON-waiting") next = "Attended";
+    else next = "Cancelled";
+
+    p.attendance_status = next;
+    tr.querySelector(".att").textContent = attIcon(next);
+
+    send("attendance",{rowIndex:p.rowIndex,status:next});
+  };
+
+  // =========================
+  // KIT
+  // =========================
+  tr.querySelector(".kit").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next = p.kit_distribution==="❌"?"🟠":p.kit_distribution==="🟠"?"✅":"❌";
+    p.kit_distribution = next;
+
+    tr.querySelector(".kit").textContent = next;
+
+    send("kit",{rowIndex:p.rowIndex,state:next});
+  };
+
+  // =========================
+  // AIRCON
+  // =========================
+  tr.querySelector(".aircon").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next = p.aircon_pref==="❌"?"🟠":p.aircon_pref==="🟠"?"✅":"❌";
+    p.aircon_pref = next;
+
+    tr.querySelector(".aircon").textContent = next;
+
+    send("aircon",{rowIndex:p.rowIndex,state:next});
+  };
+
+  // =========================
+  // ROOM AC
+  // =========================
+  roomSelect.onchange = (e)=>{
+    lastEdit = Date.now();
+
+    let val = clean(e.target.value);
+
+    if(val && roomCount[val] >= 18 && val !== p.room_ac){
+      alert("ROOM FULL");
+      e.target.value = p.room_ac;
+      return;
     }
+
+    p.room_ac = val;
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
+
+    updateRoomStats();
+    refreshRooms();
+  };
+
+  // =========================
+  // SHIRT
+  // =========================
+  const shirt = tr.querySelector(".shirt");
+  shirt.value = p.shirt_size || "";
+
+  shirt.onchange = (e)=>{
+    lastEdit = Date.now();
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
 }
 
-// Load data
-async function loadAttendance() {
-  try {
-    const res = await fetch(BASE_URL + "?sheet=" + SHEET_NAME);
-    const data = await res.json();
-    if (!Array.isArray(data)) return;
-    data.forEach(person => renderRow(person));
-  } catch (err) {
-    console.error("Load error:", err);
+// =========================
+// SEND TO APPSCRIPT
+// =========================
+function send(action,data){
+  let fd = new FormData();
+  fd.append("action",action);
+
+  for(let k in data){
+    fd.append(k,data[k]);
   }
+
+  fetch(BASE_URL,{method:"POST",body:fd});
 }
 
-// Manual refresh button
-document.querySelector("button").onclick = () => {
-  lastManualUpdate = Date.now();
-  loadAttendance();
-};
+// =========================
+// LOAD DATA
+// =========================
+async function loadData(){
+  if(Date.now() - lastEdit < 4000) return;
 
-// Auto-refresh every 15s, but skip if a manual update just occurred
-setInterval(() => {
-  if (Date.now() - lastManualUpdate > 5000) loadAttendance();
-}, 15000);
+  let res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let data = await res.json();
 
-loadAttendance();
+  allData = data;
+
+  tbody.innerHTML = "";
+  updateRoomStats();
+  allData.forEach(createRow);
+  updateStats();
+}
+
+loadData();
+setInterval(loadData,5000);
+
+// SEARCH
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  let q = e.target.value.toLowerCase();
+
+  document.querySelectorAll("tbody tr").forEach(r=>{
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+});
+  AC_ROOMS.forEach(r=>{
+    let c = roomCount[r];
+    let full = c >= 18;
+
+    html += `${r} <span class="badge ${full?"full":"available"}">${c}/18</span><br>`;
+  });
+
+  document.getElementById("roomStats").innerHTML = html;
+}
+
+/* =========================
+   CREATE ROW
+========================= */
+function createRow(p){
+
+  let tr = document.createElement("tr");
+  tr.dataset.id = p.rowIndex;
+
+  tr.innerHTML = `
+    <td>${p.rowIndex}</td>
+    <td>${p.firstName} ${p.lastName}</td>
+    <td>${p.gender}</td>
+    <td>${p.room}</td>
+
+    <td class="paytxt">${payIcon(p.paymentIndicator)}</td>
+    <td class="amt">${p.paymentIndicator==="PAID"?"₱1500":""}</td>
+
+    <td>
+      <select class="mode">
+        <option ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
+        <option ${p.modeOfPayment==="GCASH"?"selected":""}>GCASH</option>
+        <option ${p.modeOfPayment==="BANK"?"selected":""}>BANK</option>
+      </select>
+    </td>
+
+    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
+
+    <td>
+      <select class="shirt">
+        <option>S</option><option>M</option><option>L</option>
+        <option>XL</option><option>XXL</option><option>3XL</option>
+      </select>
+    </td>
+
+    <td class="clickable kit">${p.kit || "❌"}</td>
+    <td class="clickable aircon">${p.aircon || "❌"}</td>
+
+    <td>
+      <select class="roomac"></select>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+
+  /* ===== ROOM OPTIONS (FIXED) ===== */
+  const roomSelect = tr.querySelector(".roomac");
+
+  function refreshRoomOptions(){
+    roomSelect.innerHTML = `<option value="">ROOM AC</option>` +
+      AC_ROOMS.map(r=>{
+        let count = roomCount[r] || 0;
+        let full = count >= 18;
+
+        return `
+          <option value="${r}"
+            ${p.room_ac===r?"selected":""}
+            ${full && p.room_ac!==r?"disabled":""}>
+            ${r} ${full?"(FULL)":""}
+          </option>
+        `;
+      }).join("");
+  }
+
+  refreshRoomOptions();
+
+  /* =========================
+     PAYMENT (3 STATE FIX)
+  ========================= */
+  tr.querySelector(".pay").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next;
+    if(p.paymentIndicator === "NOT PAID" || !p.paymentIndicator){
+      next = "ON-WAITING PAYMENT";
+    } else if(p.paymentIndicator === "ON-WAITING PAYMENT"){
+      next = "PAID";
+    } else {
+      next = "NOT PAID";
+    }
+
+    p.paymentIndicator = next;
+
+    tr.querySelector(".pay").textContent = payIcon(next);
+    tr.querySelector(".paytxt").textContent = payIcon(next);
+    tr.querySelector(".amt").textContent = next==="PAID"?"₱1500":"";
+
+    send("payment",{rowIndex:p.rowIndex,value:next});
+    updateStats();
+  };
+
+  /* =========================
+     ATTENDANCE (FIXED)
+  ========================= */
+  tr.querySelector(".att").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next;
+    if(p.attendanceStatus === "Cancelled"){
+      next = "ON-waiting";
+    } else if(p.attendanceStatus === "ON-waiting"){
+      next = "Attended";
+    } else {
+      next = "Cancelled";
+    }
+
+    p.attendanceStatus = next;
+    tr.querySelector(".att").textContent = attIcon(next);
+
+    send("attendance",{rowIndex:p.rowIndex,status:next});
+  };
+
+  /* KIT */
+  tr.querySelector(".kit").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+    p.kit = next;
+    tr.querySelector(".kit").textContent = next;
+
+    send("kit",{rowIndex:p.rowIndex,state:next});
+  };
+
+  /* AIRCON */
+  tr.querySelector(".aircon").onclick = ()=>{
+    lastEdit = Date.now();
+
+    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+    p.aircon = next;
+    tr.querySelector(".aircon").textContent = next;
+
+    send("aircon",{rowIndex:p.rowIndex,state:next});
+  };
+
+  /* ROOM AC */
+  roomSelect.onchange = (e)=>{
+    lastEdit = Date.now();
+
+    let newRoom = clean(e.target.value);
+    let oldRoom = clean(p.room_ac);
+
+    if(newRoom && roomCount[newRoom] >= 18 && newRoom !== oldRoom){
+      alert("ROOM FULL (18)");
+      e.target.value = oldRoom;
+      return;
+    }
+
+    p.room_ac = newRoom;
+
+    send("room_ac",{rowIndex:p.rowIndex,value:newRoom});
+
+    updateRoomStats();
+    refreshRoomOptions();
+  };
+
+  /* SHIRT */
+  const shirt = tr.querySelector(".shirt");
+  shirt.value = p.shirt || "";
+
+  shirt.onchange = (e)=>{
+    lastEdit = Date.now();
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+}
+
+/* =========================
+   SEND
+========================= */
+function send(action,data){
+  let fd = new FormData();
+  fd.append("action",action);
+
+  for(let k in data){
+    fd.append(k,data[k]);
+  }
+
+  fetch(BASE_URL,{method:"POST",body:fd});
+}
+
+/* =========================
+   LOAD (NO SNAP BACK)
+========================= */
+async function loadData(){
+
+  if(Date.now() - lastEdit < 5000) return;
+
+  let res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let data = await res.json();
+
+  allData = data;
+
+  tbody.innerHTML="";
+  updateRoomStats();
+  allData.forEach(createRow);
+
+  updateStats();
+}
+
+loadData();
+setInterval(loadData,5000);
+
+/* SEARCH */
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  let q = e.target.value.toLowerCase();
+
+  document.querySelectorAll("tbody tr").forEach(r=>{
+    r.style.display = r.innerText.toLowerCase().includes(q)?"":"none";
+  });
+});
+
 
 </script>
 
