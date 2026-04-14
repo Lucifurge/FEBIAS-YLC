@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YLC 2026 Attendance System</title>
-<link rel="icon" href="refine.ico">
 
 <style>
 body{
@@ -18,20 +17,18 @@ body{
 h1{text-align:center;color:#ff6a00}
 .sub{text-align:center;color:#aaa}
 
-.legend,.stats{
+.stats{
   display:flex;
-  flex-wrap:wrap;
   gap:10px;
   justify-content:center;
-  margin:10px 0;
+  flex-wrap:wrap;
 }
 
-.box,.legend-box{
+.box{
   background:#1a1a1a;
-  border:1px solid #333;
   padding:10px;
   border-radius:10px;
-  min-width:140px;
+  min-width:120px;
   text-align:center;
 }
 
@@ -42,51 +39,29 @@ h1{text-align:center;color:#ff6a00}
   padding:10px;
   border-radius:10px;
   margin:10px 0;
-}
-
-.search{
-  display:flex;
-  justify-content:center;
-}
-
-.search input{
-  width:100%;
-  max-width:400px;
-  padding:10px;
-  border-radius:8px;
-  background:#1a1a1a;
-  border:1px solid #333;
-  color:white;
+  font-size:13px;
 }
 
 table{
   width:100%;
-  min-width:1700px;
+  min-width:1800px;
   border-collapse:collapse;
 }
 
 th{
-  position:sticky;
-  top:0;
   background:#1a1a1a;
   color:#ff6a00;
   padding:10px;
+  position:sticky;
+  top:0;
 }
 
 td{
-  border:1px solid #222;
   background:#121212;
-  padding:8px;
+  border:1px solid #222;
+  padding:6px;
   text-align:center;
-  font-size:13px;
 }
-
-.clickable{
-  cursor:pointer;
-  font-size:18px;
-  transition:0.1s;
-}
-.clickable:active{transform:scale(0.9)}
 
 select{
   background:#1a1a1a;
@@ -95,44 +70,30 @@ select{
   padding:5px;
   border-radius:6px;
 }
+
+.clickable{cursor:pointer}
+.clickable:active{transform:scale(0.9)}
 </style>
 </head>
 
 <body>
 
 <h1>YLC 2026 ATTENDANCE</h1>
-<div class="sub">FEBIAS System</div>
-
-<div class="legend">
-  <div class="legend-box">❌ Not Paid</div>
-  <div class="legend-box">🟠 Waiting</div>
-  <div class="legend-box">✅ Paid</div>
-</div>
+<div class="sub">FEBIAS SYSTEM</div>
 
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
   <div class="box">Waiting<br><span id="waiting">0</span></div>
-  <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
 </div>
 
 <div id="roomStats"></div>
 
-<button onclick="loadData()">🔄 REFRESH</button>
-
-<div class="search">
-  <input id="searchBox" oninput="filterTable()" placeholder="Search">
-</div>
-
 <table>
 <thead>
 <tr>
-  <th>#</th><th>Last</th><th>First</th><th>Gender</th><th>Age</th>
-  <th>Contact</th><th>Church</th><th>Class</th><th>Room</th>
-  <th>Payment Cat</th><th>Amount</th><th>Mode</th>
-  <th>PAY</th><th>ATT</th>
-  <th>✔</th><th>🟠</th><th>❌</th>
-  <th>Kit</th><th>Aircon</th><th>Room_AC</th>
+  <th>#</th><th>Name</th><th>Room</th><th>ROOM_AC</th>
+  <th>Payment</th><th>Attendance</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -143,17 +104,22 @@ select{
 const BASE_URL="https://script.google.com/macros/s/AKfycbxNQDvbtcnYF0Bhw0xwEp_2diIT6my0Z-YdUjD45G1mhdtkTc1eYFfH6kgMm_sPISt76g/exec";
 const SHEET="Pre-Registration";
 
+/* AC ROOMS */
 const AC_ROOMS=[
-"Berean Area","Berean – Abraham 2","Berean – Joshua 3",
-"Berean – Elijah 3","Berean – Elisha 3",
-"Sharon – Deborah 2","Sharon – Martha 3",
-"Sharon – Abigail 2","Sharon – Eve 2"
+"Berean – Abraham 2",
+"Berean – Joshua 3",
+"Berean – Elijah 3",
+"Berean – Elisha 3",
+"Sharon – Deborah 2",
+"Sharon – Martha 3",
+"Sharon – Abigail 2",
+"Sharon – Eve 2"
 ];
 
-const tbody=document.querySelector("tbody");
-let map=new Map(), allData=[];
+let dataStore=[];
+let map=new Map();
+let roomCount={};
 
-/* FAST QUEUE */
 let queue=[],running=false;
 function send(fd){queue.push(fd);run();}
 async function run(){
@@ -166,13 +132,14 @@ async function run(){
 }
 
 /* ICONS */
-const pay=v=>v==="PAID"?"✅ PAID":v==="ON-WAITING PAYMENT"?"🟠 WAITING":"❌ NOT PAID";
+const pay=v=>v==="PAID"?"✅":v==="ON-WAITING PAYMENT"?"🟠":"❌";
 const att=v=>v==="Attended"?"✅":v==="ON-waiting"?"🟠":"❌";
 
 /* STATS */
 function stats(d){
- let t=d.length,p=0,w=0;
+ let t=0,p=0,w=0;
  d.forEach(x=>{
+  t++;
   if(x.paymentIndicator==="PAID")p++;
   if(x.paymentIndicator==="ON-WAITING PAYMENT")w++;
  });
@@ -181,30 +148,45 @@ function stats(d){
  waiting.textContent=w;
 }
 
-/* ROOM + ROOM_AC */
+/* ROOM COUNT + COLORS */
 function roomStats(d){
- let c={};
- AC_ROOMS.forEach(r=>c[r]=0);
+
+ roomCount={};
+ AC_ROOMS.forEach(r=>roomCount[r]=0);
 
  d.forEach(x=>{
-  if(c[x.room]!=null) c[x.room]++;
+  if(roomCount[x.room_ac]!=null){
+   roomCount[x.room_ac]++;
+  }
  });
 
- let html="<b>ROOMS</b><br>";
+ let html="<b>A/C ROOMS</b><br>";
+
  AC_ROOMS.forEach(r=>{
-  let n=c[r]||0;
-  html+=`${r}: ${n}/18 ${n>=18?"❌ FULL":""}<br>`;
+  let n=roomCount[r]||0;
+
+  let color=
+   n>=18?"🔴":
+   n>=15?"🟠":"🟢";
+
+  html+=`${color} ${r}: ${n}/18<br>`;
  });
 
  roomStatsBox.innerHTML=html;
 }
 
+/* CHECK IF FULL */
+function isFull(room){
+ return (roomCount[room]||0)>=18;
+}
+
 /* RENDER */
 function render(p){
+
  let tr=map.get(p.rowIndex);
  if(!tr){
   tr=document.createElement("tr");
-  tr.innerHTML="<td></td>".repeat(20);
+  tr.innerHTML="<td></td><td></td><td></td><td></td><td></td><td></td>";
   tbody.appendChild(tr);
   map.set(p.rowIndex,tr);
  }
@@ -212,50 +194,48 @@ function render(p){
  const c=tr.children;
 
  c[0].textContent=p.rowIndex;
- c[1].textContent=p.lastName;
- c[2].textContent=p.firstName;
- c[3].textContent=p.gender;
- c[4].textContent=p.age;
- c[5].textContent=p.contact;
- c[6].textContent=p.church;
- c[7].textContent=p.classification;
+ c[1].textContent=(p.firstName+" "+p.lastName);
+ c[2].textContent=p.room;
 
- c[8].textContent=p.room;
+ /* ROOM_AC (FIXED + LOCKED WHEN FULL) */
+ let disabled=isFull(p.room_ac)&&p.room_ac!==p.room_ac;
 
- c[9].textContent=p.paymentCategory;
- c[10].textContent=p.amount;
-
- /* MODE */
- c[11].innerHTML=`
- <select onchange="mode(${p.rowIndex},this.value)">
- <option>Onsite</option>
- <option>GCASH</option>
- <option>BANK</option>
- <option>Onsite BO</option>
+ c[3].innerHTML=`
+ <select onchange="setRoomAC(${p.rowIndex},this.value)">
+ <option value="">--AC ROOM--</option>
+ ${AC_ROOMS.map(r=>`
+ <option value="${r}" ${p.room_ac===r?"selected":""} ${isFull(r)&&p.room_ac!==r?"disabled":""}>
+ ${r} ${isFull(r)&&p.room_ac!==r?"(FULL)":""}
+ </option>
+ `).join("")}
  </select>`;
 
- c[11].querySelector("select").value=p.modeOfPayment||"Onsite";
-
- c[12].textContent=pay(p.paymentIndicator);
- c[12].onclick=()=>send(fd("payment",p.rowIndex,p.paymentIndicator==="PAID"?"NOT PAID":"PAID"));
-
- c[13].textContent=att(p.attendanceStatus);
- c[13].onclick=()=>send(fd("attendance",p.rowIndex,p.attendanceStatus==="Attended"?"Cancelled":"Attended"));
-
- c[14].textContent=p.attendedIcon;
- c[15].textContent=p.waitingIcon;
- c[16].textContent=p.cancelledIcon;
-
- c[17].textContent=p.kit;
- c[17].onclick=()=>send(fd("kit",p.rowIndex,p.kit==="❌"?"🟠":"❌"));
-
- c[18].textContent=p.aircon;
- c[18].onclick=()=>send(fd("aircon",p.rowIndex,p.aircon==="❌"?"🟠":"❌"));
-
- c[19].textContent=p.room_ac||"";
+ c[4].textContent=pay(p.paymentIndicator);
+ c[5].textContent=att(p.attendanceStatus);
 }
 
-/* FORM DATA */
+/* ROOM AC UPDATE (OPTIMIZED) */
+function setRoomAC(row,val){
+
+ let old=dataStore.find(x=>x.rowIndex===row);
+
+ if(old) old.room_ac=val;
+
+ renderOptimistic();
+
+ send(fd("room_ac",row,val));
+}
+
+/* OPTIMISTIC FAST UI */
+function renderOptimistic(){
+ tbody.innerHTML="";
+ map.clear();
+ dataStore.forEach(render);
+ stats(dataStore);
+ roomStats(dataStore);
+}
+
+/* FORM */
 function fd(a,r,v){
  let f=new FormData();
  f.append("action",a);
@@ -265,41 +245,15 @@ function fd(a,r,v){
  return f;
 }
 
-/* MODE UPDATE */
-function mode(r,v){
- send(fd("mode",r,v));
-}
-
 /* LOAD */
 async function loadData(){
  const res=await fetch(BASE_URL+"?sheet="+SHEET);
- allData=await res.json();
+ dataStore=await res.json();
 
- tbody.innerHTML="";
- map.clear();
-
- allData.forEach(render);
-
- stats(allData);
- roomStats(allData);
+ renderOptimistic();
 }
 
-/* FILTER */
-function filterTable(){
- let q=search.value.toLowerCase();
- document.querySelectorAll("tbody tr").forEach(tr=>{
-  tr.style.display=tr.innerText.toLowerCase().includes(q)?"":"none";
- });
-}
-
-/* COUNTDOWN */
-setInterval(()=>{
- let s=new Date("2026-04-16").getTime();
- let n=Date.now();
- let d=Math.floor((s-n)/86400000);
- countdown.textContent=`STARTS IN ${d}D`;
-},1000);
-
+/* INIT */
 setInterval(loadData,60000);
 loadData();
 
