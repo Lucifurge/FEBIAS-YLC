@@ -16,7 +16,8 @@ body {
 }
 
 h1 { text-align: center; color: #ff6a00; }
-.sub { text-align: center; color: #aaa; margin-bottom: 10px; }
+
+.sub { text-align: center; color: #aaa; }
 
 .stats { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
 
@@ -55,10 +56,7 @@ td {
   font-size:13px;
 }
 
-.clickable {
-  cursor:pointer;
-  font-size:18px;
-}
+.clickable { cursor:pointer; font-size:16px; }
 
 select {
   background:#1a1a1a;
@@ -66,19 +64,6 @@ select {
   border:1px solid #333;
   padding:5px;
   border-radius:6px;
-}
-
-button {
-  width:100%;
-  max-width:300px;
-  margin:10px auto;
-  display:block;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:linear-gradient(45deg,#ff6a00,#ff2e00);
-  color:white;
-  font-weight:bold;
 }
 </style>
 </head>
@@ -92,7 +77,6 @@ button {
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
   <div class="box">Waiting<br><span id="waiting">0</span></div>
-  <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
 </div>
 
 <div id="roomStats" style="margin:10px 0;background:#1a1a1a;padding:10px;border-radius:10px;"></div>
@@ -103,14 +87,12 @@ button {
 <table>
 <thead>
 <tr>
-  <th>#</th><th>Last</th><th>First</th><th>Gender</th><th>Age</th>
-  <th>Contact</th><th>Church</th><th>Class</th><th>Room</th>
-
-  <th>Payment Cat</th><th>Amount</th><th>Mode</th>
-
+  <th>#</th><th>Name</th><th>Gender</th><th>Room</th>
+  <th>Payment</th><th>Amount</th>
+  <th>Mode</th>
   <th>PAY</th><th>ATT</th>
-
-  <th>Shirt</th><th>Kit</th><th>Aircon</th><th>ROOM_AC</th>
+  <th>Shirt</th><th>Kit</th><th>Aircon</th>
+  <th>ROOM_AC</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -119,10 +101,9 @@ button {
 
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
+const BASE_URL = "https://script.google.com/macros/s/YOUR_SCRIPT/exec";
 const SHEET = "Pre-Registration";
 
-/* ONLY AC ROOMS */
 const AC_ROOMS = [
   "Berean Area",
   "Berean – Abraham 2",
@@ -135,18 +116,17 @@ const AC_ROOMS = [
   "Sharon – Eve 2"
 ];
 
-const tbody = document.querySelector("tbody");
-
-let map = new Map();
+let tbody = document.querySelector("tbody");
 let allData = [];
 
-/* ICONS */
+/* PAYMENT ICON */
 function payIcon(v){
   if(v==="PAID") return "✅ PAID";
   if(v==="ON-WAITING PAYMENT") return "🟠 WAITING";
   return "❌ NOT PAID";
 }
 
+/* ATT ICON */
 function attIcon(v){
   if(v==="Attended") return "✅";
   if(v==="ON-waiting") return "🟠";
@@ -155,23 +135,20 @@ function attIcon(v){
 
 /* STATS */
 function updateStats(data){
-  let total = data.length;
-  let paid = 0;
-  let waiting = 0;
+  let paid=0, waiting=0;
 
   data.forEach(p=>{
     if(p.paymentIndicator==="PAID") paid++;
     if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
   });
 
-  document.getElementById("total").textContent = total;
+  document.getElementById("total").textContent = data.length;
   document.getElementById("paid").textContent = paid;
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* ROOM AC STATS */
+/* ROOM AC */
 function updateRoomStats(data){
-
   let map = {};
   AC_ROOMS.forEach(r=>map[r]=0);
 
@@ -182,10 +159,8 @@ function updateRoomStats(data){
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
-
   AC_ROOMS.forEach(r=>{
-    let c = map[r] || 0;
-    html += `${r}: ${c}/18 ${c>=18?"❌ FULL":""}<br>`;
+    html += `${r}: ${map[r]||0}/18<br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -193,41 +168,36 @@ function updateRoomStats(data){
 
 /* RENDER */
 function render(p){
-
   let tr = document.createElement("tr");
 
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
-    <td>${p.lastName}</td>
-    <td>${p.firstName}</td>
+    <td>${p.firstName} ${p.lastName}</td>
     <td>${p.gender}</td>
-    <td>${p.age}</td>
-    <td>${p.contact}</td>
-    <td>${p.church}</td>
-    <td>${p.classification}</td>
-
     <td>${p.room}</td>
 
-    <td>${p.paymentCategory}</td>
-    <td>${p.amount}</td>
-    <td>${p.modeOfPayment}</td>
-
-    <td class="clickable">${payIcon(p.paymentIndicator)}</td>
-    <td class="clickable">${attIcon(p.attendanceStatus)}</td>
+    <td>${payIcon(p.paymentIndicator)}</td>
+    <td class="amt">${p.amount || ""}</td>
 
     <td>
-      <select class="shirt">
-        <option>XS</option><option>S</option><option>M</option>
-        <option>L</option><option>XL</option><option>XXL</option>
+      <select class="mode">
+        <option>Onsite</option>
+        <option>GCASH</option>
+        <option>BANK</option>
       </select>
     </td>
+
+    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
+
+    <td><select><option>S</option><option>M</option><option>L</option></select></td>
 
     <td class="clickable kit">${p.kit||"❌"}</td>
     <td class="clickable aircon">${p.aircon||"❌"}</td>
 
     <td>
       <select class="roomac">
-        <option value="">--ROOM AC--</option>
+        <option value="">ROOM AC</option>
         ${AC_ROOMS.map(r=>`<option ${p.room_ac===r?"selected":""}>${r}</option>`).join("")}
       </select>
     </td>
@@ -235,28 +205,28 @@ function render(p){
 
   tbody.appendChild(tr);
 
-  /* PAYMENT */
-  tr.children[12].onclick = ()=>{
-    let next =
-      p.paymentIndicator==="PAID" ? "NOT PAID" :
-      p.paymentIndicator==="NOT PAID" ? "ON-WAITING PAYMENT" : "PAID";
+  const payBtn = tr.querySelector(".pay");
+  const amt = tr.querySelector(".amt");
 
+  /* PAYMENT FIX (INSTANT + ₱1500) */
+  payBtn.onclick = () => {
+    let next = p.paymentIndicator==="PAID" ? "NOT PAID" : "PAID";
     p.paymentIndicator = next;
-    tr.children[12].textContent = payIcon(next);
+
+    payBtn.textContent = payIcon(next);
+
+    if(next==="PAID"){
+      amt.textContent = "₱1500";
+    } else {
+      amt.textContent = "";
+    }
 
     send("payment",{rowIndex:p.rowIndex,value:next});
   };
 
-  /* ATTENDANCE */
-  tr.children[13].onclick = ()=>{
-    let next =
-      p.attendanceStatus==="Attended" ? "Cancelled" :
-      p.attendanceStatus==="Cancelled" ? "ON-waiting" : "Attended";
-
-    p.attendanceStatus = next;
-    tr.children[13].textContent = attIcon(next);
-
-    send("attendance",{rowIndex:p.rowIndex,status:next});
+  /* MODE DROPDOWN FIX */
+  tr.querySelector(".mode").onchange = (e)=>{
+    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
   /* KIT */
@@ -264,7 +234,6 @@ function render(p){
     let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
     p.kit = next;
     tr.querySelector(".kit").textContent = next;
-
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
@@ -273,21 +242,12 @@ function render(p){
     let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
     p.aircon = next;
     tr.querySelector(".aircon").textContent = next;
-
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
   /* ROOM AC */
   tr.querySelector(".roomac").onchange = (e)=>{
-    p.room_ac = e.target.value;
-    send("room_ac",{rowIndex:p.rowIndex,value:p.room_ac});
-    updateRoomStats(allData);
-  };
-
-  /* SHIRT */
-  tr.querySelector(".shirt").value = p.shirt||"";
-  tr.querySelector(".shirt").onchange = (e)=>{
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+    send("room_ac",{rowIndex:p.rowIndex,value:e.target.value});
   };
 }
 
@@ -295,9 +255,8 @@ function render(p){
 function send(action,data){
   let fd = new FormData();
   fd.append("action",action);
-  fd.append("rowIndex",data.rowIndex);
   for(let k in data){
-    if(k!=="rowIndex") fd.append(k,data[k]);
+    fd.append(k,data[k]);
   }
   fetch(BASE_URL,{method:"POST",body:fd});
 }
@@ -315,8 +274,7 @@ async function loadData(){
 }
 
 loadData();
-
-setInterval(loadData,60000);
+setInterval(loadData, 60000);
 
 </script>
 
