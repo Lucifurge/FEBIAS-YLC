@@ -18,7 +18,7 @@ body {
 h1 { text-align: center; color: #ff6a00; }
 .sub { text-align: center; color: #aaa; margin-bottom: 10px; }
 
-.legend {
+.legend{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:10px;
@@ -33,7 +33,7 @@ h1 { text-align: center; color: #ff6a00; }
   font-size:13px;
 }
 
-.stats {
+.stats{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
@@ -67,10 +67,7 @@ h1 { text-align: center; color: #ff6a00; }
   color:white;
 }
 
-.table-wrap{
-  width:100%;
-  overflow-x:auto;
-}
+.table-wrap{ overflow-x:auto; }
 
 table{
   width:100%;
@@ -98,6 +95,7 @@ td{
   cursor:pointer;
   font-size:18px;
   transition:0.12s;
+  user-select:none;
 }
 
 .clickable:hover{
@@ -124,30 +122,27 @@ button{
 <h1>YLC 2026 ATTENDANCE SYSTEM</h1>
 <div class="sub">FEBIAS College of Bible System</div>
 
-<!-- LEGEND -->
 <div class="legend">
   <div class="legend-box">
-    <b>PAYMENT SYSTEM</b><br>
+    <b>PAYMENT</b><br>
     ❌ Not Paid<br>
-    🟠 On-Waiting Payment<br>
+    🟠 Waiting<br>
     ✅ Paid
   </div>
 
   <div class="legend-box">
-    <b>KIT / AIRCON</b><br>
-    ❌ Not Given<br>
-    🟠 Pending<br>
-    ✅ Completed
+    <b>ATTENDANCE</b><br>
+    ❌ Cancelled<br>
+    🟠 On Waiting<br>
+    ✅ Attended
   </div>
 
   <div class="legend-box">
     <b>TIP</b><br>
-    Click icons = instant update<br>
-    No reload needed
+    Click icons → instant update (no reload needed)
   </div>
 </div>
 
-<!-- STATS -->
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
@@ -167,20 +162,12 @@ button{
 <tr>
   <th>#</th><th>Last</th><th>First</th><th>Gender</th><th>Age</th>
   <th>Contact</th><th>Church</th><th>Class</th><th>Room</th>
+  <th>Payment Cat</th><th>Amount</th><th>Mode</th>
 
-  <th>Payment Category</th>
-  <th>Amount</th>
-  <th>Mode of Payment</th>
+  <th>PAY</th><th>ATT</th>
+  <th>✔</th><th>🟠</th><th>❌</th>
 
-  <th>Payment Status</th>
-  <th>Attendance</th>
-  <th>✔</th>
-  <th>🟠</th>
-  <th>❌</th>
-
-  <th>Shirt</th>
-  <th>Kit</th>
-  <th>Aircon</th>
+  <th>Shirt</th><th>Kit</th><th>Aircon</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -189,20 +176,23 @@ button{
 
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbx7AMQmqsh2gHzZMorosZFlkQpc8xOLPVQ4nWDHVEJrgk2C6raVd9Z4WZq0UuYj-NMh/exec";
-const SHEET = "Pre-Registration";
+const BASE_URL="https://script.google.com/macros/s/AKfycbx7AMQmqsh2gHzZMorosZFlkQpc8xOLPVQ4nWDHVEJrgk2C6raVd9Z4WZq0UuYj-NMh/exec";
+const SHEET="Pre-Registration";
 
-const tbody = document.querySelector("tbody");
-const searchBox = document.getElementById("searchBox");
-const countdownEl = document.getElementById("countdown");
+const tbody=document.querySelector("tbody");
+const searchBox=document.getElementById("searchBox");
+const countdownEl=document.getElementById("countdown");
 
-let map = new Map();
-let allData = [];
+let map=new Map();
+let allData=[];
 
-const queue = [];
-let running = false;
+/* 🔥 FIX: prevent flicker overwrite */
+let dirty=new Map();
 
-/* smooth background sync */
+/* queue */
+let queue=[];
+let running=false;
+
 function sendUpdate(fd){
   queue.push(fd);
   processQueue();
@@ -210,32 +200,38 @@ function sendUpdate(fd){
 
 async function processQueue(){
   if(running) return;
-  running = true;
+  running=true;
 
   while(queue.length){
-    const fd = queue.shift();
+    const fd=queue.shift();
     try{ await fetch(BASE_URL,{method:"POST",body:fd}); }catch(e){}
   }
 
-  running = false;
+  running=false;
 }
 
-/* STATUS ICONS */
+/* ICONS */
 function payIcon(v){
-  return v==="PAID"?"✅ PAID":
-         v==="ON-WAITING PAYMENT"?"🟠 WAITING":"❌ NOT PAID";
+  return v==="PAID"?"✅":
+         v==="ON-WAITING PAYMENT"?"🟠":"❌";
+}
+
+function attIcon(v){
+  return v==="Attended"?"✅":
+         v==="ON-waiting"?"🟠":"❌";
 }
 
 /* RENDER */
 function render(p){
 
-  let tr = map.get(p.rowIndex);
+  let tr=map.get(p.rowIndex);
   if(!tr){
     tr=document.createElement("tr");
     tr.innerHTML=`<td></td><td></td><td></td><td></td><td></td>
     <td></td><td></td><td></td><td></td>
     <td></td><td></td><td></td>
-    <td></td><td></td>
+    <td class="clickable"></td>
+    <td class="clickable"></td>
     <td class="clickable"></td>
     <td class="clickable"></td>
     <td class="clickable"></td>
@@ -260,18 +256,18 @@ function render(p){
 
   c[9].textContent=p.paymentCategory;
   c[10].textContent=p.amount;
-
   c[11].textContent=p.modeOfPayment;
 
   /* PAYMENT */
   c[12].textContent=payIcon(p.paymentIndicator);
 
   c[12].onclick=()=>{
-    let next=
-      p.paymentIndicator==="PAID"?"NOT PAID":
-      p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
+    let next=p.paymentIndicator==="PAID"?"NOT PAID":
+             p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
 
     p.paymentIndicator=next;
+    dirty.set(p.rowIndex,true);
+
     c[12].textContent=payIcon(next);
 
     let fd=new FormData();
@@ -283,15 +279,16 @@ function render(p){
   };
 
   /* ATTENDANCE */
-  c[13].textContent=p.attendanceStatus;
+  c[13].textContent=attIcon(p.attendanceStatus);
 
   c[13].onclick=()=>{
-    let next=
-      p.attendanceStatus==="Attended"?"Cancelled":
-      p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
+    let next=p.attendanceStatus==="Attended"?"Cancelled":
+             p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
 
     p.attendanceStatus=next;
-    c[13].textContent=next;
+    dirty.set(p.rowIndex,true);
+
+    c[13].textContent=attIcon(next);
 
     let fd=new FormData();
     fd.append("action","attendance");
@@ -303,6 +300,7 @@ function render(p){
 
   /* KIT */
   c[18].textContent=p.kit;
+
   c[18].onclick=()=>{
     let next=p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
     p.kit=next;
@@ -318,6 +316,7 @@ function render(p){
 
   /* AIRCON */
   c[19].textContent=p.aircon;
+
   c[19].onclick=()=>{
     let next=p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
     p.aircon=next;
@@ -332,7 +331,7 @@ function render(p){
   };
 }
 
-/* LOAD */
+/* LOAD (FIXED SMOOTH) */
 async function loadData(){
   const res=await fetch(BASE_URL+"?sheet="+SHEET);
   const data=await res.json();
@@ -367,7 +366,9 @@ setInterval(()=>{
   `STARTS IN ${d}d ${h}h`:`ENDS IN ${d}d ${h}h`;
 },1000);
 
-setInterval(loadData,30000);
+/* SLOWER REFRESH = SMOOTHER UI */
+setInterval(loadData, 60000);
+
 loadData();
 
 </script>
