@@ -18,29 +18,9 @@ body {
 h1 { text-align: center; color: #ff6a00; }
 .sub { text-align: center; color: #aaa; margin-bottom: 10px; }
 
-.legend{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:10px;
-  margin:10px 0 20px;
-}
+.stats { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
 
-.legend-box{
-  background:#1a1a1a;
-  border-left:4px solid #ff6a00;
-  padding:10px;
-  border-radius:10px;
-  font-size:13px;
-}
-
-.stats{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:center;
-}
-
-.box{
+.box {
   background:#1a1a1a;
   padding:10px;
   border-radius:10px;
@@ -49,33 +29,17 @@ h1 { text-align: center; color: #ff6a00; }
   border:1px solid #333;
 }
 
-.box span{ color:#ff6a00; font-weight:bold; }
+.box span { color:#ff6a00; font-weight:bold; }
 
-.search{
-  display:flex;
-  justify-content:center;
-  margin:10px 0;
-}
+.table-wrap { overflow-x:auto; }
 
-.search input{
-  width:100%;
-  max-width:400px;
-  padding:10px;
-  border-radius:8px;
-  background:#1a1a1a;
-  border:1px solid #333;
-  color:white;
-}
-
-.table-wrap{ overflow-x:auto; }
-
-table{
+table {
   width:100%;
   min-width:1800px;
   border-collapse:collapse;
 }
 
-th{
+th {
   background:#1a1a1a;
   color:#ff6a00;
   padding:10px;
@@ -83,20 +47,28 @@ th{
   top:0;
 }
 
-td{
-  padding:6px;
+td {
+  padding:8px;
   border:1px solid #222;
   background:#121212;
   text-align:center;
   font-size:13px;
 }
 
-.clickable{
+.clickable {
   cursor:pointer;
   font-size:18px;
 }
 
-button{
+select {
+  background:#1a1a1a;
+  color:white;
+  border:1px solid #333;
+  padding:5px;
+  border-radius:6px;
+}
+
+button {
   width:100%;
   max-width:300px;
   margin:10px auto;
@@ -107,13 +79,6 @@ button{
   background:linear-gradient(45deg,#ff6a00,#ff2e00);
   color:white;
   font-weight:bold;
-}
-select{
-  background:#1a1a1a;
-  color:white;
-  border:1px solid #333;
-  border-radius:6px;
-  padding:4px;
 }
 </style>
 </head>
@@ -134,26 +99,18 @@ select{
 
 <button onclick="loadData()">🔄 REFRESH</button>
 
-<div class="search">
-  <input id="searchBox" placeholder="Search..." oninput="filterTable()" />
-</div>
-
 <div class="table-wrap">
 <table>
 <thead>
 <tr>
   <th>#</th><th>Last</th><th>First</th><th>Gender</th><th>Age</th>
-  <th>Contact</th><th>Church</th><th>Class</th>
-
-  <th>Room</th>
-  <th>ROOM_AC</th>
+  <th>Contact</th><th>Church</th><th>Class</th><th>Room</th>
 
   <th>Payment Cat</th><th>Amount</th><th>Mode</th>
 
   <th>PAY</th><th>ATT</th>
-  <th>✔</th><th>🟠</th><th>❌</th>
 
-  <th>Shirt</th><th>Kit</th><th>Aircon</th>
+  <th>Shirt</th><th>Kit</th><th>Aircon</th><th>ROOM_AC</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -165,6 +122,7 @@ select{
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
+/* ONLY AC ROOMS */
 const AC_ROOMS = [
   "Berean Area",
   "Berean – Abraham 2",
@@ -182,38 +140,11 @@ const tbody = document.querySelector("tbody");
 let map = new Map();
 let allData = [];
 
-/* stats */
-function updateStats(data){
-  let total=0, paid=0, waiting=0;
-
-  data.forEach(p=>{
-    total++;
-    if(p.paymentIndicator==="PAID") paid++;
-    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
-  });
-
-  totalEl.textContent=total;
-  paidEl.textContent=paid;
-  waitingEl.textContent=waiting;
-}
-
-/* room stats */
-function updateRoomStats(data){
-  let html="<b>ROOM AC COUNT</b><br>";
-
-  AC_ROOMS.forEach(r=>{
-    let c=data.filter(x=>x.room_ac===r).length;
-    html+=`${r}: ${c}<br>`;
-  });
-
-  document.getElementById("roomStats").innerHTML=html;
-}
-
-/* icons */
+/* ICONS */
 function payIcon(v){
   if(v==="PAID") return "✅ PAID";
   if(v==="ON-WAITING PAYMENT") return "🟠 WAITING";
-  return "❌";
+  return "❌ NOT PAID";
 }
 
 function attIcon(v){
@@ -222,12 +153,50 @@ function attIcon(v){
   return "❌";
 }
 
-/* render */
+/* STATS */
+function updateStats(data){
+  let total = data.length;
+  let paid = 0;
+  let waiting = 0;
+
+  data.forEach(p=>{
+    if(p.paymentIndicator==="PAID") paid++;
+    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+  });
+
+  document.getElementById("total").textContent = total;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+}
+
+/* ROOM AC STATS */
+function updateRoomStats(data){
+
+  let map = {};
+  AC_ROOMS.forEach(r=>map[r]=0);
+
+  data.forEach(p=>{
+    if(map[p.room_ac] !== undefined){
+      map[p.room_ac]++;
+    }
+  });
+
+  let html = "<b>ROOM AC STATUS</b><br>";
+
+  AC_ROOMS.forEach(r=>{
+    let c = map[r] || 0;
+    html += `${r}: ${c}/18 ${c>=18?"❌ FULL":""}<br>`;
+  });
+
+  document.getElementById("roomStats").innerHTML = html;
+}
+
+/* RENDER */
 function render(p){
 
-  let tr=document.createElement("tr");
+  let tr = document.createElement("tr");
 
-  tr.innerHTML=`
+  tr.innerHTML = `
     <td>${p.rowIndex}</td>
     <td>${p.lastName}</td>
     <td>${p.firstName}</td>
@@ -239,112 +208,104 @@ function render(p){
 
     <td>${p.room}</td>
 
-    <td>
-      <select>
-        ${AC_ROOMS.map(r=>`<option ${p.room_ac===r?"selected":""}>${r}</option>`)}
-      </select>
-    </td>
-
     <td>${p.paymentCategory}</td>
     <td>${p.amount}</td>
-    <td>
-      <select>
-        <option ${p.modeOfPayment==="ONSITE"?"selected":""}>ONSITE</option>
-        <option ${p.modeOfPayment==="ONLINE GCASH"?"selected":""}>ONLINE GCASH</option>
-        <option ${p.modeOfPayment==="ONLINE BANK"?"selected":""}>ONLINE BANK</option>
-      </select>
-    </td>
+    <td>${p.modeOfPayment}</td>
 
     <td class="clickable">${payIcon(p.paymentIndicator)}</td>
     <td class="clickable">${attIcon(p.attendanceStatus)}</td>
 
-    <td>${p.attendedIcon||""}</td>
-    <td>${p.waitingIcon||""}</td>
-    <td>${p.cancelledIcon||""}</td>
-
     <td>
-      <select>
+      <select class="shirt">
         <option>XS</option><option>S</option><option>M</option>
         <option>L</option><option>XL</option><option>XXL</option>
       </select>
     </td>
 
-    <td class="clickable">${p.kit}</td>
-    <td class="clickable">${p.aircon}</td>
+    <td class="clickable kit">${p.kit||"❌"}</td>
+    <td class="clickable aircon">${p.aircon||"❌"}</td>
+
+    <td>
+      <select class="roomac">
+        <option value="">--ROOM AC--</option>
+        ${AC_ROOMS.map(r=>`<option ${p.room_ac===r?"selected":""}>${r}</option>`).join("")}
+      </select>
+    </td>
   `;
 
-  /* ROOM_AC */
-  tr.children[9].querySelector("select").onchange=(e)=>{
-    fetch(BASE_URL,{method:"POST",body:new URLSearchParams({
-      action:"room_ac",rowIndex:p.rowIndex,value:e.target.value,sheet:SHEET
-    })});
-    p.room_ac=e.target.value;
-    updateRoomStats(allData);
-  };
-
-  /* MODE */
-  tr.children[11].querySelector("select").onchange=(e)=>{
-    fetch(BASE_URL,{method:"POST",body:new URLSearchParams({
-      action:"mode",rowIndex:p.rowIndex,value:e.target.value,sheet:SHEET
-    })});
-  };
+  tbody.appendChild(tr);
 
   /* PAYMENT */
-  tr.children[13].onclick=()=>{
-    let next=p.paymentIndicator==="PAID"?"NOT PAID":"PAID";
-    fetch(BASE_URL,{method:"POST",body:new URLSearchParams({
-      action:"payment",rowIndex:p.rowIndex,value:next,sheet:SHEET
-    })});
-    p.paymentIndicator=next;
-    tr.children[13].textContent=payIcon(next);
-    updateStats(allData);
+  tr.children[12].onclick = ()=>{
+    let next =
+      p.paymentIndicator==="PAID" ? "NOT PAID" :
+      p.paymentIndicator==="NOT PAID" ? "ON-WAITING PAYMENT" : "PAID";
+
+    p.paymentIndicator = next;
+    tr.children[12].textContent = payIcon(next);
+
+    send("payment",{rowIndex:p.rowIndex,value:next});
   };
 
   /* ATTENDANCE */
-  tr.children[14].onclick=()=>{
-    let next=p.attendanceStatus==="Attended"?"Cancelled":"Attended";
-    fetch(BASE_URL,{method:"POST",body:new URLSearchParams({
-      action:"attendance",rowIndex:p.rowIndex,status:next,sheet:SHEET
-    })});
-    p.attendanceStatus=next;
-    tr.children[14].textContent=attIcon(next);
-  };
+  tr.children[13].onclick = ()=>{
+    let next =
+      p.attendanceStatus==="Attended" ? "Cancelled" :
+      p.attendanceStatus==="Cancelled" ? "ON-waiting" : "Attended";
 
-  /* SHIRT */
-  tr.children[17].querySelector("select").value=p.shirt||"";
-  tr.children[17].querySelector("select").onchange=(e)=>{
-    fetch(BASE_URL,{method:"POST",body:new URLSearchParams({
-      action:"shirt",rowIndex:p.rowIndex,value:e.target.value,sheet:SHEET
-    })});
+    p.attendanceStatus = next;
+    tr.children[13].textContent = attIcon(next);
+
+    send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
   /* KIT */
-  tr.children[18].onclick=()=>{
-    let next=p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-    fetch(BASE_URL,{method:"POST",body:new URLSearchParams({
-      action:"kit",rowIndex:p.rowIndex,state:next,sheet:SHEET
-    })});
-    p.kit=next;
-    tr.children[18].textContent=next;
+  tr.querySelector(".kit").onclick = ()=>{
+    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+    p.kit = next;
+    tr.querySelector(".kit").textContent = next;
+
+    send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
   /* AIRCON */
-  tr.children[19].onclick=()=>{
-    let next=p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-    fetch(BASE_URL,{method:"POST",body:new URLSearchParams({
-      action:"aircon",rowIndex:p.rowIndex,state:next,sheet:SHEET
-    })});
-    p.aircon=next;
-    tr.children[19].textContent=next;
+  tr.querySelector(".aircon").onclick = ()=>{
+    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+    p.aircon = next;
+    tr.querySelector(".aircon").textContent = next;
+
+    send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  tbody.appendChild(tr);
+  /* ROOM AC */
+  tr.querySelector(".roomac").onchange = (e)=>{
+    p.room_ac = e.target.value;
+    send("room_ac",{rowIndex:p.rowIndex,value:p.room_ac});
+    updateRoomStats(allData);
+  };
+
+  /* SHIRT */
+  tr.querySelector(".shirt").value = p.shirt||"";
+  tr.querySelector(".shirt").onchange = (e)=>{
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+}
+
+/* SEND */
+function send(action,data){
+  let fd = new FormData();
+  fd.append("action",action);
+  fd.append("rowIndex",data.rowIndex);
+  for(let k in data){
+    if(k!=="rowIndex") fd.append(k,data[k]);
+  }
+  fetch(BASE_URL,{method:"POST",body:fd});
 }
 
 /* LOAD */
 async function loadData(){
-  let res=await fetch(BASE_URL+"?sheet="+SHEET);
-  allData=await res.json();
+  const res = await fetch(BASE_URL+"?sheet="+SHEET);
+  allData = await res.json();
 
   tbody.innerHTML="";
   allData.forEach(render);
@@ -353,30 +314,11 @@ async function loadData(){
   updateRoomStats(allData);
 }
 
-/* filter */
-function filterTable(){
-  let q=searchBox.value.toLowerCase();
-  document.querySelectorAll("tbody tr").forEach(r=>{
-    r.style.display=r.innerText.toLowerCase().includes(q)?"":"none";
-  });
-}
-
-/* countdown */
-setInterval(()=>{
-  let now=Date.now();
-  let start=new Date("2026-04-16").getTime();
-  let end=new Date("2026-04-18").getTime();
-  let t=now<start?start:end;
-
-  let d=Math.floor((t-now)/86400000);
-  let h=Math.floor((t-now)/3600000)%24;
-
-  countdown.textContent=now<start?
-  `STARTS IN ${d}D ${h}H`:`ENDS IN ${d}D ${h}H`;
-},1000);
-
 loadData();
 
+setInterval(loadData,60000);
+
 </script>
+
 </body>
 </html>
