@@ -14,18 +14,10 @@ body {
   padding: 10px;
 }
 
-h1 {
-  text-align: center;
-  color: #ff6a00;
-}
+h1 { text-align: center; color: #ff6a00; }
+.sub { text-align: center; color: #aaa; margin-bottom: 10px; }
 
-.sub {
-  text-align: center;
-  color: #aaa;
-  margin-bottom: 10px;
-}
-
-/* TOP STATS */
+/* STATS */
 .stats {
   display: flex;
   gap: 10px;
@@ -42,10 +34,7 @@ h1 {
   text-align: center;
 }
 
-.box span {
-  color: #ff6a00;
-  font-weight: bold;
-}
+.box span { color: #ff6a00; font-weight: bold; }
 
 /* SEARCH */
 .search {
@@ -64,18 +53,17 @@ h1 {
   color: white;
 }
 
-/* TABLE WRAP (IMPORTANT FOR TABLET) */
+/* TABLE */
 .table-wrap {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid #222;
   border-radius: 10px;
+  border: 1px solid #222;
 }
 
-/* TABLE */
 table {
   width: 100%;
-  min-width: 1600px; /* IMPORTANT so ALL columns fit */
+  min-width: 1800px;
   border-collapse: collapse;
 }
 
@@ -85,7 +73,6 @@ th {
   padding: 10px;
   position: sticky;
   top: 0;
-  z-index: 2;
 }
 
 td {
@@ -96,10 +83,14 @@ td {
   font-size: 13px;
 }
 
-/* CLICKABLE CELLS */
 .clickable {
   cursor: pointer;
   font-size: 18px;
+  transition: 0.15s;
+}
+
+.clickable:hover {
+  transform: scale(1.2);
 }
 
 /* BUTTON */
@@ -115,13 +106,6 @@ button {
   color: white;
   font-weight: bold;
 }
-
-/* MOBILE MODE */
-@media (max-width: 768px) {
-  table {
-    min-width: 1400px;
-  }
-}
 </style>
 </head>
 
@@ -130,7 +114,6 @@ button {
 <h1>YLC 2026 ATTENDANCE SYSTEM</h1>
 <div class="sub">FEBIAS College of Bible System</div>
 
-<!-- STATS -->
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
@@ -140,35 +123,37 @@ button {
 
 <button onclick="loadData()">🔄 REFRESH</button>
 
-<!-- SEARCH -->
 <div class="search">
-  <input id="searchBox" placeholder="Search name, church, status..." oninput="filterTable()" />
+  <input id="searchBox" placeholder="Search..." oninput="filterTable()" />
 </div>
 
-<!-- TABLE -->
 <div class="table-wrap">
 <table>
 <thead>
 <tr>
   <th>#</th>
-  <th>Last Name</th>
-  <th>First Name</th>
+  <th>Last</th>
+  <th>First</th>
   <th>Gender</th>
   <th>Age</th>
   <th>Contact</th>
   <th>Church</th>
-  <th>Classification</th>
+  <th>Class</th>
   <th>Room</th>
-  <th>Category</th>
+
+  <th>Payment Category</th>
   <th>Amount</th>
-  <th>Payment</th>
+  <th>Mode of Payment</th>
   <th>Payment Indicator</th>
+
   <th>Attendance</th>
-  <th>Attended</th>
-  <th>Waiting</th>
-  <th>Cancelled</th>
+  <th>✔</th>
+  <th>🟠</th>
+  <th>❌</th>
+
   <th>Shirt</th>
   <th>Kit</th>
+  <th>Aircon</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -177,7 +162,7 @@ button {
 
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbwWmWuLWg-httkGe4-s7jXmKVftXBnGrN2dSoXhc5mQm7AbSRHj_5dH-pWtImuJHdIdDA/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbypORBAP4XTi-aM6l84FI1VG27ZYVr-8iRpJ3RMDh9nmvTIpN8IafXzhhESVVcmWTUITg/exec";
 const SHEET = "Pre-Registration";
 
 const tbody = document.querySelector("tbody");
@@ -193,7 +178,7 @@ function updateStats(data){
     else waiting++;
   });
 
-  document.getElementById("total").textContent = data.length;
+  total.textContent = data.length;
   document.getElementById("paid").textContent = paid;
   document.getElementById("waiting").textContent = waiting;
 }
@@ -205,7 +190,7 @@ function sortData(data){
   );
 }
 
-/* RENDER ROW */
+/* RENDER */
 function render(p){
 
   let tr = map.get(p.rowIndex);
@@ -214,13 +199,15 @@ function render(p){
     tr = document.createElement("tr");
     tr.innerHTML = `
       <td></td><td></td><td></td><td></td><td></td>
-      <td></td><td></td><td></td><td></td><td></td>
-      <td></td><td class="clickable"></td>
-      <td></td><td class="clickable"></td>
+      <td></td><td></td><td></td><td></td>
+      <td></td><td></td><td class="clickable"></td>
+      <td></td>
+      <td class="clickable"></td>
       <td class="clickable"></td>
       <td class="clickable"></td>
       <td class="clickable"></td>
       <td></td>
+      <td class="clickable"></td>
       <td class="clickable"></td>
     `;
     tbody.appendChild(tr);
@@ -238,34 +225,35 @@ function render(p){
   c[6].textContent = p.church;
   c[7].textContent = p.classification;
   c[8].textContent = p.room;
-  c[9].textContent = p.category;
-  c[10].textContent = p.amount;
 
-  /* PAYMENT CLICK */
-  c[11].textContent =
+  /* PAYMENT CATEGORY FIX */
+  c[9].textContent = p.paymentCategory || "";
+  c[10].textContent = p.amount || "";
+
+  /* MODE OF PAYMENT FIX */
+  c[11].textContent = p.modeOfPayment || "";
+
+  c[12].textContent =
     p.paymentIndicator === "PAID" ? "✅" :
     p.paymentIndicator === "ON-WAITING PAYMENT" ? "🟠" : "❌";
 
-  c[11].onclick = async ()=>{
-    let val =
+  c[12].onclick = async ()=>{
+    const next =
       p.paymentIndicator === "PAID" ? "NOT PAID" :
       p.paymentIndicator === "NOT PAID" ? "WAITING" : "PAID";
 
     const fd = new FormData();
     fd.append("action","payment");
     fd.append("rowIndex",p.rowIndex);
-    fd.append("payment_by",val);
+    fd.append("value",next);
     fd.append("sheet",SHEET);
 
     await fetch(BASE_URL,{method:"POST",body:fd});
     loadData();
   };
 
-  c[12].textContent = p.paymentIndicator;
-
   /* ATTENDANCE */
   c[13].textContent = p.attendanceStatus;
-
   c[13].onclick = async ()=>{
     const next =
       p.attendanceStatus === "Attended" ? "Cancelled" :
@@ -274,7 +262,7 @@ function render(p){
     const fd = new FormData();
     fd.append("action","attendance");
     fd.append("rowIndex",p.rowIndex);
-    fd.append("attendance_status",next);
+    fd.append("status",next);
     fd.append("sheet",SHEET);
 
     await fetch(BASE_URL,{method:"POST",body:fd});
@@ -285,20 +273,36 @@ function render(p){
   c[15].textContent = p.waitingIcon;
   c[16].textContent = p.cancelledIcon;
 
-  c[17].textContent = p.shirt_size;
+  c[17].textContent = p.shirt;
 
   /* KIT */
-  c[18].textContent = p.kitDistribution || "❌";
-
+  c[18].textContent = p.kit;
   c[18].onclick = async ()=>{
-    let next =
-      p.kitDistribution === "❌" ? "🟠" :
-      p.kitDistribution === "🟠" ? "✅" : "❌";
+    const next =
+      p.kit === "❌" ? "🟠" :
+      p.kit === "🟠" ? "✅" : "❌";
 
     const fd = new FormData();
     fd.append("action","kit");
     fd.append("rowIndex",p.rowIndex);
-    fd.append("kit_state",next);
+    fd.append("state",next);
+    fd.append("sheet",SHEET);
+
+    await fetch(BASE_URL,{method:"POST",body:fd});
+    loadData();
+  };
+
+  /* AIRCON (NEW) */
+  c[19].textContent = p.aircon;
+  c[19].onclick = async ()=>{
+    const next =
+      p.aircon === "❌" ? "🟠" :
+      p.aircon === "🟠" ? "✅" : "❌";
+
+    const fd = new FormData();
+    fd.append("action","aircon");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("state",next);
     fd.append("sheet",SHEET);
 
     await fetch(BASE_URL,{method:"POST",body:fd});
@@ -308,12 +312,9 @@ function render(p){
 
 /* FILTER */
 function filterTable(){
-  const q = document.getElementById("searchBox").value.toLowerCase();
-
+  const q = searchBox.value.toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
-    tr.style.display = tr.innerText.toLowerCase().includes(q)
-      ? ""
-      : "none";
+    tr.style.display = tr.innerText.toLowerCase().includes(q) ? "" : "none";
   });
 }
 
@@ -324,12 +325,12 @@ function countdown(){
 
   setInterval(()=>{
     const now = Date.now();
-    let target = now < start ? start : end;
+    const target = now < start ? start : end;
 
     const d = Math.floor((target-now)/86400000);
     const h = Math.floor((target-now)/3600000)%24;
 
-    document.getElementById("countdown").textContent =
+    countdown.textContent =
       now < start ? `STARTS IN ${d}d ${h}h` : `ENDS IN ${d}d ${h}h`;
   },1000);
 }
@@ -347,7 +348,6 @@ async function loadData(){
   map.clear();
 
   updateStats(allData);
-
   allData.forEach(render);
 }
 
