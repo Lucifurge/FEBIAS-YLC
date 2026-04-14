@@ -3,136 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YLC 2026 Staff Dashboard</title>
+<title>YLC 2026 Attendance System</title>
 
 <style>
-body{
-  font-family:Segoe UI,sans-serif;
-  background:#0f0f0f;
-  color:#fff;
-  margin:0;
-  padding:1rem;
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #0f0f0f;
+  color: white;
+  margin: 0;
+  padding: 10px;
 }
 
-h1{
-  text-align:center;
-  color:#ff6a00;
+h1 {
+  text-align: center;
+  color: #ff6a00;
 }
 
-/* TOP BAR */
-.topbar{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  justify-content:center;
-  margin-bottom:10px;
+.sub {
+  text-align: center;
+  color: #aaa;
+  margin-bottom: 10px;
 }
 
-input{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #333;
-  background:#1a1a1a;
-  color:#fff;
-  width:260px;
+/* TOP STATS */
+.stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-button{
-  padding:10px 14px;
-  border:none;
-  border-radius:8px;
-  background:linear-gradient(45deg,#ff6a00,#ff2e00);
-  color:#fff;
-  cursor:pointer;
+.box {
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  min-width: 140px;
+  text-align: center;
 }
 
-/* STATS */
-.stats{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:center;
-  margin:10px 0;
+.box span {
+  color: #ff6a00;
+  font-weight: bold;
 }
 
-.box{
-  background:#1a1a1a;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #333;
-  flex:1 1 120px;
-  text-align:center;
+/* SEARCH */
+.search {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
 }
 
-.box span{ color:#ff6a00; font-weight:bold; }
+.search input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: white;
+}
+
+/* TABLE WRAP (IMPORTANT FOR TABLET) */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #222;
+  border-radius: 10px;
+}
 
 /* TABLE */
-.table-wrap{
-  overflow:auto;
-  max-width:100%;
-  border:1px solid #222;
+table {
+  width: 100%;
+  min-width: 1600px; /* IMPORTANT so ALL columns fit */
+  border-collapse: collapse;
 }
 
-table{
-  border-collapse:collapse;
-  min-width:2000px;
+th {
+  background: #1a1a1a;
+  color: #ff6a00;
+  padding: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
-th{
-  background:#1a1a1a;
-  color:#ff6a00;
-  padding:8px;
-  font-size:0.75rem;
-  position:sticky;
-  top:0;
-  z-index:2;
+td {
+  padding: 8px;
+  border: 1px solid #222;
+  background: #121212;
+  text-align: center;
+  font-size: 13px;
 }
 
-td{
-  border:1px solid #222;
-  padding:6px;
-  font-size:0.75rem;
-  text-align:center;
-  background:#121212;
-  white-space:nowrap;
+/* CLICKABLE CELLS */
+.clickable {
+  cursor: pointer;
+  font-size: 18px;
 }
 
-/* sticky action columns */
-th:nth-last-child(3),
-th:nth-last-child(2),
-th:nth-last-child(1),
-td:nth-last-child(3),
-td:nth-last-child(2),
-td:nth-last-child(1){
-  position:sticky;
-  right:0;
-  background:#111;
-  z-index:3;
+/* BUTTON */
+button {
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto;
+  display: block;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(45deg,#ff6a00,#ff2e00);
+  color: white;
+  font-weight: bold;
 }
 
-.kit{
-  cursor:pointer;
-  font-size:1.2rem;
+/* MOBILE MODE */
+@media (max-width: 768px) {
+  table {
+    min-width: 1400px;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<h1>YLC 2026 STAFF DASHBOARD</h1>
-
-<!-- SEARCH + BUTTONS -->
-<div class="topbar">
-  <input id="search" placeholder="Search name / last name / first name...">
-  <button onclick="loadData()">🔄 Refresh</button>
-</div>
+<h1>YLC 2026 ATTENDANCE SYSTEM</h1>
+<div class="sub">FEBIAS College of Bible System</div>
 
 <!-- STATS -->
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
-  <div class="box">Pending<br><span id="pending">0</span></div>
+  <div class="box">Waiting<br><span id="waiting">0</span></div>
   <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
+</div>
+
+<button onclick="loadData()">🔄 REFRESH</button>
+
+<!-- SEARCH -->
+<div class="search">
+  <input id="searchBox" placeholder="Search name, church, status..." oninput="filterTable()" />
 </div>
 
 <!-- TABLE -->
@@ -140,12 +150,25 @@ td:nth-last-child(1){
 <table>
 <thead>
 <tr>
-<th>#</th><th>Name</th><th>Last</th><th>First</th>
-<th>Gender</th><th>Age</th><th>Email</th><th>Church</th>
-<th>Class</th><th>Room</th><th>Pay Cat</th><th>Amount</th>
-<th>Pay Status</th><th>Attendance</th>
-<th>Attended</th><th>Waiting</th><th>Cancelled</th>
-<th>Shirt</th><th>Payment</th><th>Kit</th>
+  <th>#</th>
+  <th>Last Name</th>
+  <th>First Name</th>
+  <th>Gender</th>
+  <th>Age</th>
+  <th>Contact</th>
+  <th>Church</th>
+  <th>Classification</th>
+  <th>Room</th>
+  <th>Category</th>
+  <th>Amount</th>
+  <th>Payment</th>
+  <th>Payment Indicator</th>
+  <th>Attendance</th>
+  <th>Attended</th>
+  <th>Waiting</th>
+  <th>Cancelled</th>
+  <th>Shirt</th>
+  <th>Kit</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -154,156 +177,181 @@ td:nth-last-child(1){
 
 <script>
 
-const BASE_URL="https://script.google.com/macros/s/AKfycbwWmWuLWg-httkGe4-s7jXmKVftXBnGrN2dSoXhc5mQm7AbSRHj_5dH-pWtImuJHdIdDA/exec";
-const SHEET_NAME="Pre-Registration";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwWmWuLWg-httkGe4-s7jXmKVftXBnGrN2dSoXhc5mQm7AbSRHj_5dH-pWtImuJHdIdDA/exec";
+const SHEET = "Pre-Registration";
 
-const tbody=document.querySelector("tbody");
-const searchInput=document.getElementById("search");
-
-let dataCache=[];
-let map=new Map();
-const kitCycle=["❌","🟠","✅"];
-
-/* COUNTDOWN */
-function countdown(){
-  const start=new Date("2026-04-16").getTime();
-  const end=new Date("2026-04-18").getTime();
-
-  setInterval(()=>{
-    const now=Date.now();
-
-    let target,label;
-
-    if(now<start){ target=start; label="STARTS IN"; }
-    else if(now<=end){ target=end; label="ENDS IN"; }
-    else return;
-
-    const d=Math.floor((target-now)/86400000);
-    const h=Math.floor((target-now)/3600000%24);
-    const m=Math.floor((target-now)/60000%60);
-
-    document.getElementById("countdown").textContent=
-      `${label}: ${d}d ${h}h ${m}m`;
-
-  },1000);
-}
+const tbody = document.querySelector("tbody");
+let map = new Map();
+let allData = [];
 
 /* STATS */
-function stats(data){
-  let paid=0,pending=0;
+function updateStats(data){
+  let paid = 0, waiting = 0;
 
   data.forEach(p=>{
-    const pay=(p.paymentIndicator||"").toUpperCase();
-    if(pay==="PAID") paid++;
-    else pending++;
+    if(p.paymentIndicator === "PAID") paid++;
+    else waiting++;
   });
 
-  document.getElementById("total").textContent=data.length;
-  document.getElementById("paid").textContent=paid;
-  document.getElementById("pending").textContent=pending;
-}
-
-/* FILTER */
-function filterData(data){
-  const q=searchInput.value.toLowerCase();
-
-  if(!q) return data;
-
-  return data.filter(p=>
-    (p.firstName||"").toLowerCase().includes(q) ||
-    (p.lastName||"").toLowerCase().includes(q) ||
-    ((p.firstName+" "+p.lastName)||"").toLowerCase().includes(q)
-  );
+  document.getElementById("total").textContent = data.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
 }
 
 /* SORT */
-function sort(data){
+function sortData(data){
   return data.sort((a,b)=>
     (a.lastName||"").localeCompare(b.lastName||"")
   );
 }
 
-/* RENDER */
+/* RENDER ROW */
 function render(p){
 
-  let tr=map.get(p.rowIndex);
+  let tr = map.get(p.rowIndex);
 
   if(!tr){
-    tr=document.createElement("tr");
-
-    tr.innerHTML=`<td></td><td></td><td></td><td></td><td></td>
-    <td></td><td></td><td></td><td></td><td></td>
-    <td></td><td></td><td></td><td></td>
-    <td></td><td></td><td></td><td></td>
-    <td></td><td class="kit"></td>`;
-
+    tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td></td><td></td><td></td><td></td><td></td>
+      <td></td><td></td><td></td><td></td><td></td>
+      <td></td><td class="clickable"></td>
+      <td></td><td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td></td>
+      <td class="clickable"></td>
+    `;
     tbody.appendChild(tr);
     map.set(p.rowIndex,tr);
   }
 
-  const c=tr.children;
+  const c = tr.children;
 
-  c[0].textContent=p.sheetRow||"";
-  c[1].textContent=(p.lastName||"")+" "+(p.firstName||"");
-  c[2].textContent=p.lastName||"";
-  c[3].textContent=p.firstName||"";
-  c[4].textContent=p.gender||"";
-  c[5].textContent=p.age||"";
-  c[6].textContent=p.numberEmail||"";
-  c[7].textContent=p.church||"";
-  c[8].textContent=p.classification||"";
-  c[9].textContent=p.room||"";
-  c[10].textContent=p.paymentCategory||"";
-  c[11].textContent=p.amount||"";
-  c[12].textContent=p.paymentStatus||"";
-  c[13].textContent=p.attendanceStatus||"";
-  c[14].textContent=p.attendedIcon||"";
-  c[15].textContent=p.waitingIcon||"";
-  c[16].textContent=p.cancelledIcon||"";
-  c[17].textContent=p.shirtSize||"";
-  c[18].textContent=p.paymentIndicator||"";
+  c[0].textContent = p.rowIndex;
+  c[1].textContent = p.lastName;
+  c[2].textContent = p.firstName;
+  c[3].textContent = p.gender;
+  c[4].textContent = p.age;
+  c[5].textContent = p.contact;
+  c[6].textContent = p.church;
+  c[7].textContent = p.classification;
+  c[8].textContent = p.room;
+  c[9].textContent = p.category;
+  c[10].textContent = p.amount;
 
-  let kit=p.kitDistribution||"❌";
-  c[19].textContent=kit;
+  /* PAYMENT CLICK */
+  c[11].textContent =
+    p.paymentIndicator === "PAID" ? "✅" :
+    p.paymentIndicator === "ON-WAITING PAYMENT" ? "🟠" : "❌";
 
-  c[19].onclick=async()=>{
+  c[11].onclick = async ()=>{
+    let val =
+      p.paymentIndicator === "PAID" ? "NOT PAID" :
+      p.paymentIndicator === "NOT PAID" ? "WAITING" : "PAID";
 
-    let i=kitCycle.indexOf(kit);
-    if(i===-1)i=0;
-
-    kit=kitCycle[(i+1)%kitCycle.length];
-    c[19].textContent=kit;
-
-    const fd=new FormData();
-    fd.append("action","kit");
+    const fd = new FormData();
+    fd.append("action","payment");
     fd.append("rowIndex",p.rowIndex);
-    fd.append("kit_state",kit);
-    fd.append("sheet",SHEET_NAME);
+    fd.append("payment_by",val);
+    fd.append("sheet",SHEET);
 
     await fetch(BASE_URL,{method:"POST",body:fd});
+    loadData();
   };
+
+  c[12].textContent = p.paymentIndicator;
+
+  /* ATTENDANCE */
+  c[13].textContent = p.attendanceStatus;
+
+  c[13].onclick = async ()=>{
+    const next =
+      p.attendanceStatus === "Attended" ? "Cancelled" :
+      p.attendanceStatus === "Cancelled" ? "ON-waiting" : "Attended";
+
+    const fd = new FormData();
+    fd.append("action","attendance");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("attendance_status",next);
+    fd.append("sheet",SHEET);
+
+    await fetch(BASE_URL,{method:"POST",body:fd});
+    loadData();
+  };
+
+  c[14].textContent = p.attendedIcon;
+  c[15].textContent = p.waitingIcon;
+  c[16].textContent = p.cancelledIcon;
+
+  c[17].textContent = p.shirt_size;
+
+  /* KIT */
+  c[18].textContent = p.kitDistribution || "❌";
+
+  c[18].onclick = async ()=>{
+    let next =
+      p.kitDistribution === "❌" ? "🟠" :
+      p.kitDistribution === "🟠" ? "✅" : "❌";
+
+    const fd = new FormData();
+    fd.append("action","kit");
+    fd.append("rowIndex",p.rowIndex);
+    fd.append("kit_state",next);
+    fd.append("sheet",SHEET);
+
+    await fetch(BASE_URL,{method:"POST",body:fd});
+    loadData();
+  };
+}
+
+/* FILTER */
+function filterTable(){
+  const q = document.getElementById("searchBox").value.toLowerCase();
+
+  document.querySelectorAll("tbody tr").forEach(tr=>{
+    tr.style.display = tr.innerText.toLowerCase().includes(q)
+      ? ""
+      : "none";
+  });
+}
+
+/* COUNTDOWN */
+function countdown(){
+  const start = new Date("2026-04-16").getTime();
+  const end = new Date("2026-04-18").getTime();
+
+  setInterval(()=>{
+    const now = Date.now();
+    let target = now < start ? start : end;
+
+    const d = Math.floor((target-now)/86400000);
+    const h = Math.floor((target-now)/3600000)%24;
+
+    document.getElementById("countdown").textContent =
+      now < start ? `STARTS IN ${d}d ${h}h` : `ENDS IN ${d}d ${h}h`;
+  },1000);
 }
 
 /* LOAD */
 async function loadData(){
-  const res=await fetch(BASE_URL+"?sheet="+SHEET_NAME);
-  const data=await res.json();
+  const res = await fetch(BASE_URL+"?sheet="+SHEET);
+  const data = await res.json();
 
   if(!Array.isArray(data)) return;
 
-  dataCache=sort(data);
+  allData = sortData(data);
 
-  const filtered=filterData(dataCache);
-
-  tbody.innerHTML="";
+  tbody.innerHTML = "";
   map.clear();
 
-  stats(filtered);
-  filtered.forEach(render);
+  updateStats(allData);
+
+  allData.forEach(render);
 }
 
-/* SEARCH LIVE */
-searchInput.addEventListener("input",()=>loadData());
+setInterval(loadData,15000);
 
 loadData();
 countdown();
