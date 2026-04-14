@@ -234,55 +234,82 @@ let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
 
-/* ICONS */
+/* CLEAN VALUE */
+function clean(v){
+  return (v || "").toString().trim();
+}
+
+/* =========================
+   PAYMENT ICON (3 STATES)
+========================= */
 function payIcon(v){
-  if(v === "PAID") return "✅ PAID";
-  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
+  if (v === "PAID") return "✅ PAID";
+  if (v === "ON-WAITING PAYMENT") return "🟠 WAITING";
   return "❌ NOT PAID";
 }
 
+/* =========================
+   ATTENDANCE ICON
+========================= */
 function attIcon(v){
-  if(v === "Attended") return "✔ ATTENDED";
-  if(v === "ON-waiting") return "🟠 WAITING";
+  if (v === "Attended") return "✔ ATTENDED";
+  if (v === "ON-waiting") return "🟠 WAITING";
   return "❌ CANCELLED";
 }
 
-/* STATS */
+/* =========================
+   STATS (FIXED)
+========================= */
 function updateStats(data){
-  let paid = 0, waiting = 0;
+  let total = data.length;
+  let paid = 0;
+  let waiting = 0;
 
   data.forEach(p => {
-    if(p.paymentIndicator === "PAID") paid++;
-    if(p.paymentIndicator === "ON-WAITING PAYMENT") waiting++;
+    if (p.paymentIndicator === "PAID") paid++;
+    else if (p.paymentIndicator === "ON-WAITING PAYMENT") waiting++;
   });
 
-  document.getElementById("total").textContent = data.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
+  document.querySelectorAll(".stats .box span")[0].textContent = total;
+  document.querySelectorAll(".stats .box span")[1].textContent = paid;
+  document.querySelectorAll(".stats .box span")[2].textContent = waiting;
 }
 
-/* ROOM COUNTS */
+/* =========================
+   ROOM COUNT (FIXED + SAFE)
+========================= */
 function updateRoomStats(data){
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
   data.forEach(p => {
-    if(roomCount[p.room_ac] !== undefined){
-      roomCount[p.room_ac]++;
+    let room = clean(p.room_ac);
+    if (roomCount.hasOwnProperty(room)) {
+      roomCount[room]++;
     }
   });
 
+  const box = document.querySelector(".room-box");
   let html = "<b>ROOM AC STATUS</b><br>";
 
   AC_ROOMS.forEach(r => {
     let c = roomCount[r] || 0;
-    html += `${r}: ${c}/18 ${c >= 18 ? "❌ FULL" : ""}<br>`;
+    let full = c >= 18;
+
+    html += `
+      ${r}
+      <span class="badge ${full ? "full" : "available"}">
+        ${c}/18
+      </span><br>
+    `;
   });
 
-  document.getElementById("roomStats").innerHTML = html;
+  box.innerHTML = html;
 }
 
-/* RENDER ROW */
+/* =========================
+   RENDER ROW
+========================= */
 function render(p){
   let tr = document.createElement("tr");
 
@@ -292,23 +319,26 @@ function render(p){
     <td>${p.gender}</td>
     <td>${p.room}</td>
 
-    <td>${payIcon(p.paymentIndicator)}</td>
-    <td class="amt">${p.amount || ""}</td>
+    <td class="paytxt">${payIcon(p.paymentIndicator)}</td>
+
+    <td class="amt">
+      ${p.paymentIndicator === "PAID" ? "₱1500" : ""}
+    </td>
 
     <td>
       <select class="mode">
-        <option ${p.modeOfPayment === "Onsite" ? "selected" : ""}>Onsite</option>
-        <option ${p.modeOfPayment === "GCASH" ? "selected" : ""}>GCASH</option>
-        <option ${p.modeOfPayment === "BANK" ? "selected" : ""}>BANK</option>
+        <option ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
+        <option ${p.modeOfPayment==="GCASH"?"selected":""}>GCASH</option>
+        <option ${p.modeOfPayment==="BANK"?"selected":""}>BANK</option>
       </select>
     </td>
 
-    <td class="pay">${payIcon(p.paymentIndicator)}</td>
-    <td class="att">${attIcon(p.attendanceStatus)}</td>
+    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
     <td>
       <select class="shirt">
-        <option>S</option><option>M</option><option>L</option>
+        <option>S</option><option>M</option><option>L</option><option>XL</option>
       </select>
     </td>
 
@@ -318,8 +348,10 @@ function render(p){
     <td>
       <select class="roomac">
         <option value="">ROOM AC</option>
+
         ${AC_ROOMS.map(r => {
-          let full = roomCount[r] >= 18;
+          let count = roomCount[r] || 0;
+          let full = count >= 18;
           let disabled = full && p.room_ac !== r;
 
           return `
@@ -336,23 +368,45 @@ function render(p){
 
   tbody.appendChild(tr);
 
-  const payBtn = tr.querySelector(".pay");
-  const amt = tr.querySelector(".amt");
+  /* =========================
+     PAYMENT (3 STATE FIX)
+  ========================= */
+  tr.querySelector(".pay").onclick = () => {
 
-  /* PAYMENT TOGGLE */
-  payBtn.onclick = () => {
-    let next = p.paymentIndicator === "PAID" ? "NOT PAID" : "PAID";
+    let next;
+
+    if (p.paymentIndicator === "NOT PAID" || !p.paymentIndicator) {
+      next = "ON-WAITING PAYMENT";
+    }
+    else if (p.paymentIndicator === "ON-WAITING PAYMENT") {
+      next = "PAID";
+    }
+    else {
+      next = "NOT PAID";
+    }
+
     p.paymentIndicator = next;
 
-    payBtn.textContent = payIcon(next);
-    amt.textContent = next === "PAID" ? "₱1500" : "";
+    tr.querySelector(".pay").textContent = payIcon(next);
+    tr.querySelector(".paytxt").textContent = payIcon(next);
 
-    send("payment", { rowIndex: p.rowIndex, value: next });
+    tr.querySelector(".amt").textContent =
+      next === "PAID" ? "₱1500" : "";
+
+    send("payment", {
+      rowIndex: p.rowIndex,
+      value: next
+    });
+
+    updateStats(allData);
   };
 
   /* MODE */
   tr.querySelector(".mode").onchange = (e) => {
-    send("mode", { rowIndex: p.rowIndex, value: e.target.value });
+    send("mode", {
+      rowIndex: p.rowIndex,
+      value: e.target.value
+    });
   };
 
   /* KIT */
@@ -360,7 +414,11 @@ function render(p){
     let next = p.kit === "❌" ? "🟠" : p.kit === "🟠" ? "✅" : "❌";
     p.kit = next;
     tr.querySelector(".kit").textContent = next;
-    send("kit", { rowIndex: p.rowIndex, state: next });
+
+    send("kit", {
+      rowIndex: p.rowIndex,
+      state: next
+    });
   };
 
   /* AIRCON */
@@ -368,32 +426,51 @@ function render(p){
     let next = p.aircon === "❌" ? "🟠" : p.aircon === "🟠" ? "✅" : "❌";
     p.aircon = next;
     tr.querySelector(".aircon").textContent = next;
-    send("aircon", { rowIndex: p.rowIndex, state: next });
+
+    send("aircon", {
+      rowIndex: p.rowIndex,
+      state: next
+    });
   };
 
-  /* ROOM AC LIMIT CHECK */
+  /* =========================
+     ROOM AC (18 LIMIT ENFORCED)
+  ========================= */
   tr.querySelector(".roomac").onchange = (e) => {
-    let val = e.target.value;
+    let newRoom = clean(e.target.value);
+    let oldRoom = clean(p.room_ac);
 
-    if (roomCount[val] >= 18) {
-      alert("ROOM IS FULL");
-      e.target.value = p.room_ac || "";
+    updateRoomStats(allData);
+
+    if (newRoom && roomCount[newRoom] >= 18 && newRoom !== oldRoom) {
+      alert("ROOM IS FULL (18 LIMIT REACHED)");
+      e.target.value = oldRoom;
       return;
     }
 
-    p.room_ac = val;
-    send("room_ac", { rowIndex: p.rowIndex, value: val });
+    p.room_ac = newRoom;
+
+    send("room_ac", {
+      rowIndex: p.rowIndex,
+      value: newRoom
+    });
+
     updateRoomStats(allData);
   };
 
   /* SHIRT */
   tr.querySelector(".shirt").value = p.shirt || "";
   tr.querySelector(".shirt").onchange = (e) => {
-    send("shirt", { rowIndex: p.rowIndex, value: e.target.value });
+    send("shirt", {
+      rowIndex: p.rowIndex,
+      value: e.target.value
+    });
   };
 }
 
-/* SEND TO SHEETS */
+/* =========================
+   SEND TO SHEETS
+========================= */
 function send(action, data){
   let fd = new FormData();
   fd.append("action", action);
@@ -402,10 +479,15 @@ function send(action, data){
     fd.append(k, data[k]);
   }
 
-  fetch(BASE_URL, { method: "POST", body: fd });
+  fetch(BASE_URL, {
+    method: "POST",
+    body: fd
+  });
 }
 
-/* LOAD DATA */
+/* =========================
+   LOAD DATA
+========================= */
 async function loadData(){
   let res = await fetch(BASE_URL + "?sheet=" + SHEET);
   allData = await res.json();
@@ -418,16 +500,23 @@ async function loadData(){
 }
 
 loadData();
-setInterval(loadData, 60000);
+setInterval(loadData, 5000);
 
-/* SEARCH */
-document.querySelector(".search-bar input").addEventListener("input", e => {
-  let q = e.target.value.toLowerCase();
+/* =========================
+   SEARCH BAR (SAFE)
+========================= */
+const searchInput = document.querySelector(".search-bar input");
+if (searchInput) {
+  searchInput.addEventListener("input", e => {
+    let q = e.target.value.toLowerCase();
 
-  document.querySelectorAll("tbody tr").forEach(row => {
-    row.style.display = row.innerText.toLowerCase().includes(q) ? "" : "none";
+    document.querySelectorAll("tbody tr").forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(q)
+        ? ""
+        : "none";
+    });
   });
-});
+}
 </script>
 
 </body>
