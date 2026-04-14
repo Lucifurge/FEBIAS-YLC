@@ -18,120 +18,103 @@ body {
 h1 { text-align: center; color: #ff6a00; }
 .sub { text-align: center; color: #aaa; margin-bottom: 10px; }
 
-/* LEGEND */
 .legend {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-  margin: 10px 0 20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+  margin:10px 0 20px;
 }
 
-.legend-box {
-  background: #1a1a1a;
-  border-left: 4px solid #ff6a00;
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 13px;
+.legend-box{
+  background:#1a1a1a;
+  border-left:4px solid #ff6a00;
+  padding:10px;
+  border-radius:10px;
+  font-size:13px;
 }
 
-.legend-box h3, .legend-box h4 {
-  color: #ff6a00;
-  margin-bottom: 5px;
-}
-
-.legend-box p {
-  color: #ccc;
-  margin: 3px 0;
-}
-
-/* STATS */
 .stats {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
 }
 
-.box {
-  background: #1a1a1a;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #333;
-  min-width: 140px;
-  text-align: center;
+.box{
+  background:#1a1a1a;
+  padding:10px;
+  border-radius:10px;
+  min-width:140px;
+  text-align:center;
+  border:1px solid #333;
 }
 
-.box span { color: #ff6a00; font-weight: bold; }
+.box span{ color:#ff6a00; font-weight:bold; }
 
-/* SEARCH */
-.search {
-  display: flex;
-  justify-content: center;
-  margin: 10px 0;
+.search{
+  display:flex;
+  justify-content:center;
+  margin:10px 0;
 }
 
-.search input {
-  width: 100%;
-  max-width: 400px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #333;
-  background: #1a1a1a;
-  color: white;
+.search input{
+  width:100%;
+  max-width:400px;
+  padding:10px;
+  border-radius:8px;
+  background:#1a1a1a;
+  border:1px solid #333;
+  color:white;
 }
 
-/* TABLE */
-.table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  border-radius: 10px;
-  border: 1px solid #222;
+.table-wrap{
+  width:100%;
+  overflow-x:auto;
 }
 
-table {
-  width: 100%;
-  min-width: 1800px;
-  border-collapse: collapse;
+table{
+  width:100%;
+  min-width:1800px;
+  border-collapse:collapse;
 }
 
-th {
-  background: #1a1a1a;
-  color: #ff6a00;
-  padding: 10px;
-  position: sticky;
-  top: 0;
+th{
+  background:#1a1a1a;
+  color:#ff6a00;
+  padding:10px;
+  position:sticky;
+  top:0;
 }
 
-td {
-  padding: 8px;
-  border: 1px solid #222;
-  background: #121212;
-  text-align: center;
-  font-size: 13px;
+td{
+  padding:8px;
+  border:1px solid #222;
+  background:#121212;
+  text-align:center;
+  font-size:13px;
 }
 
-.clickable {
-  cursor: pointer;
-  font-size: 18px;
-  transition: 0.15s;
+.clickable{
+  cursor:pointer;
+  font-size:18px;
+  transition:0.12s;
 }
 
-.clickable:hover {
-  transform: scale(1.2);
+.clickable:hover{
+  transform:scale(1.2);
 }
 
-/* BUTTON */
-button {
-  width: 100%;
-  max-width: 300px;
-  margin: 10px auto;
-  display: block;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(45deg,#ff6a00,#ff2e00);
-  color: white;
-  font-weight: bold;
+button{
+  width:100%;
+  max-width:300px;
+  margin:10px auto;
+  display:block;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  color:white;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -144,29 +127,23 @@ button {
 <!-- LEGEND -->
 <div class="legend">
   <div class="legend-box">
-    <h3>📌 SYSTEM GUIDE</h3>
-    <p>Click icons to instantly change status.</p>
-    <p>All updates save automatically.</p>
+    <b>PAYMENT SYSTEM</b><br>
+    ❌ Not Paid<br>
+    🟠 On-Waiting Payment<br>
+    ✅ Paid
   </div>
 
   <div class="legend-box">
-    <h4>💳 PAYMENT / KIT / AIRCON</h4>
-    <p>❌ = NOT DONE / NOT PAID</p>
-    <p>🟠 = PENDING</p>
-    <p>✅ = COMPLETED / PAID</p>
+    <b>KIT / AIRCON</b><br>
+    ❌ Not Given<br>
+    🟠 Pending<br>
+    ✅ Completed
   </div>
 
   <div class="legend-box">
-    <h4>🧾 ATTENDANCE</h4>
-    <p>Click to cycle:</p>
-    <p>ON-WAITING → ATTENDED → CANCELLED</p>
-  </div>
-
-  <div class="legend-box">
-    <h4>⚡ SPEED MODE</h4>
-    <p>✔ Instant UI change</p>
-    <p>✔ Background saving</p>
-    <p>✔ No reload needed</p>
+    <b>TIP</b><br>
+    Click icons = instant update<br>
+    No reload needed
   </div>
 </div>
 
@@ -188,23 +165,19 @@ button {
 <table>
 <thead>
 <tr>
-  <th>#</th>
-  <th>Last</th>
-  <th>First</th>
-  <th>Gender</th>
-  <th>Age</th>
-  <th>Contact</th>
-  <th>Church</th>
-  <th>Class</th>
-  <th>Room</th>
+  <th>#</th><th>Last</th><th>First</th><th>Gender</th><th>Age</th>
+  <th>Contact</th><th>Church</th><th>Class</th><th>Room</th>
+
   <th>Payment Category</th>
   <th>Amount</th>
-  <th>Mode</th>
-  <th>Payment</th>
+  <th>Mode of Payment</th>
+
+  <th>Payment Status</th>
   <th>Attendance</th>
   <th>✔</th>
   <th>🟠</th>
   <th>❌</th>
+
   <th>Shirt</th>
   <th>Kit</th>
   <th>Aircon</th>
@@ -226,10 +199,10 @@ const countdownEl = document.getElementById("countdown");
 let map = new Map();
 let allData = [];
 
-/* QUEUE (SMOOTH SAVE) */
 const queue = [];
 let running = false;
 
+/* smooth background sync */
 function sendUpdate(fd){
   queue.push(fd);
   processQueue();
@@ -241,89 +214,67 @@ async function processQueue(){
 
   while(queue.length){
     const fd = queue.shift();
-    try { await fetch(BASE_URL,{method:"POST",body:fd}); } catch(e){}
+    try{ await fetch(BASE_URL,{method:"POST",body:fd}); }catch(e){}
   }
 
   running = false;
 }
 
-/* STATS */
-function updateStats(data){
-  let paid = 0, waiting = 0;
-
-  data.forEach(p=>{
-    if(p.paymentIndicator === "PAID") paid++;
-    else waiting++;
-  });
-
-  document.getElementById("total").textContent = data.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
-}
-
-/* SORT */
-function sortData(data){
-  return data.sort((a,b)=>
-    (a.lastName||"").localeCompare(b.lastName||"")
-  );
+/* STATUS ICONS */
+function payIcon(v){
+  return v==="PAID"?"✅ PAID":
+         v==="ON-WAITING PAYMENT"?"🟠 WAITING":"❌ NOT PAID";
 }
 
 /* RENDER */
 function render(p){
 
   let tr = map.get(p.rowIndex);
-
   if(!tr){
-    tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td></td><td></td><td></td><td></td><td></td>
-      <td></td><td></td><td></td><td></td>
-      <td></td><td></td>
-      <td class="clickable"></td>
-      <td></td>
-      <td class="clickable"></td>
-      <td class="clickable"></td>
-      <td class="clickable"></td>
-      <td class="clickable"></td>
-      <td></td>
-      <td class="clickable"></td>
-      <td class="clickable"></td>
-    `;
-
+    tr=document.createElement("tr");
+    tr.innerHTML=`<td></td><td></td><td></td><td></td><td></td>
+    <td></td><td></td><td></td><td></td>
+    <td></td><td></td><td></td>
+    <td></td><td></td>
+    <td class="clickable"></td>
+    <td class="clickable"></td>
+    <td class="clickable"></td>
+    <td></td>
+    <td class="clickable"></td>
+    <td class="clickable"></td>`;
     tbody.appendChild(tr);
     map.set(p.rowIndex,tr);
   }
 
-  const c = tr.children;
+  const c=tr.children;
 
-  c[0].textContent = p.rowIndex;
-  c[1].textContent = p.lastName;
-  c[2].textContent = p.firstName;
-  c[3].textContent = p.gender;
-  c[4].textContent = p.age;
-  c[5].textContent = p.contact;
-  c[6].textContent = p.church;
-  c[7].textContent = p.classification;
-  c[8].textContent = p.room;
+  c[0].textContent=p.rowIndex;
+  c[1].textContent=p.lastName;
+  c[2].textContent=p.firstName;
+  c[3].textContent=p.gender;
+  c[4].textContent=p.age;
+  c[5].textContent=p.contact;
+  c[6].textContent=p.church;
+  c[7].textContent=p.classification;
+  c[8].textContent=p.room;
 
-  c[9].textContent = p.paymentCategory;
-  c[10].textContent = p.amount;
+  c[9].textContent=p.paymentCategory;
+  c[10].textContent=p.amount;
 
-  function payIcon(v){
-    return v==="PAID"?"✅":v==="ON-WAITING PAYMENT"?"🟠":"❌";
-  }
+  c[11].textContent=p.modeOfPayment;
 
-  c[11].textContent = payIcon(p.paymentIndicator);
+  /* PAYMENT */
+  c[12].textContent=payIcon(p.paymentIndicator);
 
-  c[11].onclick = ()=>{
-    let next = p.paymentIndicator==="PAID"?"NOT PAID":
-               p.paymentIndicator==="NOT PAID"?"WAITING":"PAID";
+  c[12].onclick=()=>{
+    let next=
+      p.paymentIndicator==="PAID"?"NOT PAID":
+      p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
 
-    p.paymentIndicator = next;
-    c[11].textContent = payIcon(next);
+    p.paymentIndicator=next;
+    c[12].textContent=payIcon(next);
 
-    let fd = new FormData();
+    let fd=new FormData();
     fd.append("action","payment");
     fd.append("rowIndex",p.rowIndex);
     fd.append("value",next);
@@ -331,19 +282,18 @@ function render(p){
     sendUpdate(fd);
   };
 
-  c[12].textContent = p.paymentIndicator;
+  /* ATTENDANCE */
+  c[13].textContent=p.attendanceStatus;
 
-  c[13].textContent = p.attendanceStatus;
-
-  c[13].onclick = ()=>{
-    let next =
+  c[13].onclick=()=>{
+    let next=
       p.attendanceStatus==="Attended"?"Cancelled":
       p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
 
-    p.attendanceStatus = next;
-    c[13].textContent = next;
+    p.attendanceStatus=next;
+    c[13].textContent=next;
 
-    let fd = new FormData();
+    let fd=new FormData();
     fd.append("action","attendance");
     fd.append("rowIndex",p.rowIndex);
     fd.append("status",next);
@@ -351,19 +301,14 @@ function render(p){
     sendUpdate(fd);
   };
 
-  c[14].textContent = p.attendedIcon;
-  c[15].textContent = p.waitingIcon;
-  c[16].textContent = p.cancelledIcon;
+  /* KIT */
+  c[18].textContent=p.kit;
+  c[18].onclick=()=>{
+    let next=p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+    p.kit=next;
+    c[18].textContent=next;
 
-  c[17].textContent = p.shirt;
-
-  c[18].textContent = p.kit;
-  c[18].onclick = ()=>{
-    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-    p.kit = next;
-    c[18].textContent = next;
-
-    let fd = new FormData();
+    let fd=new FormData();
     fd.append("action","kit");
     fd.append("rowIndex",p.rowIndex);
     fd.append("state",next);
@@ -371,13 +316,14 @@ function render(p){
     sendUpdate(fd);
   };
 
-  c[19].textContent = p.aircon;
-  c[19].onclick = ()=>{
-    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-    p.aircon = next;
-    c[19].textContent = next;
+  /* AIRCON */
+  c[19].textContent=p.aircon;
+  c[19].onclick=()=>{
+    let next=p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+    p.aircon=next;
+    c[19].textContent=next;
 
-    let fd = new FormData();
+    let fd=new FormData();
     fd.append("action","aircon");
     fd.append("rowIndex",p.rowIndex);
     fd.append("state",next);
@@ -386,43 +332,42 @@ function render(p){
   };
 }
 
-/* FILTER */
-function filterTable(){
-  let q = searchBox.value.toLowerCase();
-  document.querySelectorAll("tbody tr").forEach(tr=>{
-    tr.style.display = tr.innerText.toLowerCase().includes(q)?"":"none";
-  });
-}
-
 /* LOAD */
 async function loadData(){
-  const res = await fetch(BASE_URL+"?sheet="+SHEET);
-  const data = await res.json();
+  const res=await fetch(BASE_URL+"?sheet="+SHEET);
+  const data=await res.json();
 
-  allData = sortData(data);
+  allData=data;
 
   tbody.innerHTML="";
   map.clear();
 
-  updateStats(allData);
   allData.forEach(render);
+}
+
+/* FILTER */
+function filterTable(){
+  let q=searchBox.value.toLowerCase();
+  document.querySelectorAll("tbody tr").forEach(tr=>{
+    tr.style.display=tr.innerText.toLowerCase().includes(q)?"":"none";
+  });
 }
 
 /* COUNTDOWN */
 setInterval(()=>{
-  const start = new Date("2026-04-16").getTime();
-  const end = new Date("2026-04-18").getTime();
-  const now = Date.now();
-  const t = now<start?start:end;
+  const start=new Date("2026-04-16").getTime();
+  const end=new Date("2026-04-18").getTime();
+  const now=Date.now();
+  const t=now<start?start:end;
 
-  const d = Math.floor((t-now)/86400000);
-  const h = Math.floor((t-now)/3600000)%24;
+  const d=Math.floor((t-now)/86400000);
+  const h=Math.floor((t-now)/3600000)%24;
 
-  countdownEl.textContent = now<start?
+  countdownEl.textContent=now<start?
   `STARTS IN ${d}d ${h}h`:`ENDS IN ${d}d ${h}h`;
 },1000);
 
-setInterval(loadData,20000);
+setInterval(loadData,30000);
 loadData();
 
 </script>
