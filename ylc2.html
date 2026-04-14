@@ -3,9 +3,9 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YLC 2026 Online Registration</title>
-  <link rel="icon" href="logo.ico">
-<style>
+  <title>YLC 2026 Walk-In Registration</title>
+  <link rel="icon" href="refine.ico">
+   <style>
 
 /* ---------- GOOGLE FONTS AUTO LOAD ---------- */
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600&family=Roboto:wght@400;500&display=swap');
@@ -228,7 +228,6 @@ button:hover{
     font-weight:bold;
   }
 }
-
 /* ---------- CAMP T-SHIRT IMAGE BESIDE RADIOS ---------- */
 .shirt-container{
   display:flex;
@@ -249,17 +248,15 @@ button:hover{
   border:2px solid #FF6A00;
   border-radius:12px;
 }
-
 </style>
 </head>
 <body>
-<div id="loader">
+  <div id="loader">
   <div class="loader-content">
-    <div class="spinner"></div>
-    Submitting your registration, please wait...
+    ⏳ Submitting your registration, please wait...
   </div>
 </div>
-  <h1>YLC 2026 Campers' Online Registration Form</h1>
+  <h1>YLC 2026 Campers' Walk-In Registration Form</h1>
   <form id="ylcForm">
 
     <h2>Privacy Statement</h2>
@@ -280,7 +277,7 @@ button:hover{
       For participants under 18 years old, a Minor Consent Form must be completed by a parent or guardian to authorize the collection and use of personal data. Any health-related details you provide will be used exclusively to ensure appropriate medical attention and accommodations when necessary.
     </p>
     <p>
-      By proceeding with this registration, you acknowledge that you have read and understood this Privacy Statement and consent to the collection and processing of your personal information for YLC 2025 purposes. If you have any concerns or wish to request modifications to your data, you may contact the YLC 2025 Registration Team.
+      By proceeding with this registration, you acknowledge that you have read and understood this Privacy Statement and consent to the collection and processing of your personal information for YLC 2026 purposes. If you have any concerns or wish to request modifications to your data, you may contact the YLC 2026 Registration Team.
     </p>
     <div class="checkbox-group">
       <label><input type="checkbox" name="privacyConsent" required> I have read and understood the privacy statement.</label>
@@ -293,7 +290,7 @@ button:hover{
       <label><input type="radio" name="minorConsent" value="Parent"> I am a parent/guardian of a minor child and I give full consent to have him/her participate in YLC 2026.</label>
     </div>
     <h2>Camper's Personal Information</h2>
-    <p>.
+    <p>
       Please provide accurate and complete details. The information you submit will be used for identification,
       communication, and camp-related arrangements. Ensure that all details are correct to avoid any registration issues.
     </p>
@@ -350,7 +347,7 @@ button:hover{
       <label><input type="radio" name="firstTimeYLC" value="NeverAttended"> No, but I have never attended any YLC before.</label>
     </div>
 
-    <h3>How did you learn about the YLC 2026?</h3>
+    <h3>How did you learn about the YLC 2025?</h3>
     <div class="radio-group">
       <label><input type="radio" name="learnAboutYLC" value="FebiasReferral" required> I was invited or referred by a Febias Student, Faculty & Staff, or Alumni.</label>
       <label><input type="radio" name="learnAboutYLC" value="ChurchReferral"> I was invited or referred by my Church Pastor, Leader, or Friend.</label>
@@ -421,6 +418,7 @@ button:hover{
 <label><input type="radio" name="bibleReading" value="4"> 4</label>
 <label><input type="radio" name="bibleReading" value="5"> 5</label>
     </div>
+
 <h2>How often do you attend church service in a month?</h2>
 <div class="radio-group">
 <label><input type="radio" name="churchAttendance" value="0" required> 0</label>
@@ -451,9 +449,7 @@ button:hover{
       <label><input type="radio" name="churchMembership" value="2 yr above"> 2 yr above</label>
     </div>    <h2>CAMP T-SHIRT</h2>
     <p>Kindly check your preferred shirt size. Please refer to Size.*</p>
-   <h2>CAMP T-SHIRT</h2>
-<p>Kindly check your preferred shirt size. Please refer to Size.*</p>
-<div class="shirt-container">
+  <div class="shirt-container">
   <div class="radio-group shirt-sizes">
     <label><input type="radio" name="shirtSize" value="XS" required> XS</label>
     <label><input type="radio" name="shirtSize" value="S"> S</label>
@@ -522,155 +518,117 @@ button:hover{
   </form>
 
   <div id="response"></div>
-
 <script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyUmPbXLVWTDs3peBSZRH95MWA8xNegVvoMkB5WfRxBi6ItRM1R4wZJxHaIAv4tVIdE/exec";
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbww2ngKYi48M1wtwoOXhhE4uP71mFCT7DFa8PneyfS-NKJGaVi1Lc9er5o5qKsWa36UBg/exec";
-
-// ---------- SUBMISSION LOCK ----------
-let isSubmitting = false;
-
-document.getElementById("ylcForm").addEventListener("submit", function(e){
-
-  // prevent double submission
-  if(sessionStorage.getItem("ylcSubmitted")){
-    alert("You have already submitted this registration on this device.");
-    return;
-  }
-  if(isSubmitting) return;
-  isSubmitting = true;
-
+document.getElementById("ylcForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  // ---------- VALIDATION ----------
-  const formElements = this.querySelectorAll("input, select, textarea");
-
-  for (const el of formElements) {
-    if((el.type === "radio" || el.type === "checkbox")) {
-      if(el.required){
-        const group = this.querySelectorAll(`input[name="${el.name}"]`);
-        if (![...group].some(r => r.checked)){
-          alert(`Please select an option for "${el.name}".`);
-          el.focus();
-          isSubmitting = false;
-          return;
-        }
-      }
-    } else if(!el.value.trim()){
-      alert(`Please fill out the "${el.name}" field.`);
-      el.focus();
-      isSubmitting = false;
-      return;
-    }
-  }
-
-  // ---------- HEALTH DECLARATION CHECK ----------
-  const healthDecl = this.querySelectorAll('input[name="healthDeclaration"]:checked');
-  if(healthDecl.length !== 4){
-    alert("Please select exactly 4 options for Health Declaration.");
-    isSubmitting = false;
-    return;
-  }
-
-  // ---------- SHOW LOADER ----------
   const loader = document.getElementById("loader");
-  loader.classList.add("active");
-
   const submitBtn = this.querySelector("button[type='submit']");
+
+  loader.classList.add("active");
   submitBtn.disabled = true;
-  submitBtn.innerText = "Submitting...";
 
   const form = new FormData(this);
   const formData = {};
 
-  const nameMap = {
-    lastName: "last_name",
-    firstName: "first_name",
-    middleName: "middle_name",
-    nickname: "nickname",
-    age: "age",
-    dob: "dob",
-    gender: "gender",
-    contact: "contact_number",
-    address: "home_address",
-    email: "email",
-    facebook: "facebook",
-    churchName: "church_name",
-    churchLocation: "church_location",
-    pastorName: "pastor_name",
-    acceptedChrist: "accepted_christ",
-    baptized: "water_baptized",
-    hasMinistries: "church_ministries",
-    youthLeaderStatus: "youth_leader",
-    ministries: "ministries",
-    otherMinistries: "other_ministries",
-    bibleReading: "bible_reading_freq",
-    churchAttendance: "church_service_freq",
-    discipleship: "discipleship_group",
-    booksInBible: "books_in_bible",
-    churchMembership: "church_membership_duration",
-    allergies: "allergies",
-    allergyDetails: "allergy_items",
-    dietaryRestrictions: "dietary_restrictions",
-    dietaryDetails: "dietary_items",
-    dietarySpecify: "dietary_specify",
-    healthConditions: "health_conditions",
-    healthConditionDetails: "health_condition_details",
-    healthConditionSpecify: "health_condition_specify",
-    healthDeclaration: "health_declaration",
-    paymentMadeBy: "payment_by",
-    sponsorName: "sponsor_name",
-    minorConsent: "minor_consent",
-    firstTimeYLC: "first_time_ylc",
-    learnAboutYLC: "learn_about_ylc",
-    shirtSize: "shirt_size"
-  };
+  /* ✅ VALIDATE HEALTH DECLARATION */
+  const healthChecks = form.getAll("healthDeclaration");
+  if (healthChecks.length !== 4) {
+    loader.classList.remove("active");
+    submitBtn.disabled = false;
+    alert("Please select ALL 4 health declarations.");
+    return;
+  }
 
-  for(let [key,value] of form.entries()){
-    const mappedKey = nameMap[key] || key;
-    if(mappedKey === "email"){
-      value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g,'');
+  /* ✅ BUILD FORM DATA */
+  for (let [key, value] of form.entries()) {
+
+    if (key === "email") {
+      value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
     }
-    if(formData[mappedKey]){
-      if(Array.isArray(formData[mappedKey])){
-        formData[mappedKey].push(value);
+
+    // Handle checkboxes (ministries etc.)
+    if (formData[key]) {
+      if (Array.isArray(formData[key])) {
+        formData[key].push(value);
       } else {
-        formData[mappedKey] = [formData[mappedKey], value];
+        formData[key] = [formData[key], value];
       }
     } else {
-      formData[mappedKey] = value;
+      formData[key] = value;
     }
   }
 
-  formData.action = "register";
-  formData.sheet = "Pre-Registration";
+  /* =========================
+     🔥 FIX FIELD ALIGNMENT
+  ========================= */
 
-  fetch(scriptURL,{
-    method:"POST",
-    body:new URLSearchParams(formData)
-  })
-  .then(res => res.json())
-  .then(data => {
-    loader.classList.remove("active");
-    if(data.result === "success" && data.rowIndex){
-      sessionStorage.setItem("ylcSubmitted","true");
-      window.location.href = "payment.html?rowIndex=" + data.rowIndex;
-    } else {
-      document.getElementById("response").innerText = "Error: "+(data.error||"Something went wrong.");
-      submitBtn.disabled = false;
-      submitBtn.innerText = "Submit Registration";
-      isSubmitting = false;
+  // Merge ministry checkboxes properly
+  if (Array.isArray(formData.ministries)) {
+    formData.ministries = formData.ministries.join(", ");
+  }
+
+  // FIX: map fields to match Apps Script
+  formData.allergyDetails =
+    formData.allergyDetails || formData.allergyTriggers || "";
+
+  formData.dietaryRestrictions =
+    formData.dietaryRestrictions === "Yes"
+      ? (formData.dietaryDetails || formData.dietarySpecify || "")
+      : "No";
+
+  formData.healthConditions =
+    formData.healthConditions === "Yes"
+      ? (formData.healthConditionDetails || formData.healthConditionSpecify || "")
+      : "No";
+
+  /* REMOVE UNUSED FIELDS (clean payload) */
+  delete formData.allergyTriggers;
+  delete formData.dietaryDetails;
+  delete formData.dietarySpecify;
+  delete formData.healthConditionDetails;
+  delete formData.healthConditionSpecify;
+  delete formData.healthDeclaration;
+  delete formData.otherMinistries;
+  delete formData.learnAboutYLC;
+  delete formData.firstTimeYLC;
+  delete formData.privacyConsent;
+
+  /* FLAGS FOR APPS SCRIPT */
+  formData.action = "register";
+  formData.sheet = "WALK-IN";
+
+  try {
+    const res = await fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams(formData)
+    });
+
+    const text = await res.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Server returned invalid response");
     }
-  })
-  .catch(err=>{
+
+    loader.classList.remove("active");
+
+    if (data.result === "success" && data.rowIndex) {
+      window.location.href = "payment2.html?rowIndex=" + data.rowIndex;
+    } else {
+      throw new Error(data.error || "Submission failed");
+    }
+
+  } catch (err) {
+    console.error(err);
     loader.classList.remove("active");
     submitBtn.disabled = false;
-    submitBtn.innerText = "Submit Registration";
-    isSubmitting = false;
-    document.getElementById("response").innerText = "Submission failed. Please try again.";
-    console.error(err);
-  });
-
+    alert(err.message || "Something went wrong");
+  }
 });
 </script>
 </body>
