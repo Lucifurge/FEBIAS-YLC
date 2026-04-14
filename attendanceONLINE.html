@@ -126,7 +126,7 @@ button{
   <div class="legend-box">
     <b>PAYMENT</b><br>
     ❌ Not Paid<br>
-    🟠 Waiting<br>
+    🟠 Waiting/DownPayment<br>
     ✅ Paid
   </div>
 
@@ -162,6 +162,7 @@ button{
 <tr>
   <th>#</th><th>Last</th><th>First</th><th>Gender</th><th>Age</th>
   <th>Contact</th><th>Church</th><th>Class</th><th>Room</th>
+
   <th>Payment Cat</th><th>Amount</th><th>Mode</th>
 
   <th>PAY</th><th>ATT</th>
@@ -176,22 +177,22 @@ button{
 
 <script>
 
-const BASE_URL="https://script.google.com/macros/s/AKfycbx7AMQmqsh2gHzZMorosZFlkQpc8xOLPVQ4nWDHVEJrgk2C6raVd9Z4WZq0UuYj-NMh/exec";
-const SHEET="Pre-Registration";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbx7AMQmqsh2gHzZMorosZFlkQpc8xOLPVQ4nWDHVEJrgk2C6raVd9Z4WZq0UuYj-NMh/exec";
+const SHEET = "Pre-Registration";
 
-const tbody=document.querySelector("tbody");
-const searchBox=document.getElementById("searchBox");
-const countdownEl=document.getElementById("countdown");
+const tbody = document.querySelector("tbody");
+const searchBox = document.getElementById("searchBox");
+const countdownEl = document.getElementById("countdown");
 
-let map=new Map();
-let allData=[];
+let map = new Map();
+let allData = [];
 
-/* 🔥 FIX: prevent flicker overwrite */
-let dirty=new Map();
+/* 🔥 CRITICAL FIX: local cache prevents flicker rollback */
+let localCache = new Map();
 
-/* queue */
-let queue=[];
-let running=false;
+/* queue system */
+let queue = [];
+let running = false;
 
 function sendUpdate(fd){
   queue.push(fd);
@@ -200,113 +201,131 @@ function sendUpdate(fd){
 
 async function processQueue(){
   if(running) return;
-  running=true;
+  running = true;
 
   while(queue.length){
-    const fd=queue.shift();
-    try{ await fetch(BASE_URL,{method:"POST",body:fd}); }catch(e){}
+    const fd = queue.shift();
+    try{
+      await fetch(BASE_URL,{method:"POST",body:fd});
+    }catch(e){}
   }
 
-  running=false;
+  running = false;
 }
 
-/* ICONS */
+/* ICONS (FIXED) */
 function payIcon(v){
-  return v==="PAID"?"✅":
-         v==="ON-WAITING PAYMENT"?"🟠":"❌";
+  if(v==="PAID") return "✅ PAID";
+  if(v==="ON-WAITING PAYMENT") return "🟠 WAITING";
+  return "❌ NOT PAID";
 }
 
 function attIcon(v){
-  return v==="Attended"?"✅":
-         v==="ON-waiting"?"🟠":"❌";
+  if(v==="Attended") return "✅ ATTENDED";
+  if(v==="ON-waiting") return "🟠 WAITING";
+  return "❌ CANCELLED";
 }
 
 /* RENDER */
 function render(p){
 
-  let tr=map.get(p.rowIndex);
+  let tr = map.get(p.rowIndex);
+
   if(!tr){
-    tr=document.createElement("tr");
-    tr.innerHTML=`<td></td><td></td><td></td><td></td><td></td>
-    <td></td><td></td><td></td><td></td>
-    <td></td><td></td><td></td>
-    <td class="clickable"></td>
-    <td class="clickable"></td>
-    <td class="clickable"></td>
-    <td class="clickable"></td>
-    <td class="clickable"></td>
-    <td></td>
-    <td class="clickable"></td>
-    <td class="clickable"></td>`;
+    tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td></td><td></td><td></td><td></td><td></td>
+      <td></td><td></td><td></td><td></td>
+      <td></td><td></td><td></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+      <td></td>
+      <td class="clickable"></td>
+      <td class="clickable"></td>
+    `;
     tbody.appendChild(tr);
     map.set(p.rowIndex,tr);
   }
 
-  const c=tr.children;
+  const c = tr.children;
 
-  c[0].textContent=p.rowIndex;
-  c[1].textContent=p.lastName;
-  c[2].textContent=p.firstName;
-  c[3].textContent=p.gender;
-  c[4].textContent=p.age;
-  c[5].textContent=p.contact;
-  c[6].textContent=p.church;
-  c[7].textContent=p.classification;
-  c[8].textContent=p.room;
+  c[0].textContent = p.rowIndex;
+  c[1].textContent = p.lastName;
+  c[2].textContent = p.firstName;
+  c[3].textContent = p.gender;
+  c[4].textContent = p.age;
+  c[5].textContent = p.contact;
+  c[6].textContent = p.church;
+  c[7].textContent = p.classification;
+  c[8].textContent = p.room;
 
-  c[9].textContent=p.paymentCategory;
-  c[10].textContent=p.amount;
-  c[11].textContent=p.modeOfPayment;
+  c[9].textContent = p.paymentCategory;
+  c[10].textContent = p.amount;
+  c[11].textContent = p.modeOfPayment;
 
   /* PAYMENT */
-  c[12].textContent=payIcon(p.paymentIndicator);
+  c[12].textContent = payIcon(p.paymentIndicator);
 
-  c[12].onclick=()=>{
-    let next=p.paymentIndicator==="PAID"?"NOT PAID":
-             p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
+  c[12].onclick = () => {
 
-    p.paymentIndicator=next;
-    dirty.set(p.rowIndex,true);
+    let next =
+      p.paymentIndicator==="PAID" ? "NOT PAID" :
+      p.paymentIndicator==="NOT PAID" ? "ON-WAITING PAYMENT" : "PAID";
 
-    c[12].textContent=payIcon(next);
+    p.paymentIndicator = next;
+    localCache.set(p.rowIndex, p);
 
-    let fd=new FormData();
+    c[12].textContent = payIcon(next);
+
+    let fd = new FormData();
     fd.append("action","payment");
     fd.append("rowIndex",p.rowIndex);
     fd.append("value",next);
     fd.append("sheet",SHEET);
+
     sendUpdate(fd);
   };
 
-  /* ATTENDANCE */
-  c[13].textContent=attIcon(p.attendanceStatus);
+  /* ATTENDANCE (FIXED ICON SYNC) */
+  c[13].textContent = attIcon(p.attendanceStatus);
 
-  c[13].onclick=()=>{
-    let next=p.attendanceStatus==="Attended"?"Cancelled":
-             p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
+  c[13].onclick = () => {
 
-    p.attendanceStatus=next;
-    dirty.set(p.rowIndex,true);
+    let next =
+      p.attendanceStatus==="Attended" ? "Cancelled" :
+      p.attendanceStatus==="Cancelled" ? "ON-waiting" : "Attended";
 
-    c[13].textContent=attIcon(next);
+    p.attendanceStatus = next;
+    localCache.set(p.rowIndex, p);
 
-    let fd=new FormData();
+    c[13].textContent = attIcon(next);
+
+    let fd = new FormData();
     fd.append("action","attendance");
     fd.append("rowIndex",p.rowIndex);
     fd.append("status",next);
     fd.append("sheet",SHEET);
+
     sendUpdate(fd);
   };
 
+  /* ICON COLUMNS (NOW FIXED) */
+  c[14].textContent = p.attendedIcon || "";
+  c[15].textContent = p.waitingIcon || "";
+  c[16].textContent = p.cancelledIcon || "";
+
   /* KIT */
-  c[18].textContent=p.kit;
+  c[18].textContent = p.kit;
 
-  c[18].onclick=()=>{
-    let next=p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-    p.kit=next;
-    c[18].textContent=next;
+  c[18].onclick = () => {
+    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+    p.kit = next;
+    c[18].textContent = next;
 
-    let fd=new FormData();
+    let fd = new FormData();
     fd.append("action","kit");
     fd.append("rowIndex",p.rowIndex);
     fd.append("state",next);
@@ -315,14 +334,14 @@ function render(p){
   };
 
   /* AIRCON */
-  c[19].textContent=p.aircon;
+  c[19].textContent = p.aircon;
 
-  c[19].onclick=()=>{
-    let next=p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-    p.aircon=next;
-    c[19].textContent=next;
+  c[19].onclick = () => {
+    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+    p.aircon = next;
+    c[19].textContent = next;
 
-    let fd=new FormData();
+    let fd = new FormData();
     fd.append("action","aircon");
     fd.append("rowIndex",p.rowIndex);
     fd.append("state",next);
@@ -331,42 +350,50 @@ function render(p){
   };
 }
 
-/* LOAD (FIXED SMOOTH) */
+/* LOAD (SMOOTH + CACHE SAFE) */
 async function loadData(){
-  const res=await fetch(BASE_URL+"?sheet="+SHEET);
-  const data=await res.json();
 
-  allData=data;
+  const res = await fetch(BASE_URL+"?sheet="+SHEET);
+  const data = await res.json();
 
-  tbody.innerHTML="";
+  allData = data;
+
+  tbody.innerHTML = "";
   map.clear();
 
-  allData.forEach(render);
+  allData.forEach(p => {
+
+    if(localCache.has(p.rowIndex)){
+      p = localCache.get(p.rowIndex);
+    }
+
+    render(p);
+  });
 }
 
 /* FILTER */
 function filterTable(){
-  let q=searchBox.value.toLowerCase();
+  let q = searchBox.value.toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
-    tr.style.display=tr.innerText.toLowerCase().includes(q)?"":"none";
+    tr.style.display = tr.innerText.toLowerCase().includes(q) ? "" : "none";
   });
 }
 
 /* COUNTDOWN */
 setInterval(()=>{
-  const start=new Date("2026-04-16").getTime();
-  const end=new Date("2026-04-18").getTime();
-  const now=Date.now();
-  const t=now<start?start:end;
+  const start = new Date("2026-04-16").getTime();
+  const end = new Date("2026-04-18").getTime();
+  const now = Date.now();
+  const t = now < start ? start : end;
 
-  const d=Math.floor((t-now)/86400000);
-  const h=Math.floor((t-now)/3600000)%24;
+  const d = Math.floor((t-now)/86400000);
+  const h = Math.floor((t-now)/3600000)%24;
 
-  countdownEl.textContent=now<start?
-  `STARTS IN ${d}d ${h}h`:`ENDS IN ${d}d ${h}h`;
+  countdownEl.textContent =
+    now < start ? `STARTS IN ${d}d ${h}h` : `ENDS IN ${d}d ${h}h`;
 },1000);
 
-/* SLOWER REFRESH = SMOOTHER UI */
+/* REFRESH (SLOW = SMOOTH) */
 setInterval(loadData, 60000);
 
 loadData();
