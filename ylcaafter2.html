@@ -519,110 +519,71 @@ button:hover{
 
   <div id="response"></div>
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbww2ngKYi48M1wtwoOXhhE4uP71mFCT7DFa8PneyfS-NKJGaVi1Lc9er5o5qKsWa36UBg/exec";
-
+const scriptURL = "https://script.google.com/macros/s/AKfycbyUmPbXLVWTDs3peBSZRH95MWA8xNegVvoMkB5WfRxBi6ItRM1R4wZJxHaIAv4tVIdE/exec
 document.getElementById("ylcForm").addEventListener("submit", function(e){
   e.preventDefault();
 
-  // Show loader overlay
   const loader = document.getElementById("loader");
-  loader.classList.add("active");
-
-  // Disable submit button to prevent double-click
   const submitBtn = this.querySelector("button[type='submit']");
+
+  loader.classList.add("active");
   submitBtn.disabled = true;
 
   const form = new FormData(this);
   const formData = {};
 
-  const nameMap = {
-    lastName: "last_name",
-    firstName: "first_name",
-    middleName: "middle_name",
-    nickname: "nickname",
-    age: "age",
-    dob: "dob",
-    gender: "gender",
-    contact: "contact_number",
-    address: "home_address",
-    email: "email",
-    facebook: "facebook",
-    churchName: "church_name",
-    churchLocation: "church_location",
-    pastorName: "pastor_name",
-    acceptedChrist: "accepted_christ",
-    baptized: "water_baptized",
-    hasMinistries: "church_ministries",
-    youthLeaderStatus: "youth_leader",
-    ministries: "ministries",
-    otherMinistries: "other_ministries",
-    bibleReading: "bible_reading_freq",
-    churchAttendance: "church_service_freq",
-    discipleship: "discipleship_group",
-    booksInBible: "books_in_bible",
-    churchMembership: "church_membership_duration",
-    allergies: "allergies",
-    allergyDetails: "allergy_items",
-    dietaryRestrictions: "dietary_restrictions",
-    dietaryDetails: "dietary_items",
-    dietarySpecify: "dietary_specify",
-    healthConditions: "health_conditions",
-    healthConditionDetails: "health_condition_details",
-    healthConditionSpecify: "health_condition_specify",
-    healthDeclaration: "health_declaration",
-    paymentMadeBy: "payment_by",
-    sponsorName: "sponsor_name",
-    minorConsent: "minor_consent",
-    firstTimeYLC: "first_time_ylc",
-    learnAboutYLC: "learn_about_ylc",
-    shirtSize: "shirt_size"
-  };
+  // ✅ VALIDATION: must select all 4 health declarations
+  const healthChecks = form.getAll("healthDeclaration");
+  if (healthChecks.length !== 4) {
+    loader.classList.remove("active");
+    submitBtn.disabled = false;
+    alert("Please select ALL 4 health declarations.");
+    return;
+  }
 
-  // Map form values to structured object
+  // ✅ BUILD FORM DATA (NO NAMEMAP)
   for (let [key, value] of form.entries()) {
-    const mappedKey = nameMap[key] || key;
 
     // Clean email
-    if (mappedKey === "email") {
+    if (key === "email") {
       value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
     }
 
     // Handle multiple values (checkboxes)
-    if (formData[mappedKey]) {
-      if (Array.isArray(formData[mappedKey])) {
-        formData[mappedKey].push(value);
+    if (formData[key]) {
+      if (Array.isArray(formData[key])) {
+        formData[key].push(value);
       } else {
-        formData[mappedKey] = [formData[mappedKey], value];
+        formData[key] = [formData[key], value];
       }
     } else {
-      formData[mappedKey] = value;
+      formData[key] = value;
     }
   }
 
+  // Optional extra flags
   formData.action = "register";
-  formData.sheet = "Walk-In";
+  formData.sheet = "WALK-IN";
 
-  // Send form data to Google Apps Script
   fetch(scriptURL, {
     method: "POST",
     body: new URLSearchParams(formData)
   })
   .then(res => res.json())
   .then(data => {
-    loader.classList.remove("active"); // hide loader
+    loader.classList.remove("active");
 
     if (data.result === "success" && data.rowIndex) {
-      // Redirect to payment page with rowIndex
       window.location.href = "payment2.html?rowIndex=" + data.rowIndex;
     } else {
       document.getElementById("response").innerText =
         "Error: " + (data.error || "Something went wrong.");
-      submitBtn.disabled = false; // re-enable button
+      submitBtn.disabled = false;
     }
   })
   .catch(err => {
-    loader.classList.remove("active"); // hide loader
-    submitBtn.disabled = false; // re-enable button
+    loader.classList.remove("active");
+    submitBtn.disabled = false;
     document.getElementById("response").innerText =
       "Submission failed. Please try again.";
     console.error(err);
