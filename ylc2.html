@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YLC 2026 Walk-In Registration</title>
+  <title>YLC 2026 Online Registration</title>
   <link rel="icon" href="logo.ico">
-   <style>
+<style>
 
 /* ---------- GOOGLE FONTS AUTO LOAD ---------- */
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600&family=Roboto:wght@400;500&display=swap');
@@ -227,6 +228,7 @@ button:hover{
     font-weight:bold;
   }
 }
+
 /* ---------- CAMP T-SHIRT IMAGE BESIDE RADIOS ---------- */
 .shirt-container{
   display:flex;
@@ -247,15 +249,17 @@ button:hover{
   border:2px solid #FF6A00;
   border-radius:12px;
 }
+
 </style>
 </head>
 <body>
-  <div id="loader">
+<div id="loader">
   <div class="loader-content">
-    ⏳ Submitting your registration, please wait...
+    <div class="spinner"></div>
+    Submitting your registration, please wait...
   </div>
 </div>
-  <h1>YLC 2026 Campers' Walk-In Registration Form</h1>
+  <h1>YLC 2026 Campers' Online Registration Form</h1>
   <form id="ylcForm">
 
     <h2>Privacy Statement</h2>
@@ -276,7 +280,7 @@ button:hover{
       For participants under 18 years old, a Minor Consent Form must be completed by a parent or guardian to authorize the collection and use of personal data. Any health-related details you provide will be used exclusively to ensure appropriate medical attention and accommodations when necessary.
     </p>
     <p>
-      By proceeding with this registration, you acknowledge that you have read and understood this Privacy Statement and consent to the collection and processing of your personal information for YLC 2026 purposes. If you have any concerns or wish to request modifications to your data, you may contact the YLC 2026 Registration Team.
+      By proceeding with this registration, you acknowledge that you have read and understood this Privacy Statement and consent to the collection and processing of your personal information for YLC 2025 purposes. If you have any concerns or wish to request modifications to your data, you may contact the YLC 2025 Registration Team.
     </p>
     <div class="checkbox-group">
       <label><input type="checkbox" name="privacyConsent" required> I have read and understood the privacy statement.</label>
@@ -289,7 +293,7 @@ button:hover{
       <label><input type="radio" name="minorConsent" value="Parent"> I am a parent/guardian of a minor child and I give full consent to have him/her participate in YLC 2026.</label>
     </div>
     <h2>Camper's Personal Information</h2>
-    <p>
+    <p>.
       Please provide accurate and complete details. The information you submit will be used for identification,
       communication, and camp-related arrangements. Ensure that all details are correct to avoid any registration issues.
     </p>
@@ -346,7 +350,7 @@ button:hover{
       <label><input type="radio" name="firstTimeYLC" value="NeverAttended"> No, but I have never attended any YLC before.</label>
     </div>
 
-    <h3>How did you learn about the YLC 2025?</h3>
+    <h3>How did you learn about the YLC 2026?</h3>
     <div class="radio-group">
       <label><input type="radio" name="learnAboutYLC" value="FebiasReferral" required> I was invited or referred by a Febias Student, Faculty & Staff, or Alumni.</label>
       <label><input type="radio" name="learnAboutYLC" value="ChurchReferral"> I was invited or referred by my Church Pastor, Leader, or Friend.</label>
@@ -417,7 +421,6 @@ button:hover{
 <label><input type="radio" name="bibleReading" value="4"> 4</label>
 <label><input type="radio" name="bibleReading" value="5"> 5</label>
     </div>
-
 <h2>How often do you attend church service in a month?</h2>
 <div class="radio-group">
 <label><input type="radio" name="churchAttendance" value="0" required> 0</label>
@@ -448,7 +451,9 @@ button:hover{
       <label><input type="radio" name="churchMembership" value="2 yr above"> 2 yr above</label>
     </div>    <h2>CAMP T-SHIRT</h2>
     <p>Kindly check your preferred shirt size. Please refer to Size.*</p>
-  <div class="shirt-container">
+   <h2>CAMP T-SHIRT</h2>
+<p>Kindly check your preferred shirt size. Please refer to Size.*</p>
+<div class="shirt-container">
   <div class="radio-group shirt-sizes">
     <label><input type="radio" name="shirtSize" value="XS" required> XS</label>
     <label><input type="radio" name="shirtSize" value="S"> S</label>
@@ -517,19 +522,63 @@ button:hover{
   </form>
 
   <div id="response"></div>
+
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyqJUxYG25wJgU3PJQZ-ppizmHp9VlD5ZbCHB6Itdi10k6a8n-xTb7B0Qy824quPhLh0w/exec";
+
+const scriptURL = "https://script.google.com/macros/s/AKfycbww2ngKYi48M1wtwoOXhhE4uP71mFCT7DFa8PneyfS-NKJGaVi1Lc9er5o5qKsWa36UBg/exec";
+
+// ---------- SUBMISSION LOCK ----------
+let isSubmitting = false;
 
 document.getElementById("ylcForm").addEventListener("submit", function(e){
+
+  // prevent double submission
+  if(sessionStorage.getItem("ylcSubmitted")){
+    alert("You have already submitted this registration on this device.");
+    return;
+  }
+  if(isSubmitting) return;
+  isSubmitting = true;
+
   e.preventDefault();
 
-  // Show loader overlay
+  // ---------- VALIDATION ----------
+  const formElements = this.querySelectorAll("input, select, textarea");
+
+  for (const el of formElements) {
+    if((el.type === "radio" || el.type === "checkbox")) {
+      if(el.required){
+        const group = this.querySelectorAll(`input[name="${el.name}"]`);
+        if (![...group].some(r => r.checked)){
+          alert(`Please select an option for "${el.name}".`);
+          el.focus();
+          isSubmitting = false;
+          return;
+        }
+      }
+    } else if(!el.value.trim()){
+      alert(`Please fill out the "${el.name}" field.`);
+      el.focus();
+      isSubmitting = false;
+      return;
+    }
+  }
+
+  // ---------- HEALTH DECLARATION CHECK ----------
+  const healthDecl = this.querySelectorAll('input[name="healthDeclaration"]:checked');
+  if(healthDecl.length !== 4){
+    alert("Please select exactly 4 options for Health Declaration.");
+    isSubmitting = false;
+    return;
+  }
+
+  // ---------- SHOW LOADER ----------
   const loader = document.getElementById("loader");
   loader.classList.add("active");
 
-  // Disable submit button to prevent double-click
   const submitBtn = this.querySelector("button[type='submit']");
   submitBtn.disabled = true;
+  submitBtn.innerText = "Submitting...";
 
   const form = new FormData(this);
   const formData = {};
@@ -577,18 +626,13 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     shirtSize: "shirt_size"
   };
 
-  // Map form values to structured object
-  for (let [key, value] of form.entries()) {
+  for(let [key,value] of form.entries()){
     const mappedKey = nameMap[key] || key;
-
-    // Clean email
-    if (mappedKey === "email") {
-      value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
+    if(mappedKey === "email"){
+      value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g,'');
     }
-
-    // Handle multiple values (checkboxes)
-    if (formData[mappedKey]) {
-      if (Array.isArray(formData[mappedKey])) {
+    if(formData[mappedKey]){
+      if(Array.isArray(formData[mappedKey])){
         formData[mappedKey].push(value);
       } else {
         formData[mappedKey] = [formData[mappedKey], value];
@@ -599,33 +643,34 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   }
 
   formData.action = "register";
-  formData.sheet = "Walk-In";
+  formData.sheet = "Pre-Registration";
 
-  // Send form data to Google Apps Script
-  fetch(scriptURL, {
-    method: "POST",
-    body: new URLSearchParams(formData)
+  fetch(scriptURL,{
+    method:"POST",
+    body:new URLSearchParams(formData)
   })
   .then(res => res.json())
   .then(data => {
-    loader.classList.remove("active"); // hide loader
-
-    if (data.result === "success" && data.rowIndex) {
-      // Redirect to payment page with rowIndex
-      window.location.href = "payment2.html?rowIndex=" + data.rowIndex;
+    loader.classList.remove("active");
+    if(data.result === "success" && data.rowIndex){
+      sessionStorage.setItem("ylcSubmitted","true");
+      window.location.href = "payment.html?rowIndex=" + data.rowIndex;
     } else {
-      document.getElementById("response").innerText =
-        "Error: " + (data.error || "Something went wrong.");
-      submitBtn.disabled = false; // re-enable button
+      document.getElementById("response").innerText = "Error: "+(data.error||"Something went wrong.");
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Submit Registration";
+      isSubmitting = false;
     }
   })
-  .catch(err => {
-    loader.classList.remove("active"); // hide loader
-    submitBtn.disabled = false; // re-enable button
-    document.getElementById("response").innerText =
-      "Submission failed. Please try again.";
+  .catch(err=>{
+    loader.classList.remove("active");
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Submit Registration";
+    isSubmitting = false;
+    document.getElementById("response").innerText = "Submission failed. Please try again.";
     console.error(err);
   });
+
 });
 </script>
 </body>
