@@ -7,7 +7,7 @@
 
 <style>
 body{
-  font-family:Segoe UI;
+  font-family:"Segoe UI",sans-serif;
   background:#0f0f0f;
   color:white;
   margin:0;
@@ -15,23 +15,23 @@ body{
 }
 
 h1{text-align:center;color:#ff6a00}
-.sub{text-align:center;color:#aaa}
+.sub{text-align:center;color:#aaa;margin-bottom:10px}
 
 .stats{
   display:flex;
   gap:10px;
-  justify-content:center;
   flex-wrap:wrap;
+  justify-content:center;
 }
 
 .box{
   background:#1a1a1a;
   padding:10px;
   border-radius:10px;
-  min-width:120px;
+  min-width:130px;
   text-align:center;
+  border:1px solid #333;
 }
-
 .box span{color:#ff6a00;font-weight:bold}
 
 #roomStats{
@@ -44,7 +44,7 @@ h1{text-align:center;color:#ff6a00}
 
 table{
   width:100%;
-  min-width:1800px;
+  min-width:1700px;
   border-collapse:collapse;
 }
 
@@ -57,29 +57,36 @@ th{
 }
 
 td{
-  background:#121212;
+  padding:8px;
   border:1px solid #222;
-  padding:6px;
+  background:#121212;
   text-align:center;
+  font-size:13px;
 }
 
 select{
   background:#1a1a1a;
   color:white;
   border:1px solid #333;
-  padding:5px;
+  padding:6px;
   border-radius:6px;
+  transition:0.15s;
 }
+select:hover{border-color:#ff6a00}
 
-.clickable{cursor:pointer}
-.clickable:active{transform:scale(0.9)}
+.clickable{
+  cursor:pointer;
+  transition:0.1s;
+  user-select:none;
+}
+.clickable:active{transform:scale(0.85)}
 </style>
 </head>
 
 <body>
 
-<h1>YLC 2026 ATTENDANCE</h1>
-<div class="sub">FEBIAS SYSTEM</div>
+<h1>YLC 2026 ATTENDANCE SYSTEM</h1>
+<div class="sub">FEBIAS College of Bible System</div>
 
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
@@ -92,8 +99,15 @@ select{
 <table>
 <thead>
 <tr>
-  <th>#</th><th>Name</th><th>Room</th><th>ROOM_AC</th>
-  <th>Payment</th><th>Attendance</th>
+  <th>#</th>
+  <th>Name</th>
+  <th>Room</th>
+  <th>ROOM_AC</th>
+  <th>PAY</th>
+  <th>ATT</th>
+  <th>✔</th>
+  <th>🟠</th>
+  <th>❌</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -104,7 +118,7 @@ select{
 const BASE_URL="https://script.google.com/macros/s/AKfycbxNQDvbtcnYF0Bhw0xwEp_2diIT6my0Z-YdUjD45G1mhdtkTc1eYFfH6kgMm_sPISt76g/exec";
 const SHEET="Pre-Registration";
 
-/* AC ROOMS */
+/* A/C ROOMS */
 const AC_ROOMS=[
 "Berean – Abraham 2",
 "Berean – Joshua 3",
@@ -121,14 +135,20 @@ let map=new Map();
 let roomCount={};
 
 let queue=[],running=false;
-function send(fd){queue.push(fd);run();}
-async function run(){
- if(running) return;
- running=true;
- while(queue.length){
-  await fetch(BASE_URL,{method:"POST",body:queue.shift()});
- }
- running=false;
+
+/* QUEUE (NO LAG SYSTEM) */
+function send(fd){
+  queue.push(fd);
+  process();
+}
+async function process(){
+  if(running) return;
+  running=true;
+  while(queue.length){
+    try{ await fetch(BASE_URL,{method:"POST",body:queue.shift()}); }
+    catch(e){}
+  }
+  running=false;
 }
 
 /* ICONS */
@@ -136,124 +156,146 @@ const pay=v=>v==="PAID"?"✅":v==="ON-WAITING PAYMENT"?"🟠":"❌";
 const att=v=>v==="Attended"?"✅":v==="ON-waiting"?"🟠":"❌";
 
 /* STATS */
-function stats(d){
- let t=0,p=0,w=0;
- d.forEach(x=>{
-  t++;
-  if(x.paymentIndicator==="PAID")p++;
-  if(x.paymentIndicator==="ON-WAITING PAYMENT")w++;
- });
- total.textContent=t;
- paid.textContent=p;
- waiting.textContent=w;
+function updateStats(){
+  let t=0,p=0,w=0;
+  dataStore.forEach(x=>{
+    t++;
+    if(x.paymentIndicator==="PAID")p++;
+    if(x.paymentIndicator==="ON-WAITING PAYMENT")w++;
+  });
+  total.textContent=t;
+  paid.textContent=p;
+  waiting.textContent=w;
 }
 
-/* ROOM COUNT + COLORS */
-function roomStats(d){
+/* ROOM COUNT */
+function updateRoomStats(){
 
- roomCount={};
- AC_ROOMS.forEach(r=>roomCount[r]=0);
+  roomCount={};
+  AC_ROOMS.forEach(r=>roomCount[r]=0);
 
- d.forEach(x=>{
-  if(roomCount[x.room_ac]!=null){
-   roomCount[x.room_ac]++;
-  }
- });
+  dataStore.forEach(x=>{
+    if(roomCount[x.room_ac]!=null){
+      roomCount[x.room_ac]++;
+    }
+  });
 
- let html="<b>A/C ROOMS</b><br>";
+  let html="<b>A/C ROOM CAPACITY</b><br>";
 
- AC_ROOMS.forEach(r=>{
-  let n=roomCount[r]||0;
+  AC_ROOMS.forEach(r=>{
+    let n=roomCount[r]||0;
+    let color=n>=18?"🔴":n>=15?"🟠":"🟢";
+    html+=`${color} ${r}: ${n}/18 ${n>=18?"FULL":""}<br>`;
+  });
 
-  let color=
-   n>=18?"🔴":
-   n>=15?"🟠":"🟢";
-
-  html+=`${color} ${r}: ${n}/18<br>`;
- });
-
- roomStatsBox.innerHTML=html;
+  roomStats.innerHTML=html;
 }
 
-/* CHECK IF FULL */
+/* CHECK FULL */
 function isFull(room){
- return (roomCount[room]||0)>=18;
+  return (roomCount[room]||0)>=18;
 }
 
-/* RENDER */
-function render(p){
+/* FAST RENDER */
+function renderAll(){
+  tbody.innerHTML="";
+  map.clear();
+  dataStore.forEach(renderRow);
+  updateStats();
+  updateRoomStats();
+}
 
- let tr=map.get(p.rowIndex);
- if(!tr){
-  tr=document.createElement("tr");
-  tr.innerHTML="<td></td><td></td><td></td><td></td><td></td><td></td>";
+/* RENDER ROW */
+function renderRow(p){
+
+  let tr=document.createElement("tr");
+
+  tr.innerHTML=`
+  <td>${p.rowIndex}</td>
+  <td>${p.firstName} ${p.lastName}</td>
+  <td>${p.room||""}</td>
+
+  <td></td>
+  <td class="clickable"></td>
+  <td class="clickable"></td>
+  <td>${p.attendedIcon||""}</td>
+  <td>${p.waitingIcon||""}</td>
+  <td>${p.cancelledIcon||""}</td>
+  `;
+
+  const c=tr.children;
+
+  /* ROOM_AC DROPDOWN */
+  c[3].innerHTML=`
+  <select>
+    <option value="">--A/C ROOM--</option>
+    ${AC_ROOMS.map(r=>`
+      <option value="${r}" 
+        ${p.room_ac===r?"selected":""}
+        ${isFull(r)&&p.room_ac!==r?"disabled":""}>
+        ${r} ${isFull(r)&&p.room_ac!==r?"(FULL)":""}
+      </option>
+    `).join("")}
+  </select>`;
+
+  c[3].querySelector("select").onchange=(e)=>{
+    let val=e.target.value;
+
+    p.room_ac=val;
+    renderAll(); // instant UI
+
+    send(fd("room_ac",p.rowIndex,val));
+  };
+
+  /* PAYMENT CLICK */
+  c[4].textContent=pay(p.paymentIndicator);
+  c[4].onclick=()=>{
+    let next=
+      p.paymentIndicator==="PAID"?"NOT PAID":
+      p.paymentIndicator==="NOT PAID"?"ON-WAITING PAYMENT":"PAID";
+
+    p.paymentIndicator=next;
+    c[4].textContent=pay(next);
+
+    send(fd("payment",p.rowIndex,next));
+    updateStats();
+  };
+
+  /* ATTENDANCE CLICK */
+  c[5].textContent=att(p.attendanceStatus);
+  c[5].onclick=()=>{
+    let next=
+      p.attendanceStatus==="Attended"?"Cancelled":
+      p.attendanceStatus==="Cancelled"?"ON-waiting":"Attended";
+
+    p.attendanceStatus=next;
+    c[5].textContent=att(next);
+
+    send(fd("attendance",p.rowIndex,next));
+  };
+
   tbody.appendChild(tr);
-  map.set(p.rowIndex,tr);
- }
-
- const c=tr.children;
-
- c[0].textContent=p.rowIndex;
- c[1].textContent=(p.firstName+" "+p.lastName);
- c[2].textContent=p.room;
-
- /* ROOM_AC (FIXED + LOCKED WHEN FULL) */
- let disabled=isFull(p.room_ac)&&p.room_ac!==p.room_ac;
-
- c[3].innerHTML=`
- <select onchange="setRoomAC(${p.rowIndex},this.value)">
- <option value="">--AC ROOM--</option>
- ${AC_ROOMS.map(r=>`
- <option value="${r}" ${p.room_ac===r?"selected":""} ${isFull(r)&&p.room_ac!==r?"disabled":""}>
- ${r} ${isFull(r)&&p.room_ac!==r?"(FULL)":""}
- </option>
- `).join("")}
- </select>`;
-
- c[4].textContent=pay(p.paymentIndicator);
- c[5].textContent=att(p.attendanceStatus);
-}
-
-/* ROOM AC UPDATE (OPTIMIZED) */
-function setRoomAC(row,val){
-
- let old=dataStore.find(x=>x.rowIndex===row);
-
- if(old) old.room_ac=val;
-
- renderOptimistic();
-
- send(fd("room_ac",row,val));
-}
-
-/* OPTIMISTIC FAST UI */
-function renderOptimistic(){
- tbody.innerHTML="";
- map.clear();
- dataStore.forEach(render);
- stats(dataStore);
- roomStats(dataStore);
 }
 
 /* FORM */
 function fd(a,r,v){
- let f=new FormData();
- f.append("action",a);
- f.append("rowIndex",r);
- f.append("value",v);
- f.append("sheet",SHEET);
- return f;
+  let f=new FormData();
+  f.append("action",a);
+  f.append("rowIndex",r);
+  f.append("value",v);
+  f.append("status",v);
+  f.append("sheet",SHEET);
+  return f;
 }
 
 /* LOAD */
 async function loadData(){
- const res=await fetch(BASE_URL+"?sheet="+SHEET);
- dataStore=await res.json();
-
- renderOptimistic();
+  const res=await fetch(BASE_URL+"?sheet="+SHEET);
+  dataStore=await res.json();
+  renderAll();
 }
 
-/* INIT */
+/* AUTO REFRESH */
 setInterval(loadData,60000);
 loadData();
 
