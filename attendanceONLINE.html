@@ -11,116 +11,96 @@
 body {
   font-family: "Segoe UI", system-ui, sans-serif;
   background: #0f0f0f;
-  color: #ffffff;
+  color: #fff;
   padding: 1rem;
   margin: 0;
 }
 
-h1 {
-  text-align: center;
-  color: #ff6a00;
-  font-size: 1.3rem;
-}
-
-.sub {
-  text-align: center;
-  color: #bbb;
-  font-size: 0.85rem;
-}
+h1 { text-align:center; color:#ff6a00; font-size:1.3rem; }
+.sub { text-align:center; color:#bbb; font-size:0.85rem; }
 
 .stats {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 15px 0;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin:15px 0;
 }
 
 .box {
-  background: #1a1a1a;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #333;
-  text-align: center;
-  flex: 1 1 120px;
-  font-size: 0.85rem;
+  background:#1a1a1a;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #333;
+  flex:1 1 120px;
+  text-align:center;
+  font-size:0.85rem;
 }
 
-.box span {
-  color: #ff6a00;
-  font-weight: bold;
-}
+.box span { color:#ff6a00; font-weight:bold; }
 
 button {
-  width: 100%;
-  max-width: 320px;
-  margin: 10px auto;
-  display: block;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  background: linear-gradient(45deg, #ff6a00, #ff2e00);
-  color: white;
+  width:100%;
+  max-width:320px;
+  margin:10px auto;
+  display:block;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  color:#fff;
 }
 
-.table-wrap {
-  width: 100%;
-  overflow-x: auto;
-}
+.table-wrap { width:100%; overflow-x:auto; }
 
 table {
-  width: 100%;
-  min-width: 600px;
-  border-collapse: collapse;
-  margin-top: 10px;
+  width:100%;
+  min-width:650px;
+  border-collapse:collapse;
+  margin-top:10px;
 }
 
 th {
-  background: #1a1a1a;
-  color: #ff6a00;
-  padding: 10px;
+  background:#1a1a1a;
+  color:#ff6a00;
+  padding:10px;
 }
 
 td {
-  border: 1px solid #222;
-  padding: 8px;
-  background: #121212;
-  text-align: center;
+  border:1px solid #222;
+  padding:8px;
+  text-align:center;
+  background:#121212;
 }
 
-.payment, .attendance, .kit {
-  font-size: 1.2rem;
-  cursor: pointer;
-}
+.kit { cursor:pointer; font-size:1.2rem; }
 
 /* MOBILE */
-@media (max-width: 600px) {
+@media(max-width:600px){
+  table,thead{display:none;}
+  tbody{display:block;}
 
-  table, thead { display: none; }
-
-  tbody { display: block; }
-
-  tr {
-    display: block;
-    background: #121212;
-    margin-bottom: 10px;
-    border-radius: 10px;
-    padding: 10px;
-    border: 1px solid #222;
+  tr{
+    display:block;
+    background:#121212;
+    margin-bottom:10px;
+    border-radius:10px;
+    padding:10px;
+    border:1px solid #222;
   }
 
-  td {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 0;
-    border: none;
-    font-size: 0.85rem;
+  td{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+    border:none;
+    font-size:0.85rem;
   }
 
-  td::before {
-    content: attr(data-label);
-    color: #aaa;
+  td::before{
+    content:attr(data-label);
+    color:#aaa;
   }
 }
 </style>
@@ -131,12 +111,15 @@ td {
 <h1>YLC 2026 ATTENDANCE ONLINE</h1>
 <div class="sub">FEBIAS College of Bible System</div>
 
+<!-- STATS -->
 <div class="stats">
-  <div class="box">Total Members<br><span id="totalCount">0</span></div>
+  <div class="box">Total<br><span id="totalCount">0</span></div>
+  <div class="box">Paid<br><span id="paidCount">0</span></div>
+  <div class="box">Pending<br><span id="pendingCount">0</span></div>
   <div class="box">Countdown<br><span id="countdown">Loading...</span></div>
 </div>
 
-<button onclick="loadAttendance()">🔥 REFRESH DATA</button>
+<button onclick="loadAttendance()">🔥 REFRESH</button>
 
 <div class="table-wrap">
 <table>
@@ -165,7 +148,19 @@ const kitCycle = ["❌","🟠","✅"];
 
 /* STATS */
 function updateStats(data){
+
+  let paid = 0;
+  let pending = 0;
+
+  data.forEach(p=>{
+    const pay = (p.paymentIndicator || "").toUpperCase();
+    if(pay === "PAID") paid++;
+    else pending++;
+  });
+
   document.getElementById("totalCount").textContent = data.length;
+  document.getElementById("paidCount").textContent = paid;
+  document.getElementById("pendingCount").textContent = pending;
 }
 
 /* COUNTDOWN */
@@ -173,7 +168,8 @@ function startCountdown(){
   const start = new Date("2026-04-16T00:00:00").getTime();
   const end = new Date("2026-04-18T23:59:59").getTime();
 
-  setInterval(() => {
+  setInterval(()=>{
+
     const now = Date.now();
 
     let target, label;
@@ -191,23 +187,21 @@ function startCountdown(){
 
     const diff = target - now;
 
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff / 3600000) % 24);
-    const m = Math.floor((diff / 60000) % 60);
-    const s = Math.floor((diff / 1000) % 60);
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff/3600000)%24);
+    const m = Math.floor((diff/60000)%60);
+    const s = Math.floor((diff/1000)%60);
 
     document.getElementById("countdown").textContent =
       `${label}: ${d}d ${h}h ${m}m ${s}s`;
 
-  }, 1000);
+  },1000);
 }
 
-/* SORTING (LAST NAME A–Z) */
+/* SORT A–Z LAST NAME */
 function sortData(data){
   return data.sort((a,b)=>{
-    const A = (a.lastName || "").toLowerCase();
-    const B = (b.lastName || "").toLowerCase();
-    return A.localeCompare(B);
+    return (a.lastName||"").localeCompare(b.lastName||"");
   });
 }
 
@@ -222,21 +216,23 @@ function renderRow(p){
     tr.innerHTML = `
       <td data-label="First Name"></td>
       <td data-label="Last Name"></td>
-      <td data-label="Payment" class="payment"></td>
-      <td data-label="Attendance" class="attendance"></td>
+      <td data-label="Payment"></td>
+      <td data-label="Attendance"></td>
       <td data-label="Kit" class="kit"></td>
     `;
 
     tbody.appendChild(tr);
-    peopleMap.set(p.rowIndex, tr);
+    peopleMap.set(p.rowIndex,tr);
   }
 
   tr.children[0].textContent = p.firstName || "";
   tr.children[1].textContent = p.lastName || "";
 
+  const pay = (p.paymentIndicator || "").toUpperCase();
+
   tr.children[2].textContent =
-    p.paymentIndicator === "PAID" ? "✅" :
-    p.paymentIndicator === "ON-WAITING PAYMENT" ? "🟠" : "❌";
+    pay === "PAID" ? "✅" :
+    pay === "ON-WAITING PAYMENT" ? "🟠" : "❌";
 
   tr.children[3].textContent =
     p.attendanceStatus === "Attended" ? "✅" :
@@ -247,12 +243,12 @@ function renderRow(p){
 
   kitCell.textContent = kitState;
 
-  kitCell.onclick = async () => {
+  kitCell.onclick = async ()=>{
 
     let i = kitCycle.indexOf(kitState);
     if(i === -1) i = 0;
 
-    kitState = kitCycle[(i + 1) % kitCycle.length];
+    kitState = kitCycle[(i+1)%kitCycle.length];
     kitCell.textContent = kitState;
 
     const fd = new FormData();
@@ -267,6 +263,7 @@ function renderRow(p){
 
 /* LOAD */
 async function loadAttendance(){
+
   const res = await fetch(BASE_URL+"?sheet="+SHEET_NAME);
   const data = await res.json();
 
