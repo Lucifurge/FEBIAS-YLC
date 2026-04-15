@@ -255,49 +255,44 @@ const SHEET = "Pre-Registration";
 
 const ROOM_LIMIT = 18;
 
-/* ✅ STRICT ROOM MAPPING */
-const AC_STRUCTURE = {
-  "Berean": {
-    "Abraham": "Berean – Abraham (2)",
-    "Elijah": "Berean – Elijah (2)",
-    "Joshua": "Berean – Joshua (3)",
-    "Elisha": "Berean – Elisha (3)"
-  },
-  "Sharon": {
-    "Deborah": "Sharon – Deborah (2)",
-    "Abigail": "Sharon – Abigail (2)",
-    "Martha": "Sharon – Martha (3)",
-    "Eve": "Sharon – Eve (3)"
-  }
-};
-
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
 let localChanges = {};
+let searchQuery = "";
 
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* 🔥 AUTO ROOM DETECTOR (FROM ROOM COLUMN) */
+/* 🔥 MEMBER → AC ROOM */
 function getAutoRoomAC(room){
   if(!room) return "";
 
   let r = room.toLowerCase();
 
-  if(r.includes("berean")){
-    if(r.includes("abraham")) return AC_STRUCTURE["Berean"]["Abraham"];
-    if(r.includes("elijah")) return AC_STRUCTURE["Berean"]["Elijah"];
-    if(r.includes("joshua")) return AC_STRUCTURE["Berean"]["Joshua"];
-    if(r.includes("elisha")) return AC_STRUCTURE["Berean"]["Elisha"];
-  }
+  if(r.includes("barnabas") || r.includes("caleb"))
+    return "Berean – Abraham (2)";
 
-  if(r.includes("sharon")){
-    if(r.includes("deborah")) return AC_STRUCTURE["Sharon"]["Deborah"];
-    if(r.includes("abigail")) return AC_STRUCTURE["Sharon"]["Abigail"];
-    if(r.includes("martha")) return AC_STRUCTURE["Sharon"]["Martha"];
-    if(r.includes("eve")) return AC_STRUCTURE["Sharon"]["Eve"];
-  }
+  if(r.includes("joseph") || r.includes("david") || r.includes("daniel"))
+    return "Berean – Elijah (2)";
+
+  if(r.includes("moses") || r.includes("nehemiah"))
+    return "Berean – Joshua (3)";
+
+  if(r.includes("timothy") || r.includes("stephen") || r.includes("paul"))
+    return "Berean – Elisha (3)";
+
+  if(r.includes("esther") || r.includes("eunice"))
+    return "Sharon – Deborah (2)";
+
+  if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah"))
+    return "Sharon – Abigail (2)";
+
+  if(r.includes("priscilla") || r.includes("sarah"))
+    return "Sharon – Martha (3)";
+
+  if(r.includes("mary") || r.includes("elizabeth"))
+    return "Sharon – Eve (3)";
 
   return "";
 }
@@ -330,29 +325,49 @@ function applyLocal(data){
   });
 }
 
+/* 🔍 SEARCH FILTER */
+function filterData(data){
+  if(!searchQuery) return data;
+
+  return data.filter(p=>{
+    let text = `
+      ${p.firstName}
+      ${p.lastName}
+      ${p.room}
+      ${p.gender}
+      ${p.classification}
+    `.toLowerCase();
+
+    return text.includes(searchQuery);
+  });
+}
+
 /* STATS */
-function updateStats(){
+function updateStats(data){
   let paid=0, waiting=0;
 
-  allData.forEach(p=>{
+  data.forEach(p=>{
     if(p.paymentIndicator==="PAID") paid++;
     if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
   });
 
-  document.getElementById("total").textContent = allData.length;
+  document.getElementById("total").textContent = data.length;
   document.getElementById("paid").textContent = paid;
   document.getElementById("waiting").textContent = waiting;
 }
 
 /* ROOM COUNT */
 function updateRoomStats(){
-  roomCount = {};
-
-  Object.values(AC_STRUCTURE).forEach(group=>{
-    Object.values(group).forEach(room=>{
-      roomCount[room] = 0;
-    });
-  });
+  roomCount = {
+    "Berean – Abraham (2)":0,
+    "Berean – Elijah (2)":0,
+    "Berean – Joshua (3)":0,
+    "Berean – Elisha (3)":0,
+    "Sharon – Deborah (2)":0,
+    "Sharon – Abigail (2)":0,
+    "Sharon – Martha (3)":0,
+    "Sharon – Eve (3)":0
+  };
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
@@ -363,18 +378,14 @@ function updateRoomStats(){
 
   let html = "<b>ROOM AC STATUS</b><br>";
 
-  Object.entries(AC_STRUCTURE).forEach(([group, subs])=>{
-    html += `<br><b>${group}</b><br>`;
+  Object.keys(roomCount).forEach(room=>{
+    let c = roomCount[room];
+    let full = c >= ROOM_LIMIT;
 
-    Object.values(subs).forEach(room=>{
-      let c = roomCount[room] || 0;
-      let full = c >= ROOM_LIMIT;
-
-      html += `${room} 
-        <span class="badge ${full?"full":"available"}">
-        ${c}/${ROOM_LIMIT}
-        </span><br>`;
-    });
+    html += `${room} 
+      <span class="badge ${full?"full":"available"}">
+      ${c}/${ROOM_LIMIT}
+      </span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -418,98 +429,52 @@ function createRow(p){
     <td class="clickable aircon">${p.aircon || "❌"}</td>
 
     <td><select class="roomac"></select></td>
+
+    <!-- CLASSIFICATION (UNCHANGED POSITION) -->
+    <td class="${p.classification === 'Silver' ? 'silver' : 'copper'}">
+      ${p.classification || ""}
+    </td>
   `;
 
   tbody.appendChild(tr);
 
-  /* MODE */
-  tr.querySelector(".mode").onchange = e=>{
-    let v=e.target.value;
-    p.modeOfPayment=v;
-    saveLocal(p.rowIndex,"modeOfPayment",v);
-    send("mode",{rowIndex:p.rowIndex,value:v});
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-    p.kit = next;
-    saveLocal(p.rowIndex,"kit",next);
-    tr.querySelector(".kit").textContent = next;
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* AIRCON */
-  tr.querySelector(".aircon").onclick = ()=>{
-    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-    p.aircon = next;
-    saveLocal(p.rowIndex,"aircon",next);
-    tr.querySelector(".aircon").textContent = next;
-    send("aircon",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* 🔒 ROOM AC AUTO + LOCKED */
+  /* ROOM LOGIC */
   const roomSelect = tr.querySelector(".roomac");
+  let allowedRoom = getAutoRoomAC(p.room);
 
-  let autoRoom = getAutoRoomAC(p.room);
-
-  // auto assign if empty
-  if(!p.ROOM_AC && autoRoom){
-    p.ROOM_AC = autoRoom;
-    saveLocal(p.rowIndex,"ROOM_AC",autoRoom);
-    send("room_ac",{rowIndex:p.rowIndex,value:autoRoom});
-  }
-
-  // display locked
-  if(autoRoom){
+  if(allowedRoom){
     roomSelect.innerHTML = `
-      <option value="${autoRoom}" selected>
-        ${autoRoom} (AUTO)
+      <option value="">NO ROOM</option>
+      <option value="${allowedRoom}">
+        ${allowedRoom}
       </option>
     `;
+    roomSelect.value = p.ROOM_AC || "";
   }else{
     roomSelect.innerHTML = `<option value="">NO ROOM</option>`;
   }
 
-  // block changes
-  roomSelect.onchange = ()=>{
-    alert("❌ ROOM is auto-assigned based on delegate ROOM.");
-    roomSelect.value = p.ROOM_AC || "";
-  };
+  roomSelect.onchange = e=>{
+    let val = clean(e.target.value);
+    let old = clean(p.ROOM_AC);
 
-  /* PAYMENT */
-  tr.querySelector(".pay").onclick = ()=>{
-    let next=p.paymentIndicator==="PAID"
-      ?"NOT PAID"
-      :p.paymentIndicator==="ON-WAITING PAYMENT"
-      ?"PAID"
-      :"ON-WAITING PAYMENT";
+    if(val && val !== allowedRoom){
+      alert("❌ You can only select your assigned AC room.");
+      roomSelect.value = old;
+      return;
+    }
 
-    p.paymentIndicator=next;
-    saveLocal(p.rowIndex,"paymentIndicator",next);
+    if(val && roomCount[val] >= ROOM_LIMIT){
+      alert("ROOM FULL ("+ROOM_LIMIT+")");
+      roomSelect.value = old;
+      return;
+    }
 
-    tr.querySelector(".pay").textContent=payIcon(next);
-    tr.querySelector(".paytxt").textContent=payIcon(next);
-    tr.querySelector(".amt").textContent=next==="PAID"?"₱1500":"";
+    p.ROOM_AC = val;
+    saveLocal(p.rowIndex,"ROOM_AC",val);
 
-    send("payment",{rowIndex:p.rowIndex,value:next});
-    updateStats();
-  };
-
-  /* ATT */
-  tr.querySelector(".att").onclick = ()=>{
-    let next=p.attendanceStatus==="Cancelled"
-      ?"ON-waiting"
-      :p.attendanceStatus==="ON-waiting"
-      ?"Attended"
-      :"Cancelled";
-
-    p.attendanceStatus=next;
-    saveLocal(p.rowIndex,"attendanceStatus",next);
-
-    tr.querySelector(".att").textContent=attIcon(next);
-
-    send("attendance",{rowIndex:p.rowIndex,status:next});
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
+    updateRoomStats();
   };
 
 }
@@ -532,16 +497,22 @@ async function loadData(){
 
   allData=applyLocal(data);
 
+  let filtered = filterData(allData);
+
   tbody.innerHTML="";
   updateRoomStats();
-  allData.forEach(createRow);
-  updateStats();
+  filtered.forEach(createRow);
+  updateStats(filtered);
 }
+
+/* 🔍 SEARCH EVENT */
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  searchQuery = e.target.value.toLowerCase();
+  loadData();
+});
 
 loadData();
 setInterval(loadData,4000);
-
-</script>
 
 </script>
 </body>
