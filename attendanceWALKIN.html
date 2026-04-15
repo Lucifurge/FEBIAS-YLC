@@ -204,15 +204,14 @@ let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
 let allData = {};
-let updatingRows = new Set();
 
 /* =========================
-   SAFE NORMALIZERS
+   NORMALIZER
 ========================= */
 const norm = v => (v || "").toString().toUpperCase();
 
 /* =========================
-   ICONS (BULLETPROOF)
+   ICONS (SAFE)
 ========================= */
 function payIcon(v){
   v = norm(v);
@@ -223,14 +222,14 @@ function payIcon(v){
 }
 
 function attIcon(v){
-  v = (v || "").toString().toLowerCase();
+  v = (v || "").toLowerCase();
   if(v.includes("attended")) return "✔ ATTENDED";
   if(v.includes("cancel")) return "❌ CANCELLED";
   return "🟠 WAITING";
 }
 
 function kitIcon(v){
-  v = (v || "").toString().toLowerCase();
+  v = (v || "").toLowerCase();
   if(v === "✔" || v.includes("given")) return "✔ GIVEN";
   if(v === "❌" || v.includes("not")) return "❌ NOT GIVEN";
   return "🟠 WAITING";
@@ -254,12 +253,9 @@ function getRoomOptions(selected){
 }
 
 /* =========================
-   SEND (STRONG LOCK)
+   SEND (NO DELAY)
 ========================= */
 function send(action,data){
-  let id = String(data.rowIndex);
-  updatingRows.add(id);
-
   let fd = new FormData();
   fd.append("action",action);
 
@@ -267,9 +263,7 @@ function send(action,data){
     fd.append(k,data[k]);
   }
 
-  fetch(BASE_URL,{method:"POST",body:fd})
-    .then(()=> setTimeout(()=> updatingRows.delete(id),500))
-    .catch(()=> updatingRows.delete(id));
+  fetch(BASE_URL,{method:"POST",body:fd});
 }
 
 /* =========================
@@ -316,7 +310,6 @@ function createRow(p){
     <option ${p.classification==="Copper"?"selected":""}>Copper</option>
   `;
   cs.onchange = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
     p.classification = cs.value;
     send("classification",{rowIndex:p.rowIndex,value:cs.value});
   };
@@ -326,26 +319,19 @@ function createRow(p){
   let room = tr.querySelector(".room");
   room.innerHTML = getRoomOptions(p.room_assignment);
   room.onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
     p.room_assignment = e.target.value;
     send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* SHIRT (NO SNAPBACK EVER) */
+  /* SHIRT */
   let shirt = tr.querySelector(".shirt");
   shirt.onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    let val = e.target.value;
-    p.shirt_size = val;
-
-    send("shirt",{rowIndex:p.rowIndex,value:val});
+    p.shirt_size = e.target.value;
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
   /* PAY */
   tr.querySelector(".pay").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
     let current = norm(p.payment_indicator);
 
     let next =
@@ -362,8 +348,6 @@ function createRow(p){
 
   /* ATT */
   tr.querySelector(".att").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
     let current = (p.attendance_status || "").toLowerCase();
 
     let next =
@@ -379,8 +363,6 @@ function createRow(p){
 
   /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
     let current = (p.kit_distribution || "").toString();
 
     let next =
@@ -420,7 +402,7 @@ function updateRowUI(tr,p){
 }
 
 /* =========================
-   LOAD (NO SNAPBACK GUARANTEED)
+   LOAD
 ========================= */
 async function loadData(){
 
@@ -444,15 +426,12 @@ async function loadData(){
       return;
     }
 
-    if(updatingRows.has(id)) return;
-
     Object.assign(allData[id], p);
 
     let tr = document.querySelector(`tr[data-id="${id}"]`);
     if(tr){
       updateRowUI(tr, allData[id]);
 
-      // 🔥 PERFECT SHIRT SYNC
       let shirt = tr.querySelector(".shirt");
       if(shirt && shirt.value !== (p.shirt_size||"")){
         shirt.value = p.shirt_size || "";
