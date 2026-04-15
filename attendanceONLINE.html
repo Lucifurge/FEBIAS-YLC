@@ -241,10 +241,11 @@ Loading...
 
 <script>
 
+
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
-const ROOM_LIMIT = 9;
+const ROOM_LIMIT = 18; // ✅ FINAL
 
 const AC_ROOMS = [
   "Berean Area",
@@ -279,7 +280,7 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* LOCAL CACHE */
+/* LOCAL CACHE (ANTI SNAPBACK) */
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
   localChanges[row][field] = val;
@@ -297,14 +298,15 @@ function applyLocal(data){
 /* STATS */
 function updateStats(){
   let paid=0, waiting=0;
+
   allData.forEach(p=>{
     if(p.paymentIndicator==="PAID") paid++;
     if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
   });
 
-  total.textContent = allData.length;
-  paid.textContent = paid;
-  waiting.textContent = waiting;
+  document.getElementById("total").textContent = allData.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
 }
 
 /* ROOM COUNT */
@@ -326,7 +328,7 @@ function updateRoomStats(){
     html+=`${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
   });
 
-  roomStats.innerHTML = html;
+  document.getElementById("roomStats").innerHTML = html;
 }
 
 /* CREATE ROW */
@@ -379,27 +381,21 @@ function createRow(p){
     send("mode",{rowIndex:p.rowIndex,value:v});
   };
 
-  /* KIT 🔥 FIXED */
+  /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
     let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-
     p.kit = next;
     saveLocal(p.rowIndex,"kit",next);
-
     tr.querySelector(".kit").textContent = next;
-
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
-  /* AIRCON 🔥 FIXED */
+  /* AIRCON */
   tr.querySelector(".aircon").onclick = ()=>{
     let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-
     p.aircon = next;
     saveLocal(p.rowIndex,"aircon",next);
-
     tr.querySelector(".aircon").textContent = next;
-
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
@@ -426,7 +422,7 @@ function createRow(p){
     let old=clean(p.ROOM_AC);
 
     if(val && roomCount[val]>=ROOM_LIMIT && val!==old){
-      alert("ROOM FULL (9)");
+      alert("ROOM FULL ("+ROOM_LIMIT+")");
       e.target.value=old;
       return;
     }
