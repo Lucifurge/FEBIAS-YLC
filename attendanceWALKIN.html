@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -145,6 +145,21 @@ select{
   padding:6px;
   border-radius:8px;
 }
+
+/* CLICKABLE */
+.clickable{
+  cursor:pointer;
+  transition:0.15s;
+}
+
+.clickable:hover{
+  transform:scale(1.05);
+}
+
+/* SMOOTH VISUAL FEEL */
+td, select{
+  transition:all 0.15s ease;
+}
 </style>
 </head>
 
@@ -156,14 +171,14 @@ select{
 <div class="instructions">
 <b>HOW TO USE SYSTEM:</b><br>
 1. Search campers instantly using the search bar.<br>
-2. Click PAY → toggles NOT PAID → ONSITE → PAID.<br>
-3. Click ATT → updates attendance status.<br>
-4. Choose Mode (Onsite / Online).<br>
-5. Shirt sizes include up to 3XL.<br>
+2. Click PAY → WAITING → ONSITE → PAID → CANCELLED.<br>
+3. Click ATT → updates attendance.<br>
+4. Select Mode, Room, Shirt, Classification.<br>
+5. Everything updates instantly and syncs automatically.<br>
 </div>
 
 <div class="search-bar">
-  <input type="text" placeholder="Search camper name, room, church...">
+  <input type="text" placeholder="Search camper name...">
 </div>
 
 <div class="stats">
@@ -204,7 +219,7 @@ let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
 let allData = {};
-let lastEdit = {}; // anti snapback
+let lastEdit = {};
 
 const norm = v => (v || "").toString().toUpperCase();
 
@@ -258,8 +273,7 @@ function createRow(p){
     <td>${p.gender||""}</td>
 
     <td class="classification"></td>
-
-    <td></td>
+    <td class="room"></td>
 
     <td class="payment"></td>
     <td class="amount"></td>
@@ -276,14 +290,60 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ========================= SHIRT (FIXED) */
-  let shirtSelect = document.createElement("select");
+  /* ========================= CLASSIFICATION */
+  let classSelect = document.createElement("select");
+  let currentClass = p.classification || "No class";
 
+  classSelect.innerHTML = `
+    <option ${currentClass==="No class"?"selected":""}>No class</option>
+    <option ${currentClass==="Silver"?"selected":""}>Silver</option>
+    <option ${currentClass==="Copper"?"selected":""}>Copper</option>
+  `;
+
+  classSelect.onchange = ()=>{
+    let val = classSelect.value;
+    p.classification = val;
+    allData[p.rowIndex].classification = val;
+    send("classification",{rowIndex:p.rowIndex,value:val});
+  };
+
+  tr.querySelector(".classification").appendChild(classSelect);
+
+  /* ========================= ROOM */
+  let roomSelect = document.createElement("select");
+
+  let rooms = [
+    "",
+    "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
+    "Berean – David","Berean – Joseph","Berean – Moses",
+    "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy",
+
+    "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
+    "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
+    "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah","Sharon – Ruth"
+  ];
+
+  roomSelect.innerHTML = rooms.map(r=>
+    `<option value="${r}" ${p.room_assignment===r?"selected":""}>${r||"-- No Room --"}</option>`
+  ).join("");
+
+  roomSelect.onchange = ()=>{
+    let val = roomSelect.value;
+    p.room_assignment = val;
+    allData[p.rowIndex].room_assignment = val;
+
+    send("room_assignment",{rowIndex:p.rowIndex,value:val});
+  };
+
+  tr.querySelector(".room").appendChild(roomSelect);
+
+  /* ========================= SHIRT */
+  let shirtSelect = document.createElement("select");
   let sizes = ["","S","M","L","XL","XXL","3XL"];
 
-  shirtSelect.innerHTML = sizes.map(s=>{
-    return `<option value="${s}" ${p.shirt_size===s?"selected":""}>${s||"--"}</option>`;
-  }).join("");
+  shirtSelect.innerHTML = sizes.map(s=>
+    `<option value="${s}" ${p.shirt_size===s?"selected":""}>${s||"--"}</option>`
+  ).join("");
 
   shirtSelect.onchange = ()=>{
     let val = shirtSelect.value;
@@ -297,6 +357,7 @@ function createRow(p){
 
   /* ========================= MODE */
   let modeSelect = document.createElement("select");
+
   modeSelect.innerHTML = `
     <option ${norm(p.mode_of_payment)==="ONSITE"?"selected":""}>ONSITE</option>
     <option ${norm(p.mode_of_payment)==="ONLINE"?"selected":""}>ONLINE</option>
@@ -374,8 +435,7 @@ function updateRowUI(tr,p){
   tr.querySelector(".pay").textContent = payIcon(p.payment_indicator);
 
   tr.querySelector(".amount").textContent =
-    norm(p.payment_indicator).includes("PAID")
-    ? "₱1500" : "";
+    norm(p.payment_indicator).includes("PAID") ? "₱1500" : "";
 
   tr.querySelector(".att").textContent = attIcon(p.attendance_status);
   tr.querySelector(".kit").textContent = kitIcon(p.kit_distribution);
@@ -397,24 +457,23 @@ async function loadData(){
       return;
     }
 
-    // 🔥 block overwrite for 5s after user action
+    // 🔥 HARD SNAPBACK BLOCK (5s)
     if(lastEdit[id] && Date.now() - lastEdit[id] < 5000){
       return;
     }
 
     let local = allData[id];
-
     Object.assign(local, server);
 
     let tr = document.querySelector(`tr[data-id="${id}"]`);
     if(tr){
       updateRowUI(tr, local);
 
-      // 🔥 sync shirt safely
-      let shirt = tr.querySelector(".shirt select");
-      if(shirt && shirt.value !== (server.shirt_size || "")){
-        shirt.value = server.shirt_size || "";
-      }
+      // sync dropdowns
+      tr.querySelector(".room select").value = server.room_assignment || "";
+      tr.querySelector(".shirt select").value = server.shirt_size || "";
+      tr.querySelector(".mode select").value = server.mode_of_payment || "";
+      tr.querySelector(".classification select").value = server.classification || "No class";
     }
   });
 }
