@@ -206,6 +206,15 @@ let searchInput = document.querySelector(".search-bar input");
 let allData = {};
 let updatingRows = new Set();
 
+/* =========================const BASE_URL = "https://script.google.com/macros/s/AKfycbyrQeAIXhIHvfDGaSpkqqCcyFMSuz_Scm0tB1oL0i-H0Ibiq-_ch_c9sZmppUYm45zK/exec";
+const SHEET = "WALK-IN";
+
+let tbody = document.querySelector("tbody");
+let searchInput = document.querySelector(".search-bar input");
+
+let allData = {};
+let updatingRows = new Set();
+
 /* =========================
    ICONS
 ========================= */
@@ -224,7 +233,32 @@ function attIcon(v){
 }
 
 /* =========================
-   SEND (FAST)
+   ROOM OPTIONS
+========================= */
+function getRoomOptions(selected){
+  return `
+    <option value="No room" ${!selected || selected==="No room" ? "selected" : ""}>🚫 No room</option>
+
+    <optgroup label="BEREAN (Boys)">
+      ${[
+        "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
+        "Berean – David","Berean – Joseph","Berean – Moses",
+        "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy"
+      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
+    </optgroup>
+
+    <optgroup label="SHARON (Girls)">
+      ${[
+        "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
+        "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
+        "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah"
+      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
+    </optgroup>
+  `;
+}
+
+/* =========================
+   SEND
 ========================= */
 function send(action,data){
 
@@ -243,7 +277,7 @@ function send(action,data){
 }
 
 /* =========================
-   CREATE ROW (ONCE)
+   CREATE ROW (FULL RESTORE)
 ========================= */
 function createRow(p){
 
@@ -256,26 +290,42 @@ function createRow(p){
     <td>${p.gender || ""}</td>
 
     <td class="classification"></td>
-    <td class="room"></td>
+
+    <td>
+      <select class="room"></select>
+    </td>
 
     <td class="payment"></td>
     <td class="amount"></td>
 
+    <td>
+      <select class="mode">
+        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
+        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
+      </select>
+    </td>
+
     <td class="pay clickable"></td>
     <td class="att clickable"></td>
+
+    <td>
+      <select class="shirt">
+        <option value="">--</option>
+        <option ${p.shirt_size==="S"?"selected":""}>S</option>
+        <option ${p.shirt_size==="M"?"selected":""}>M</option>
+        <option ${p.shirt_size==="L"?"selected":""}>L</option>
+        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
+        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
+        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
+      </select>
+    </td>
+
     <td class="kit clickable"></td>
   `;
 
   tbody.appendChild(tr);
 
-  /* CLICKABLE STYLE */
-  tr.querySelectorAll(".clickable").forEach(el=>{
-    el.style.cursor = "pointer";
-  });
-
-  /* =========================
-     CLASSIFICATION (FIXED)
-  ========================= */
+  /* CLASSIFICATION */
   let classSelect = document.createElement("select");
   classSelect.innerHTML = `
     <option ${p.classification==="Silver"?"selected":""}>Silver</option>
@@ -295,16 +345,35 @@ function createRow(p){
 
   tr.querySelector(".classification").appendChild(classSelect);
 
-  /* =========================
-     ROOM DISPLAY
-  ========================= */
-  tr.querySelector(".room").textContent = p.room_assignment || "No room";
+  /* ROOM */
+  let roomSelect = tr.querySelector(".room");
+  roomSelect.innerHTML = getRoomOptions(p.room_assignment);
 
-  /* =========================
-     PAYMENT
-  ========================= */
+  roomSelect.onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
+    let val = e.target.value || "No room";
+    p.room_assignment = val;
+
+    send("room_assignment",{rowIndex:p.rowIndex,value:val});
+  };
+
+  /* MODE */
+  tr.querySelector(".mode").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
+    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+  /* SHIRT */
+  tr.querySelector(".shirt").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+  /* PAY */
   tr.querySelector(".pay").onclick = ()=>{
-
     if(updatingRows.has(String(p.rowIndex))) return;
 
     let next = (p.payment_indicator || "").includes("ONSITE")
@@ -315,17 +384,11 @@ function createRow(p){
 
     updateRowUI(tr, p);
 
-    send("payment",{
-      rowIndex:p.rowIndex,
-      payment_by: next
-    });
+    send("payment",{rowIndex:p.rowIndex,payment_by:next});
   };
 
-  /* =========================
-     ATTENDANCE
-  ========================= */
+  /* ATT */
   tr.querySelector(".att").onclick = ()=>{
-
     if(updatingRows.has(String(p.rowIndex))) return;
 
     let next =
@@ -340,11 +403,8 @@ function createRow(p){
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
-  /* =========================
-     KIT
-  ========================= */
+  /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
-
     if(updatingRows.has(String(p.rowIndex))) return;
 
     let next =
@@ -363,12 +423,12 @@ function createRow(p){
 }
 
 /* =========================
-   UPDATE UI ONLY
+   UPDATE UI
 ========================= */
 function updateRowUI(tr, p){
 
   tr.querySelector(".name").textContent =
-    (p.firstName || "") + " " + (p.lastName || "");
+    (p.lastName || "") + ", " + (p.firstName || "");
 
   tr.querySelector(".payment").textContent =
     payIcon(p.payment_indicator);
@@ -392,22 +452,28 @@ function updateRowUI(tr, p){
 }
 
 /* =========================
-   LOAD (SORTED + STABLE)
+   LOAD (ALPHABETICAL FIX)
 ========================= */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  // ✅ SORT A-Z
+  // ✅ PROPER SORT (LAST NAME FIRST)
   data.sort((a,b)=>{
-    let nameA = ((a.firstName||"") + " " + (a.lastName||"")).toLowerCase();
-    let nameB = ((b.firstName||"") + " " + (b.lastName||"")).toLowerCase();
-    return nameA.localeCompare(nameB);
+    let lastA = (a.lastName||"").toLowerCase();
+    let lastB = (b.lastName||"").toLowerCase();
+
+    if(lastA < lastB) return -1;
+    if(lastA > lastB) return 1;
+
+    let firstA = (a.firstName||"").toLowerCase();
+    let firstB = (b.firstName||"").toLowerCase();
+
+    return firstA.localeCompare(firstB);
   });
 
   data.forEach(p=>{
-
     let id = String(p.rowIndex);
 
     if(!allData[id]){
