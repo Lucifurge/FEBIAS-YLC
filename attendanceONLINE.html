@@ -244,6 +244,8 @@ Loading...
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
+const ROOM_LIMIT = 9;
+
 const AC_ROOMS = [
   "Berean Area",
   "Berean – Abraham 2",
@@ -261,6 +263,9 @@ let allData = [];
 let roomCount = {};
 let lastEdit = 0;
 
+/* 🔥 LOCAL CACHE (ANTI SNAP BACK) */
+let localChanges = {}; // {rowIndex: {field:value}}
+
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
 
@@ -275,6 +280,17 @@ function attIcon(v){
   if(v === "Attended") return "✔ ATTENDED";
   if(v === "ON-waiting") return "🟠 WAITING";
   return "❌ CANCELLED";
+}
+
+/* APPLY LOCAL OVERRIDE */
+function applyLocalChanges(data){
+  return data.map(p=>{
+    let local = localChanges[p.rowIndex];
+    if(local){
+      return {...p, ...local};
+    }
+    return p;
+  });
 }
 
 /* STATS */
@@ -307,19 +323,24 @@ function updateRoomStats(){
 
   AC_ROOMS.forEach(r=>{
     let c = roomCount[r];
-    let full = c >= 18;
+    let full = c >= ROOM_LIMIT;
 
-    html += `${r} <span class="badge ${full?"full":"available"}">${c}/18</span><br>`;
+    html += `${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
+}
+
+/* SAVE LOCAL CHANGE */
+function saveLocal(rowIndex, field, value){
+  if(!localChanges[rowIndex]) localChanges[rowIndex] = {};
+  localChanges[rowIndex][field] = value;
 }
 
 /* CREATE ROW */
 function createRow(p){
 
   let tr = document.createElement("tr");
-  tr.dataset.id = p.rowIndex;
 
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
@@ -361,27 +382,24 @@ function createRow(p){
   tbody.appendChild(tr);
 
   /* MODE */
-  const modeSelect = tr.querySelector(".mode");
-  modeSelect.onchange = (e)=>{
+  tr.querySelector(".mode").onchange = (e)=>{
+    let val = e.target.value;
     lastEdit = Date.now();
 
-    let newValue = e.target.value;
-    p.modeOfPayment = newValue;
+    p.modeOfPayment = val;
+    saveLocal(p.rowIndex,"modeOfPayment",val);
 
-    send("mode", {
-      rowIndex: p.rowIndex,
-      value: newValue
-    });
+    send("mode",{rowIndex:p.rowIndex,value:val});
   };
 
-  /* ROOM OPTIONS */
+  /* ROOM */
   const roomSelect = tr.querySelector(".roomac");
 
   function refreshRoomOptions(){
     roomSelect.innerHTML = `<option value="">ROOM AC</option>` +
       AC_ROOMS.map(r=>{
         let count = roomCount[r] || 0;
-        let full = count >= 18;
+        let full = count >= ROOM_LIMIT;
 
         return `
           <option value="${r}"
@@ -395,20 +413,39 @@ function createRow(p){
 
   refreshRoomOptions();
 
+  roomSelect.onchange = (e)=>{
+    let val = clean(e.target.value);
+    let old = clean(p.ROOM_AC);
+
+    if(val && roomCount[val] >= ROOM_LIMIT && val !== old){
+      alert("ROOM FULL (9)");
+      e.target.value = old;
+      return;
+    }
+
+    lastEdit = Date.now();
+
+    p.ROOM_AC = val;
+    saveLocal(p.rowIndex,"ROOM_AC",val);
+
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
+
+    updateRoomStats();
+    refreshRoomOptions();
+  };
+
   /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
     lastEdit = Date.now();
 
-    let next;
-    if(p.paymentIndicator === "NOT PAID" || !p.paymentIndicator){
-      next = "ON-WAITING PAYMENT";
-    } else if(p.paymentIndicator === "ON-WAITING PAYMENT"){
-      next = "PAID";
-    } else {
-      next = "NOT PAID";
-    }
+    let next = p.paymentIndicator==="PAID"
+      ? "NOT PAID"
+      : p.paymentIndicator==="ON-WAITING PAYMENT"
+      ? "PAID"
+      : "ON-WAITING PAYMENT";
 
     p.paymentIndicator = next;
+    saveLocal(p.rowIndex,"paymentIndicator",next);
 
     tr.querySelector(".pay").textContent = payIcon(next);
     tr.querySelector(".paytxt").textContent = payIcon(next);
@@ -418,53 +455,22 @@ function createRow(p){
     updateStats();
   };
 
-  /* ATTENDANCE */
+  /* ATT */
   tr.querySelector(".att").onclick = ()=>{
     lastEdit = Date.now();
 
-    let next;
-    if(p.attendanceStatus === "Cancelled"){
-      next = "ON-waiting";
-    } else if(p.attendanceStatus === "ON-waiting"){
-      next = "Attended";
-    } else {
-      next = "Cancelled";
-    }
+    let next = p.attendanceStatus==="Cancelled"
+      ? "ON-waiting"
+      : p.attendanceStatus==="ON-waiting"
+      ? "Attended"
+      : "Cancelled";
 
     p.attendanceStatus = next;
+    saveLocal(p.rowIndex,"attendanceStatus",next);
+
     tr.querySelector(".att").textContent = attIcon(next);
 
     send("attendance",{rowIndex:p.rowIndex,status:next});
-  };
-
-  /* ROOM AC */
-  roomSelect.onchange = (e)=>{
-    lastEdit = Date.now();
-
-    let newRoom = clean(e.target.value);
-    let oldRoom = clean(p.ROOM_AC);
-
-    if(newRoom && roomCount[newRoom] >= 18 && newRoom !== oldRoom){
-      alert("ROOM FULL (18)");
-      e.target.value = oldRoom;
-      return;
-    }
-
-    p.ROOM_AC = newRoom;
-
-    send("room_ac",{rowIndex:p.rowIndex,value:newRoom});
-
-    updateRoomStats();
-    refreshRoomOptions();
-  };
-
-  /* SHIRT */
-  const shirt = tr.querySelector(".shirt");
-  shirt.value = p.shirt || "";
-
-  shirt.onchange = (e)=>{
-    lastEdit = Date.now();
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
 }
@@ -485,12 +491,11 @@ function send(action,data){
 /* LOAD */
 async function loadData(){
 
-  if(Date.now() - lastEdit < 8000) return;
-
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  allData = data;
+  /* 🔥 APPLY LOCAL OVERRIDE */
+  allData = applyLocalChanges(data);
 
   tbody.innerHTML="";
   updateRoomStats();
@@ -500,7 +505,7 @@ async function loadData(){
 }
 
 loadData();
-setInterval(loadData,5000);
+setInterval(loadData,4000);
 
 /* SEARCH */
 document.querySelector(".search-bar input").addEventListener("input", e=>{
