@@ -249,7 +249,7 @@ function getRoomOptions(selected){
 }
 
 /* =========================
-   LOCKED SEND
+   FAST SEND (NO DELAY LOCK)
 ========================= */
 function send(action,data){
 
@@ -265,7 +265,7 @@ function send(action,data){
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .then(()=> setTimeout(()=> updatingRows.delete(id),3000))
+    .then(()=> updatingRows.delete(id))
     .catch(()=> updatingRows.delete(id));
 }
 
@@ -323,15 +323,13 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* CLICKABLE FEEL */
+  /* POINTER FIX */
   tr.querySelectorAll(".clickable").forEach(el=>{
     el.style.cursor = "pointer";
   });
 
   /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
     let next = p.payment_indicator==="PAID" ? "WAITING" : "PAID";
     p.payment_indicator = next;
 
@@ -344,8 +342,6 @@ function createRow(p){
 
   /* ATT */
   tr.querySelector(".att").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
     let next =
       p.attendance_status==="ON-waiting" ? "Attended" :
       p.attendance_status==="Attended" ? "Cancelled" :
@@ -358,19 +354,14 @@ function createRow(p){
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
-  /* ROOM FIX */
+  /* ROOM */
   tr.querySelector(".room").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
     let val = e.target.value || "No room";
-
-    // instant UI persist
     p.room_assignment = val;
-
     send("room_assignment",{rowIndex:p.rowIndex,value:val});
   };
 
-  /* SEARCH INDEX */
+  /* SEARCH */
   tr.dataset.search = (
     (p.firstName||"") + " " +
     (p.lastName||"") + " " +
@@ -390,7 +381,7 @@ async function loadData(){
 
     let id = String(newRow.rowIndex);
 
-    // 🔒 DO NOT overwrite active row
+    // DO NOT override active row
     if(updatingRows.has(id)) return;
 
     let existing = document.querySelector(`tr[data-id="${id}"]`);
@@ -398,7 +389,6 @@ async function loadData(){
     if(!existing){
       createRow(newRow);
     } else {
-      // update only safe fields
       existing.querySelector(".payment").textContent = payIcon(newRow.payment_indicator);
       existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
       existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
