@@ -228,9 +228,7 @@ function attIcon(v){
 ========================= */
 function getRoomOptions(selected){
   return `
-    <option value="No room" ${!selected || selected==="No room" ? "selected" : ""}>
-      🚫 No room
-    </option>
+    <option value="No room" ${!selected || selected==="No room" ? "selected" : ""}>🚫 No room</option>
 
     <optgroup label="BEREAN (Boys)">
       ${[
@@ -251,23 +249,7 @@ function getRoomOptions(selected){
 }
 
 /* =========================
-   STATS
-========================= */
-function updateStats(){
-  let paid = 0, waiting = 0;
-
-  allData.forEach(p=>{
-    if((p.payment_indicator||"").includes("PAID")) paid++;
-    if(p.attendance_status === "ON-waiting") waiting++;
-  });
-
-  document.getElementById("total").textContent = allData.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
-}
-
-/* =========================
-   SEND WITH LOCK
+   LOCKED SEND
 ========================= */
 function send(action,data){
 
@@ -279,6 +261,7 @@ function send(action,data){
   }
 
   let id = String(data.rowIndex);
+
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
@@ -294,10 +277,6 @@ function createRow(p){
   let tr = document.createElement("tr");
   tr.dataset.id = p.rowIndex;
 
-  let displayAmount = (p.payment_indicator && p.payment_indicator.includes("PAID")) 
-    ? "₱1500" 
-    : (p.amount || "");
-
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
     <td>${p.firstName || ""} ${p.lastName || ""}</td>
@@ -311,13 +290,11 @@ function createRow(p){
     </td>
 
     <td>
-      <select class="room">
-        ${getRoomOptions(p.room_assignment)}
-      </select>
+      <select class="room">${getRoomOptions(p.room_assignment)}</select>
     </td>
 
-    <td>${payIcon(p.payment_indicator)}</td>
-    <td class="amount">${displayAmount}</td>
+    <td class="payment">${payIcon(p.payment_indicator)}</td>
+    <td class="amount">${p.payment_indicator?.includes("PAID") ? "₱1500" : ""}</td>
 
     <td>
       <select class="mode">
@@ -326,8 +303,8 @@ function createRow(p){
       </select>
     </td>
 
-    <td class="pay">${payIcon(p.payment_indicator)}</td>
-    <td class="att">${attIcon(p.attendance_status)}</td>
+    <td class="pay clickable">${payIcon(p.payment_indicator)}</td>
+    <td class="att clickable">${attIcon(p.attendance_status)}</td>
 
     <td>
       <select class="shirt">
@@ -341,46 +318,15 @@ function createRow(p){
       </select>
     </td>
 
-    <td class="kit">${p.kit_distribution || "❌"}</td>
+    <td class="kit clickable">${p.kit_distribution || "❌"}</td>
   `;
 
   tbody.appendChild(tr);
 
-  /* CLASSIFICATION */
-  tr.querySelector(".classification").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-    send("classification",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* ROOM */
-  tr.querySelector(".room").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-    send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* MODE */
-  tr.querySelector(".mode").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* SHIRT */
-  tr.querySelector(".shirt").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    let next = p.kit_distribution==="✔" ? "❌" : "✔";
-    p.kit_distribution = next;
-
-    tr.querySelector(".kit").textContent = next;
-
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
+  /* CLICKABLE FEEL */
+  tr.querySelectorAll(".clickable").forEach(el=>{
+    el.style.cursor = "pointer";
+  });
 
   /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
@@ -390,15 +336,13 @@ function createRow(p){
     p.payment_indicator = next;
 
     tr.querySelector(".pay").textContent = payIcon(next);
-
-    let amountCell = tr.querySelector(".amount");
-    amountCell.textContent = next === "PAID" ? "₱1500" : "";
+    tr.querySelector(".payment").textContent = payIcon(next);
+    tr.querySelector(".amount").textContent = next==="PAID" ? "₱1500" : "";
 
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
-    updateStats();
   };
 
-  /* ATTENDANCE */
+  /* ATT */
   tr.querySelector(".att").onclick = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
@@ -412,7 +356,18 @@ function createRow(p){
     tr.querySelector(".att").textContent = attIcon(next);
 
     send("attendance",{rowIndex:p.rowIndex,status:next});
-    updateStats();
+  };
+
+  /* ROOM FIX */
+  tr.querySelector(".room").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
+    let val = e.target.value || "No room";
+
+    // instant UI persist
+    p.room_assignment = val;
+
+    send("room_assignment",{rowIndex:p.rowIndex,value:val});
   };
 
   /* SEARCH INDEX */
@@ -421,6 +376,37 @@ function createRow(p){
     (p.lastName||"") + " " +
     (p.room_assignment||"")
   ).toLowerCase();
+}
+
+/* =========================
+   LOAD (NO SNAPBACK)
+========================= */
+async function loadData(){
+
+  let res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let data = await res.json();
+
+  data.forEach(newRow=>{
+
+    let id = String(newRow.rowIndex);
+
+    // 🔒 DO NOT overwrite active row
+    if(updatingRows.has(id)) return;
+
+    let existing = document.querySelector(`tr[data-id="${id}"]`);
+
+    if(!existing){
+      createRow(newRow);
+    } else {
+      // update only safe fields
+      existing.querySelector(".payment").textContent = payIcon(newRow.payment_indicator);
+      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
+      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
+      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
+    }
+  });
+
+  allData = data;
 }
 
 /* =========================
@@ -434,22 +420,6 @@ searchInput.addEventListener("input", ()=>{
     tr.style.display = text.includes(value) ? "" : "none";
   });
 });
-
-/* =========================
-   LOAD DATA
-========================= */
-async function loadData(){
-
-  let res = await fetch(BASE_URL+"?sheet="+SHEET);
-  let data = await res.json();
-
-  tbody.innerHTML = "";
-
-  data.forEach(p=> createRow(p));
-
-  allData = data;
-  updateStats();
-}
 
 /* INIT */
 loadData();
