@@ -241,8 +241,7 @@ Loading...
 
 <script>
 
-
-const BASE_URL = "https://script.google.com/macros/s/AKfycbynLNEjonJ0-5TXcllwbq3BUxrbHn4SQ3TJ8QEoRobxVYKdvhBjb5LdKmxufYcm6HWl/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyRl1uSX6QfZD_aGG8OoRw7MtWLP8NmYJSTcFsNJTd4H8V71HXJpWkottMC8DhcgKJq/exec";
 const SHEET = "WALK-IN";
 
 const AC_ROOMS = [
@@ -265,7 +264,7 @@ let lastEdit = 0;
 const clean = v => (v || "").toString().trim();
 
 /* =========================
-   ICONS (FIXED + CONSISTENT)
+   ICONS
 ========================= */
 function payIcon(v){
   if(!v || v.includes("NOT")) return "❌ NOT PAID";
@@ -287,8 +286,10 @@ function updateStats(){
   let paid = 0, waiting = 0;
 
   allData.forEach(p=>{
-    if((p.payment_status || "").includes("PAID")) paid++;
-    if((p.payment_status || "").includes("ONSITE") || (p.payment_status || "").includes("WAITING")) waiting++;
+    const pay = p.paymentIndicator || "";
+
+    if(pay.includes("PAID")) paid++;
+    if(pay.includes("ONSITE") || pay.includes("WAIT") || pay.includes("ON-WAIT")) waiting++;
   });
 
   document.getElementById("total").textContent = allData.length;
@@ -297,14 +298,14 @@ function updateStats(){
 }
 
 /* =========================
-   ROOM COUNTS
+   ROOM STATS
 ========================= */
 function updateRoomStats(){
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
   allData.forEach(p=>{
-    let r = clean(p.room_ac);
+    let r = clean(p.ROOM_AC);
     if(roomCount[r] !== undefined) roomCount[r]++;
   });
 
@@ -321,7 +322,7 @@ function updateRoomStats(){
 }
 
 /* =========================
-   SEND TO APPSCRIPT
+   SEND (IMPORTANT FIX)
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -335,7 +336,7 @@ function send(action,data){
 }
 
 /* =========================
-   ROW CREATION
+   ROW
 ========================= */
 function createRow(p){
 
@@ -346,34 +347,34 @@ function createRow(p){
     <td>${p.rowIndex}</td>
     <td>${p.firstName || ""} ${p.lastName || ""}</td>
     <td>${p.gender || ""}</td>
-    <td>${p.room_ac || ""}</td>
+    <td>${p.ROOM_AC || ""}</td>
 
-    <td class="paytxt">${payIcon(p.payment_status)}</td>
-    <td>${p.payment_status?.includes("PAID") ? "₱1500" : ""}</td>
+    <td class="paytxt">${payIcon(p.paymentIndicator)}</td>
+    <td>${p.paymentIndicator?.includes("PAID") ? "₱1500" : ""}</td>
 
     <td>
       <select class="mode">
-        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
-        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
+        <option ${p.modeOfPayment==="ONSITE"?"selected":""}>ONSITE</option>
+        <option ${p.modeOfPayment==="ONLINE"?"selected":""}>ONLINE</option>
       </select>
     </td>
 
-    <td class="pay">${payIcon(p.payment_indicator)}</td>
-    <td class="att">${attIcon(p.attendance_status)}</td>
+    <td class="pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="att">${attIcon(p.attendanceStatus)}</td>
 
     <td>
       <select class="shirt">
-        <option ${p.shirt_size==="S"?"selected":""}>S</option>
-        <option ${p.shirt_size==="M"?"selected":""}>M</option>
-        <option ${p.shirt_size==="L"?"selected":""}>L</option>
-        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
-        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
-        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
+        <option ${p.shirt==="S"?"selected":""}>S</option>
+        <option ${p.shirt==="M"?"selected":""}>M</option>
+        <option ${p.shirt==="L"?"selected":""}>L</option>
+        <option ${p.shirt==="XL"?"selected":""}>XL</option>
+        <option ${p.shirt==="XXL"?"selected":""}>XXL</option>
+        <option ${p.shirt==="3XL"?"selected":""}>3XL</option>
       </select>
     </td>
 
-    <td class="kit">${p.kit_distribution || "❌"}</td>
-    <td class="aircon">${p.aircon_pref || "❌"}</td>
+    <td class="kit">${p.kit}</td>
+    <td class="aircon">${p.aircon}</td>
 
     <td>
       <select class="roomac"></select>
@@ -393,8 +394,8 @@ function createRow(p){
 
         return `
           <option value="${r}"
-            ${p.room_ac===r?"selected":""}
-            ${full && p.room_ac!==r?"disabled":""}>
+            ${p.ROOM_AC===r?"selected":""}
+            ${full && p.ROOM_AC!==r?"disabled":""}>
             ${r} ${full?"(FULL)":""}
           </option>
         `;
@@ -404,37 +405,37 @@ function createRow(p){
   refreshRooms();
 
 /* =========================
-   PAYMENT TOGGLE
+   FIXED PAYMENT
 ========================= */
 tr.querySelector(".pay").onclick = ()=>{
   lastEdit = Date.now();
 
   let next;
-  if(!p.payment_status || p.payment_status.includes("NOT")) next = "ONSITE 🟠";
-  else if(p.payment_status.includes("ONSITE")) next = "PAID ✅";
-  else next = "NOT PAID ❌";
+  if(!p.paymentIndicator || p.paymentIndicator.includes("NOT")) next = "ONSITE";
+  else if(p.paymentIndicator.includes("ONSITE")) next = "PAID";
+  else next = "NOT PAID";
 
-  p.payment_status = next;
+  p.paymentIndicator = next;
 
   tr.querySelector(".pay").textContent = payIcon(next);
   tr.querySelector(".paytxt").textContent = payIcon(next);
 
-  send("payment_toggle",{rowIndex:p.rowIndex,value:next});
+  send("payment",{rowIndex:p.rowIndex,value:next});
   updateStats();
 };
 
 /* =========================
-   ATTENDANCE TOGGLE
+   ATTENDANCE (OK)
 ========================= */
 tr.querySelector(".att").onclick = ()=>{
   lastEdit = Date.now();
 
   let next;
-  if(p.attendance_status === "Cancelled") next = "ON-waiting";
-  else if(p.attendance_status === "ON-waiting") next = "Attended";
+  if(p.attendanceStatus === "Cancelled") next = "ON-waiting";
+  else if(p.attendanceStatus === "ON-waiting") next = "Attended";
   else next = "Cancelled";
 
-  p.attendance_status = next;
+  p.attendanceStatus = next;
   tr.querySelector(".att").textContent = attIcon(next);
 
   send("attendance",{rowIndex:p.rowIndex,status:next});
@@ -446,8 +447,8 @@ tr.querySelector(".att").onclick = ()=>{
 tr.querySelector(".kit").onclick = ()=>{
   lastEdit = Date.now();
 
-  let next = p.kit_distribution==="❌"?"🟠":p.kit_distribution==="🟠"?"✅":"❌";
-  p.kit_distribution = next;
+  let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+  p.kit = next;
 
   tr.querySelector(".kit").textContent = next;
   send("kit",{rowIndex:p.rowIndex,state:next});
@@ -459,8 +460,8 @@ tr.querySelector(".kit").onclick = ()=>{
 tr.querySelector(".aircon").onclick = ()=>{
   lastEdit = Date.now();
 
-  let next = p.aircon_pref==="❌"?"🟠":p.aircon_pref==="🟠"?"✅":"❌";
-  p.aircon_pref = next;
+  let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+  p.aircon = next;
 
   tr.querySelector(".aircon").textContent = next;
   send("aircon",{rowIndex:p.rowIndex,state:next});
@@ -474,13 +475,13 @@ roomSelect.onchange = (e)=>{
 
   let val = clean(e.target.value);
 
-  if(val && roomCount[val] >= 18 && val !== p.room_ac){
+  if(val && roomCount[val] >= 18 && val !== p.ROOM_AC){
     alert("ROOM FULL (18)");
-    e.target.value = p.room_ac;
+    e.target.value = p.ROOM_AC;
     return;
   }
 
-  p.room_ac = val;
+  p.ROOM_AC = val;
   send("room_ac",{rowIndex:p.rowIndex,value:val});
 
   updateRoomStats();
@@ -488,7 +489,7 @@ roomSelect.onchange = (e)=>{
 };
 
 /* =========================
-   SHIRT SIZE
+   SHIRT
 ========================= */
 tr.querySelector(".shirt").onchange = (e)=>{
   lastEdit = Date.now();
@@ -524,8 +525,6 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
     r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
   });
 });
-
-
 </script>
 
 </body>
