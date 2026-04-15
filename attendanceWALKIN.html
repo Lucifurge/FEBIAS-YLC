@@ -201,6 +201,8 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbxi_FqU4a6njkAz53FLO0W
 const SHEET = "WALK-IN";
 
 let tbody = document.querySelector("tbody");
+let searchInput = document.querySelector(".search-bar input");
+
 let allData = [];
 let updatingRows = new Set();
 
@@ -265,7 +267,7 @@ function updateStats(){
 }
 
 /* =========================
-   SEND (LOCK SYSTEM)
+   SEND (LOCK)
 ========================= */
 function send(action,data){
 
@@ -277,18 +279,11 @@ function send(action,data){
   }
 
   let id = String(data.rowIndex);
-
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .then(()=>{
-      setTimeout(()=>{
-        updatingRows.delete(id);
-      },3000);
-    })
-    .catch(()=>{
-      updatingRows.delete(id);
-    });
+    .then(()=> setTimeout(()=> updatingRows.delete(id),3000))
+    .catch(()=> updatingRows.delete(id));
 }
 
 /* =========================
@@ -318,7 +313,7 @@ function createRow(p){
     </td>
 
     <td>${payIcon(p.payment_indicator)}</td>
-    <td>${p.amount || ""}</td>
+    <td class="amount">${p.amount || ""}</td>
 
     <td>
       <select class="mode">
@@ -347,50 +342,7 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* CLASSIFICATION */
-  tr.querySelector(".classification").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    send("classification",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* ROOM */
-  tr.querySelector(".room").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    send("room_assignment",{
-      rowIndex:p.rowIndex,
-      value:e.target.value || "No room"
-    });
-  };
-
-  /* MODE */
-  tr.querySelector(".mode").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* SHIRT */
-  tr.querySelector(".shirt").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    let next = p.kit_distribution==="✔" ? "❌" : "✔";
-    p.kit_distribution = next;
-
-    tr.querySelector(".kit").textContent = next;
-
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* PAYMENT */
+  /* PAYMENT (₱1500 AUTO) */
   tr.querySelector(".pay").onclick = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
@@ -399,54 +351,56 @@ function createRow(p){
 
     tr.querySelector(".pay").textContent = payIcon(next);
 
+    // 💰 AUTO AMOUNT
+    let amountCell = tr.querySelector(".amount");
+    if(next === "PAID"){
+      amountCell.textContent = "₱1500";
+    } else {
+      amountCell.textContent = "";
+    }
+
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
     updateStats();
   };
 
-  /* ATTENDANCE */
-  tr.querySelector(".att").onclick = ()=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-
-    let next = p.attendance_status==="ON-waiting" ? "Attended" :
-               p.attendance_status==="Attended" ? "Cancelled" : "ON-waiting";
-
-    p.attendance_status = next;
-
-    tr.querySelector(".att").textContent = attIcon(next);
-
-    send("attendance",{rowIndex:p.rowIndex,status:next});
-    updateStats();
-  };
+  /* SEARCH SUPPORT (store text) */
+  tr.dataset.search = (
+    (p.firstName||"") + " " +
+    (p.lastName||"") + " " +
+    (p.room_assignment||"")
+  ).toLowerCase();
 }
 
 /* =========================
-   LOAD (ANTI SNAPBACK)
+   SEARCH (LIVE FILTER)
+========================= */
+searchInput.addEventListener("input", ()=>{
+
+  let value = searchInput.value.toLowerCase();
+
+  document.querySelectorAll("tbody tr").forEach(tr=>{
+    let text = tr.dataset.search || "";
+
+    if(text.includes(value)){
+      tr.style.display = "";
+    } else {
+      tr.style.display = "none";
+    }
+  });
+
+});
+
+/* =========================
+   LOAD
 ========================= */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  data.forEach(newRow=>{
+  tbody.innerHTML = "";
 
-    let id = String(newRow.rowIndex);
-
-    if(updatingRows.has(id)) return;
-
-    let existing = document.querySelector(`tr[data-id="${id}"]`);
-
-    if(existing){
-
-      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
-      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
-      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
-
-      existing.querySelector(".room").value = newRow.room_assignment || "No room";
-
-    } else {
-      createRow(newRow);
-    }
-  });
+  data.forEach(p=> createRow(p));
 
   allData = data;
   updateStats();
