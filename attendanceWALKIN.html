@@ -202,6 +202,7 @@ const SHEET = "WALK-IN";
 
 let tbody = document.querySelector("tbody");
 let allData = [];
+let updatingRows = new Set();
 
 /* =========================
    ICONS
@@ -221,10 +222,9 @@ function attIcon(v){
 }
 
 /* =========================
-   ROOM OPTIONS (FIXED)
+   ROOM OPTIONS
 ========================= */
 function getRoomOptions(selected){
-
   return `
     <option value="No room" ${!selected || selected==="No room" ? "selected" : ""}>
       🚫 No room
@@ -265,9 +265,10 @@ function updateStats(){
 }
 
 /* =========================
-   SEND (FIXED NO ROOM)
+   SEND (LOCK SYSTEM)
 ========================= */
 function send(action,data){
+
   let fd = new FormData();
   fd.append("action",action);
 
@@ -275,7 +276,19 @@ function send(action,data){
     fd.append(k,data[k]);
   }
 
-  fetch(BASE_URL,{method:"POST",body:fd});
+  let id = String(data.rowIndex);
+
+  updatingRows.add(id);
+
+  fetch(BASE_URL,{method:"POST",body:fd})
+    .then(()=>{
+      setTimeout(()=>{
+        updatingRows.delete(id);
+      },3000);
+    })
+    .catch(()=>{
+      updatingRows.delete(id);
+    });
 }
 
 /* =========================
@@ -284,6 +297,7 @@ function send(action,data){
 function createRow(p){
 
   let tr = document.createElement("tr");
+  tr.dataset.id = p.rowIndex;
 
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
@@ -335,67 +349,104 @@ function createRow(p){
 
   /* CLASSIFICATION */
   tr.querySelector(".classification").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
     send("classification",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* ROOM (FIXED DEFAULT) */
+  /* ROOM */
   tr.querySelector(".room").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
     send("room_assignment",{
       rowIndex:p.rowIndex,
-      value: e.target.value || "No room"
+      value:e.target.value || "No room"
     });
   };
 
   /* MODE */
   tr.querySelector(".mode").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
     send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
   /* SHIRT */
   tr.querySelector(".shirt").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
     send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
   /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
     let next = p.kit_distribution==="✔" ? "❌" : "✔";
     p.kit_distribution = next;
+
     tr.querySelector(".kit").textContent = next;
+
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
   /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
     let next = p.payment_indicator==="PAID" ? "WAITING" : "PAID";
     p.payment_indicator = next;
 
     tr.querySelector(".pay").textContent = payIcon(next);
+
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
     updateStats();
   };
 
   /* ATTENDANCE */
   tr.querySelector(".att").onclick = ()=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
     let next = p.attendance_status==="ON-waiting" ? "Attended" :
                p.attendance_status==="Attended" ? "Cancelled" : "ON-waiting";
 
     p.attendance_status = next;
+
     tr.querySelector(".att").textContent = attIcon(next);
+
     send("attendance",{rowIndex:p.rowIndex,status:next});
     updateStats();
   };
 }
 
 /* =========================
-   LOAD
+   LOAD (ANTI SNAPBACK)
 ========================= */
 async function loadData(){
+
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  tbody.innerHTML = "";
+  data.forEach(newRow=>{
 
-  data.forEach(p=> createRow(p));
+    let id = String(newRow.rowIndex);
+
+    if(updatingRows.has(id)) return;
+
+    let existing = document.querySelector(`tr[data-id="${id}"]`);
+
+    if(existing){
+
+      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
+      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
+      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
+
+      existing.querySelector(".room").value = newRow.room_assignment || "No room";
+
+    } else {
+      createRow(newRow);
+    }
+  });
 
   allData = data;
   updateStats();
