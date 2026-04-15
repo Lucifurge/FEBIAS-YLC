@@ -195,213 +195,272 @@ select{
 <tbody></tbody>
 </table>
 </div>
-
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbwLaZlaSDJKLwuSGQejc2Mi3R34VLAhvPzRtI_uDsUY_6RaAKlsLBnOBRYHcuu42xqA/exec";
-const SHEET = "WALK-IN";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
+const SHEET = "Pre-Registration";
+
+const ROOM_LIMIT = 18;
 
 let tbody = document.querySelector("tbody");
 let allData = [];
-let updatingRows = new Set();
+let roomCount = {};
+let localChanges = {};
+let searchQuery = "";
 
+/* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* =========================
-   ICONS
-========================= */
+/* 🔥 MEMBER → AC ROOM */
+function getAutoRoomAC(room){
+  if(!room) return "";
+
+  let r = room.toLowerCase();
+
+  if(r.includes("barnabas") || r.includes("caleb"))
+    return "Berean – Abraham (2)";
+
+  if(r.includes("joseph") || r.includes("david") || r.includes("daniel"))
+    return "Berean – Elijah (2)";
+
+  if(r.includes("moses") || r.includes("nehemiah"))
+    return "Berean – Joshua (3)";
+
+  if(r.includes("timothy") || r.includes("stephen") || r.includes("paul"))
+    return "Berean – Elisha (3)";
+
+  if(r.includes("esther") || r.includes("eunice"))
+    return "Sharon – Deborah (2)";
+
+  if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah"))
+    return "Sharon – Abigail (2)";
+
+  if(r.includes("priscilla") || r.includes("sarah"))
+    return "Sharon – Martha (3)";
+
+  if(r.includes("mary") || r.includes("elizabeth"))
+    return "Sharon – Eve (3)";
+
+  return "";
+}
+
+/* ICONS */
 function payIcon(v){
-  if(!v) return "❌ NOT PAID";
-  if(v.includes("NOT")) return "❌ NOT PAID";
-  if(v.includes("ONSITE")) return "🟠 ONSITE";
-  if(v.includes("ONLINE")) return "💳 ONLINE";
-  if(v.includes("PAID")) return "✔ PAID";
-  return v;
+  if(v === "PAID") return "✅ PAID";
+  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
+  return "❌ NOT PAID";
 }
 
 function attIcon(v){
   if(v === "Attended") return "✔ ATTENDED";
-  if(v === "Cancelled") return "❌ CANCELLED";
-  return "🟠 WAITING";
+  if(v === "ON-waiting") return "🟠 WAITING";
+  return "❌ CANCELLED";
 }
 
-/* =========================
-   STATS
-========================= */
-function updateStats(){
-  let paid = 0, waiting = 0;
+/* LOCAL CACHE */
+function saveLocal(row, field, val){
+  if(!localChanges[row]) localChanges[row] = {};
+  localChanges[row][field] = val;
+}
 
-  allData.forEach(p=>{
-    if((p.payment_indicator||"").includes("PAID")) paid++;
-    if(p.attendance_status === "ON-waiting") waiting++;
+function applyLocal(data){
+  return data.map(p=>{
+    if(localChanges[p.rowIndex]){
+      return {...p, ...localChanges[p.rowIndex]};
+    }
+    return p;
+  });
+}
+
+/* 🔍 SEARCH FILTER */
+function filterData(data){
+  if(!searchQuery) return data;
+
+  return data.filter(p=>{
+    let text = `
+      ${p.firstName}
+      ${p.lastName}
+      ${p.room}
+      ${p.gender}
+      ${p.classification}
+    `.toLowerCase();
+
+    return text.includes(searchQuery);
+  });
+}
+
+/* STATS */
+function updateStats(data){
+  let paid=0, waiting=0;
+
+  data.forEach(p=>{
+    if(p.paymentIndicator==="PAID") paid++;
+    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
   });
 
-  document.getElementById("total").textContent = allData.length;
+  document.getElementById("total").textContent = data.length;
   document.getElementById("paid").textContent = paid;
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* =========================
-   SEND (ANTI SNAPBACK LOCK)
-========================= */
-function send(action,data){
-  let fd = new FormData();
-  fd.append("action",action);
+/* ROOM COUNT */
+function updateRoomStats(){
+  roomCount = {
+    "Berean – Abraham (2)":0,
+    "Berean – Elijah (2)":0,
+    "Berean – Joshua (3)":0,
+    "Berean – Elisha (3)":0,
+    "Sharon – Deborah (2)":0,
+    "Sharon – Abigail (2)":0,
+    "Sharon – Martha (3)":0,
+    "Sharon – Eve (3)":0
+  };
 
-  for(let k in data){
-    fd.append(k,data[k]);
-  }
+  allData.forEach(p=>{
+    let r = clean(p.ROOM_AC);
+    if(roomCount[r] !== undefined){
+      roomCount[r]++;
+    }
+  });
 
-  let id = String(data.rowIndex);
+  let html = "<b>ROOM AC STATUS</b><br>";
 
-  updatingRows.add(id);
+  Object.keys(roomCount).forEach(room=>{
+    let c = roomCount[room];
+    let full = c >= ROOM_LIMIT;
 
-  fetch(BASE_URL,{method:"POST",body:fd})
-    .then(r=>r.json())
-    .then(()=>{
-      setTimeout(()=>{
-        updatingRows.delete(id);
-      },3000);
-    })
-    .catch(()=>{
-      updatingRows.delete(id);
-    });
+    html += `${room} 
+      <span class="badge ${full?"full":"available"}">
+      ${c}/${ROOM_LIMIT}
+      </span><br>`;
+  });
+
+  document.getElementById("roomStats").innerHTML = html;
 }
 
-/* =========================
-   CREATE ROW
-========================= */
+/* CREATE ROW */
 function createRow(p){
 
   let tr = document.createElement("tr");
-  tr.dataset.id = p.rowIndex;
 
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
-    <td>${p.firstName || ""} ${p.lastName || ""}</td>
-    <td>${p.gender || ""}</td>
-    <td>${p.room || ""}</td>
+    <td>${p.firstName} ${p.lastName}</td>
+    <td>${p.gender}</td>
+    <td>${p.room}</td>
 
-    <td class="payment">${payIcon(p.payment_indicator)}</td>
-    <td class="amount">${p.amount || ""}</td>
+    <td class="paytxt">${payIcon(p.paymentIndicator)}</td>
+    <td class="amt">${p.paymentIndicator==="PAID"?"₱1500":""}</td>
 
     <td>
       <select class="mode">
-        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
-        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
+        <option value="">Select</option>
+        <option value="Onsite (BO)" ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite (BO)</option>
+        <option value="Onsite (orange tag)" ${p.modeOfPayment==="Onsite (orange tag)"?"selected":""}>Onsite (orange tag)</option>
+        <option value="Online (GCASH)" ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>Online (GCASH)</option>
+        <option value="Online (BANK)" ${p.modeOfPayment==="Online (BANK)"?"selected":""}>Online (BANK)</option>
       </select>
     </td>
 
-    <td class="pay">${payIcon(p.payment_indicator)}</td>
-    <td class="att">${attIcon(p.attendance_status)}</td>
+    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
+    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
     <td>
       <select class="shirt">
-        <option ${p.shirt_size==="S"?"selected":""}>S</option>
-        <option ${p.shirt_size==="M"?"selected":""}>M</option>
-        <option ${p.shirt_size==="L"?"selected":""}>L</option>
-        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
-        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
-        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
+        <option>S</option><option>M</option><option>L</option>
+        <option>XL</option><option>XXL</option><option>3XL</option>
       </select>
     </td>
 
-    <td class="kit">${p.kit_distribution || "❌"}</td>
+    <td class="clickable kit">${p.kit || "❌"}</td>
+    <td class="clickable aircon">${p.aircon || "❌"}</td>
+
+    <td><select class="roomac"></select></td>
+
+    <!-- CLASSIFICATION (UNCHANGED POSITION) -->
+    <td class="${p.classification === 'Silver' ? 'silver' : 'copper'}">
+      ${p.classification || ""}
+    </td>
   `;
 
   tbody.appendChild(tr);
 
-  /* MODE */
-  tr.querySelector(".mode").onchange = (e)=>{
-    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
-  };
+  /* ROOM LOGIC */
+  const roomSelect = tr.querySelector(".roomac");
+  let allowedRoom = getAutoRoomAC(p.room);
 
-  /* PAYMENT (FIXED FLOW) */
-  tr.querySelector(".pay").onclick = ()=>{
+  if(allowedRoom){
+    roomSelect.innerHTML = `
+      <option value="">NO ROOM</option>
+      <option value="${allowedRoom}">
+        ${allowedRoom}
+      </option>
+    `;
+    roomSelect.value = p.ROOM_AC || "";
+  }else{
+    roomSelect.innerHTML = `<option value="">NO ROOM</option>`;
+  }
 
-    let current = p.payment_indicator || "";
+  roomSelect.onchange = e=>{
+    let val = clean(e.target.value);
+    let old = clean(p.ROOM_AC);
 
-    let next;
-    if(current.includes("NOT")) next = "ONSITE 🟠";
-    else if(current.includes("ONSITE")) next = "PAID ✔";
-    else next = "NOT PAID ❌";
-
-    p.payment_indicator = next;
-
-    tr.querySelector(".pay").textContent = payIcon(next);
-    tr.querySelector(".payment").textContent = payIcon(next);
-
-    send("payment",{rowIndex:p.rowIndex,value:next});
-    updateStats();
-  };
-
-  /* ATTENDANCE (FIXED LOOP) */
-  tr.querySelector(".att").onclick = ()=>{
-
-    let current = p.attendance_status;
-
-    let next;
-    if(current === "Cancelled") next = "ON-waiting";
-    else if(current === "ON-waiting") next = "Attended";
-    else next = "Cancelled";
-
-    p.attendance_status = next;
-
-    tr.querySelector(".att").textContent = attIcon(next);
-
-    send("attendance",{rowIndex:p.rowIndex,status:next});
-    updateStats();
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    let current = p.kit_distribution || "❌";
-
-    let next = current==="❌"?"🟠":current==="🟠"?"✔":"❌";
-
-    p.kit_distribution = next;
-    tr.querySelector(".kit").textContent = next;
-
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* SHIRT */
-  tr.querySelector(".shirt").onchange = (e)=>{
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-}
-
-/* =========================
-   LOAD DATA (STABLE)
-========================= */
-async function loadData(){
-  let res = await fetch(BASE_URL+"?sheet="+SHEET);
-  let data = await res.json();
-
-  data.forEach(newRow=>{
-    let id = String(newRow.rowIndex);
-
-    if(updatingRows.has(id)) return;
-
-    let existing = document.querySelector(`tr[data-id="${id}"]`);
-
-    if(existing){
-      existing.querySelector(".payment").textContent = payIcon(newRow.payment_indicator);
-      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
-      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
-      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
-    } else {
-      createRow(newRow);
+    if(val && val !== allowedRoom){
+      alert("❌ You can only select your assigned AC room.");
+      roomSelect.value = old;
+      return;
     }
-  });
 
-  allData = data;
-  updateStats();
+    if(val && roomCount[val] >= ROOM_LIMIT){
+      alert("ROOM FULL ("+ROOM_LIMIT+")");
+      roomSelect.value = old;
+      return;
+    }
+
+    p.ROOM_AC = val;
+    saveLocal(p.rowIndex,"ROOM_AC",val);
+
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
+    updateRoomStats();
+  };
+
 }
 
-/* INIT */
+/* SEND */
+function send(action,data){
+  let fd=new FormData();
+  fd.append("action",action);
+  fd.append("sheet",SHEET);
+
+  for(let k in data) fd.append(k,data[k]);
+
+  fetch(BASE_URL,{method:"POST",body:fd});
+}
+
+/* LOAD */
+async function loadData(){
+  let res=await fetch(BASE_URL+"?sheet="+SHEET);
+  let data=await res.json();
+
+  allData=applyLocal(data);
+
+  let filtered = filterData(allData);
+
+  tbody.innerHTML="";
+  updateRoomStats();
+  filtered.forEach(createRow);
+  updateStats(filtered);
+}
+
+/* 🔍 SEARCH EVENT */
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  searchQuery = e.target.value.toLowerCase();
+  loadData();
+});
+
 loadData();
-setInterval(loadData,12000);
+setInterval(loadData,4000);
+
 </script>
 
 </body>
