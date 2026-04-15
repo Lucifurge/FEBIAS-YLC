@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+can you remove the aircon option and room ac and room ac counting remove it andj ust leave it as is after <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -87,7 +87,7 @@ h1{
   font-size:20px;
 }
 
-/* ROOM BOX (cleaned) */
+/* ROOM BOX */
 .room-box{
   max-width:1100px;
   margin:12px auto;
@@ -97,6 +97,25 @@ h1{
   border-radius:12px;
   font-size:13px;
   color:#ccc;
+}
+
+/* BADGES */
+.badge{
+  padding:4px 10px;
+  border-radius:8px;
+  font-size:12px;
+  margin-left:8px;
+  font-weight:bold;
+}
+
+.full{
+  background:#ff2e2e;
+  color:white;
+}
+
+.available{
+  background:#1db954;
+  color:white;
 }
 
 /* BUTTON */
@@ -128,7 +147,7 @@ button:hover{
 
 table{
   width:100%;
-  min-width:1400px;
+  min-width:1600px;
   border-collapse:collapse;
 }
 
@@ -171,6 +190,9 @@ select{
 2. Click PAY → toggles PAID / NOT PAID (₱1500 auto display).<br>
 3. Click ATT → updates attendance status.<br>
 4. Choose Mode (Onsite / GCASH / BANK).<br>
+5. ROOM_AC has max 18 campers per room.<br>
+6. Full rooms are disabled automatically.<br>
+7. Shirt sizes now include up to 3XL.<br>
 </div>
 
 <div class="search-bar">
@@ -183,9 +205,9 @@ select{
   <div class="box">Waiting<br><span id="waiting">0</span></div>
 </div>
 
-<div class="room-box">
-<b>ROOM STATUS</b><br>
-(Room monitoring removed)
+<div class="room-box" id="roomStats">
+<b>ROOM AC STATUS</b><br>
+Loading...
 </div>
 
 <button>🔄 REFRESH</button>
@@ -205,6 +227,8 @@ select{
   <th>ATT</th>
   <th>Shirt</th>
   <th>Kit</th>
+  <th>Aircon</th>
+  <th>ROOM_AC</th>
 </tr>
 </thead>
 
@@ -212,8 +236,6 @@ select{
 </table>
 </div>
 
-</body>
-</html>
 <script>
 
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
@@ -390,6 +412,7 @@ async function loadData(){
 /* INIT */
 loadData();
 setInterval(loadData,4000);
+
 
 </script>
 </body>
