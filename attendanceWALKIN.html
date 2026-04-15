@@ -204,15 +204,12 @@ let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
 let allData = {};
+let dirty = new Set(); // 🔥 rows being edited
 
-/* =========================
-   NORMALIZER
-========================= */
+/* ========================= */
 const norm = v => (v || "").toString().toUpperCase();
 
-/* =========================
-   ICONS
-========================= */
+/* ========================= ICONS */
 function payIcon(v){
   v = norm(v);
   if(v.includes("PAID")) return "✔ PAID";
@@ -235,27 +232,11 @@ function kitIcon(v){
   return "🟠 WAITING";
 }
 
-/* =========================
-   ROOM OPTIONS
-========================= */
-function getRoomOptions(selected){
-  return `
-    <option value="No room" ${!selected ? "selected":""}>🚫 No room</option>
-    <optgroup label="BEREAN">
-      ${["Barnabas","Caleb","Daniel","David","Joseph","Moses","Nehemiah","Paul","Stephen","Timothy"]
-      .map(r=>`<option ${selected===("Berean – "+r)?"selected":""}>Berean – ${r}</option>`).join("")}
-    </optgroup>
-    <optgroup label="SHARON">
-      ${["Elizabeth","Esther","Eunice","Hannah","Lydia","Mary","Priscilla","Rebecca","Sarah"]
-      .map(r=>`<option ${selected===("Sharon – "+r)?"selected":""}>Sharon – ${r}</option>`).join("")}
-    </optgroup>
-  `;
-}
-
-/* =========================
-   SEND
-========================= */
+/* ========================= SEND (NO LOCK, NO WAIT) */
 function send(action,data){
+  let id = String(data.rowIndex);
+  dirty.add(id); // mark as editing
+
   let fd = new FormData();
   fd.append("action",action);
 
@@ -264,12 +245,12 @@ function send(action,data){
   }
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .catch(()=>console.log("send failed"));
+    .finally(()=>{
+      setTimeout(()=> dirty.delete(id), 800); // 🔥 short protection only
+    });
 }
 
-/* =========================
-   CREATE ROW
-========================= */
+/* ========================= CREATE ROW */
 function createRow(p){
 
   let tr = document.createElement("tr");
@@ -294,9 +275,7 @@ function createRow(p){
     <td>
       <select class="shirt">
         <option value="">--</option>
-        ${["S","M","L","XL","XXL","3XL"].map(s=>
-          `<option ${norm(p.shirt_size)===s?"selected":""}>${s}</option>`
-        ).join("")}
+        ${["S","M","L","XL","XXL","3XL"].map(s=>`<option>${s}</option>`).join("")}
       </select>
     </td>
     <td class="kit clickable"></td>
@@ -304,40 +283,8 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* CLASSIFICATION */
-  let cs = document.createElement("select");
-  cs.innerHTML = `
-    <option ${p.classification==="Silver"?"selected":""}>Silver</option>
-    <option ${p.classification==="Copper"?"selected":""}>Copper</option>
-  `;
-  cs.onchange = ()=>{
-    p.classification = cs.value;
-    send("classification",{rowIndex:p.rowIndex,value:cs.value});
-  };
-  tr.querySelector(".classification").appendChild(cs);
+  /* EVENTS */
 
-  /* ROOM */
-  let room = tr.querySelector(".room");
-  room.innerHTML = getRoomOptions(p.room_assignment);
-  room.onchange = e=>{
-    p.room_assignment = e.target.value;
-    send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* SHIRT (FIXED MATCH) */
-  let shirt = tr.querySelector(".shirt");
-  shirt.value = (p.shirt_size || "").trim();
-
-  shirt.onchange = e=>{
-    let val = (e.target.value || "").trim();
-
-    p.shirt_size = val;
-    allData[p.rowIndex].shirt_size = val;
-
-    send("shirt",{rowIndex:p.rowIndex,value:val});
-  };
-
-  /* PAY */
   tr.querySelector(".pay").onclick = ()=>{
     let current = norm(p.payment_indicator);
 
@@ -349,11 +296,9 @@ function createRow(p){
 
     p.payment_indicator = next;
     updateRowUI(tr,p);
-
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
   };
 
-  /* ATT */
   tr.querySelector(".att").onclick = ()=>{
     let current = (p.attendance_status || "").toLowerCase();
 
@@ -364,13 +309,11 @@ function createRow(p){
 
     p.attendance_status = next;
     updateRowUI(tr,p);
-
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
-  /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
-    let current = (p.kit_distribution || "").toString();
+    let current = p.kit_distribution || "";
 
     let next =
       current === "" || current === "WAITING" ? "✔" :
@@ -379,16 +322,13 @@ function createRow(p){
 
     p.kit_distribution = next;
     updateRowUI(tr,p);
-
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
   return tr;
 }
 
-/* =========================
-   UPDATE UI
-========================= */
+/* ========================= UI UPDATE */
 function updateRowUI(tr,p){
 
   tr.querySelector(".name").textContent =
@@ -408,9 +348,7 @@ function updateRowUI(tr,p){
   tr.dataset.search = ((p.firstName||"")+" "+(p.lastName||"")).toLowerCase();
 }
 
-/* =========================
-   LOAD
-========================= */
+/* ========================= LOAD (NO SNAPBACK) */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -426,8 +364,8 @@ async function loadData(){
   data.forEach(p=>{
     let id = String(p.rowIndex);
 
-    // 🔥 normalize shirt here too
-    p.shirt_size = (p.shirt_size || "").trim();
+    // 🔥 SKIP rows being edited
+    if(dirty.has(id)) return;
 
     if(!allData[id]){
       allData[id] = p;
@@ -441,11 +379,6 @@ async function loadData(){
     let tr = document.querySelector(`tr[data-id="${id}"]`);
     if(tr){
       updateRowUI(tr, allData[id]);
-
-      let shirt = tr.querySelector(".shirt");
-      if(shirt && shirt.value !== p.shirt_size){
-        shirt.value = p.shirt_size;
-      }
     }
   });
 }
@@ -460,7 +393,7 @@ searchInput.addEventListener("input",()=>{
 
 /* INIT */
 loadData();
-setInterval(loadData,10000);
+setInterval(loadData,12000); // slower refresh = smoother
 </script>
  </body>
 </html>
