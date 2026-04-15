@@ -267,7 +267,7 @@ function updateStats(){
 }
 
 /* =========================
-   SEND (LOCK)
+   SEND WITH LOCK
 ========================= */
 function send(action,data){
 
@@ -294,7 +294,6 @@ function createRow(p){
   let tr = document.createElement("tr");
   tr.dataset.id = p.rowIndex;
 
-  // 💰 FIX: SHOW ₱1500 IF PAID (ON LOAD)
   let displayAmount = (p.payment_indicator && p.payment_indicator.includes("PAID")) 
     ? "₱1500" 
     : (p.amount || "");
@@ -347,7 +346,43 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* PAY CLICK (FIXED) */
+  /* CLASSIFICATION */
+  tr.querySelector(".classification").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+    send("classification",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+  /* ROOM */
+  tr.querySelector(".room").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+    send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+  /* MODE */
+  tr.querySelector(".mode").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+  /* SHIRT */
+  tr.querySelector(".shirt").onchange = e=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+  /* KIT */
+  tr.querySelector(".kit").onclick = ()=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
+    let next = p.kit_distribution==="✔" ? "❌" : "✔";
+    p.kit_distribution = next;
+
+    tr.querySelector(".kit").textContent = next;
+
+    send("kit",{rowIndex:p.rowIndex,state:next});
+  };
+
+  /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
@@ -357,18 +392,30 @@ function createRow(p){
     tr.querySelector(".pay").textContent = payIcon(next);
 
     let amountCell = tr.querySelector(".amount");
-
-    if(next === "PAID"){
-      amountCell.textContent = "₱1500";
-    } else {
-      amountCell.textContent = "";
-    }
+    amountCell.textContent = next === "PAID" ? "₱1500" : "";
 
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
     updateStats();
   };
 
-  /* SEARCH TEXT */
+  /* ATTENDANCE */
+  tr.querySelector(".att").onclick = ()=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
+    let next =
+      p.attendance_status==="ON-waiting" ? "Attended" :
+      p.attendance_status==="Attended" ? "Cancelled" :
+      "ON-waiting";
+
+    p.attendance_status = next;
+
+    tr.querySelector(".att").textContent = attIcon(next);
+
+    send("attendance",{rowIndex:p.rowIndex,status:next});
+    updateStats();
+  };
+
+  /* SEARCH INDEX */
   tr.dataset.search = (
     (p.firstName||"") + " " +
     (p.lastName||"") + " " +
@@ -389,7 +436,7 @@ searchInput.addEventListener("input", ()=>{
 });
 
 /* =========================
-   LOAD
+   LOAD DATA
 ========================= */
 async function loadData(){
 
