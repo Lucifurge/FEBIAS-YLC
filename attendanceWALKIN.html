@@ -15,7 +15,6 @@ body{
   padding:15px;
 }
 
-/* TITLE */
 h1{
   text-align:center;
   color:#ff6a00;
@@ -32,7 +31,6 @@ h1{
   font-size:13px;
 }
 
-/* INSTRUCTIONS */
 .instructions{
   max-width:1100px;
   margin:12px auto;
@@ -45,7 +43,6 @@ h1{
   line-height:1.6;
 }
 
-/* SEARCH */
 .search-bar{
   display:flex;
   justify-content:center;
@@ -63,7 +60,6 @@ h1{
   outline:none;
 }
 
-/* DROPDOWN */
 .room-dropdown-wrap{
   display:flex;
   justify-content:center;
@@ -81,7 +77,6 @@ h1{
   outline:none;
 }
 
-/* STATS */
 .stats{
   display:flex;
   justify-content:center;
@@ -105,7 +100,6 @@ h1{
   font-size:20px;
 }
 
-/* ROOM BOX */
 .room-box{
   max-width:1100px;
   margin:12px auto;
@@ -117,7 +111,44 @@ h1{
   color:#ccc;
 }
 
-/* TABLE */
+.badge{
+  padding:4px 10px;
+  border-radius:8px;
+  font-size:12px;
+  margin-left:8px;
+  font-weight:bold;
+}
+
+.full{
+  background:#ff2e2e;
+  color:white;
+}
+
+.available{
+  background:#1db954;
+  color:white;
+}
+
+button{
+  display:block;
+  margin:15px auto;
+  padding:12px 22px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(45deg,#ff6a00,#ff2e00);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.2s;
+  box-shadow:0 0 10px rgba(255,106,0,0.3);
+  font-size:14px;
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 18px rgba(255,106,0,0.5);
+}
+
 .table-wrap{
   overflow-x:auto;
   margin-top:15px;
@@ -135,7 +166,6 @@ th{
   padding:12px;
   position:sticky;
   top:0;
-  z-index:2;
 }
 
 td{
@@ -146,7 +176,6 @@ td{
   font-size:13px;
 }
 
-/* SELECT */
 select{
   background:#111;
   color:white;
@@ -179,6 +208,32 @@ select{
 <div class="room-dropdown-wrap">
   <select id="roomDropdown">
     <option value="">Select Group</option>
+
+    <optgroup label="Sharon (Girls)">
+      <option>Sarah</option>
+      <option>Esther</option>
+      <option>Eunice</option>
+      <option>Rebecca</option>
+      <option>Lydia</option>
+      <option>Hannah</option>
+      <option>Priscilla</option>
+      <option>Mary</option>
+      <option>Elizabeth</option>
+    </optgroup>
+
+    <optgroup label="Berean (Boys)">
+      <option>Abraham</option>
+      <option>Barnabas</option>
+      <option>Caleb</option>
+      <option>Joseph</option>
+      <option>David</option>
+      <option>Daniel</option>
+      <option>Moses</option>
+      <option>Nehemiah</option>
+      <option>Timothy</option>
+      <option>Stephen</option>
+      <option>Paul</option>
+    </optgroup>
   </select>
 </div>
 
@@ -195,8 +250,10 @@ Loading...
 
 <button>🔄 REFRESH</button>
 
+<!-- ✅ FIXED TABLE -->
 <div class="table-wrap">
 <table>
+
 <thead>
 <tr>
   <th>#</th>
@@ -215,63 +272,10 @@ Loading...
 </tr>
 </thead>
 
-<tbody>
+<tbody></tbody> <!-- ✅ REQUIRED -->
 
-<!-- TEMPLATE ROW (JS WILL GENERATE THIS) -->
-<tr>
-  <td>#</td>
-  <td>Name</td>
-  <td>Gender</td>
-
-  <!-- ✅ ROOM ASSIGNMENT -->
-  <td>
-    <select class="roomAssign">
-      <option value="">Select Room</option>
-
-      <optgroup label="BEREAN (Boys)">
-        <option>Berean – Barnabas</option>
-        <option>Berean – Caleb</option>
-        <option>Berean – Daniel</option>
-        <option>Berean – David</option>
-        <option>Berean – Joseph</option>
-        <option>Berean – Moses</option>
-        <option>Berean – Nehemiah</option>
-        <option>Berean – Paul</option>
-        <option>Berean – Stephen</option>
-        <option>Berean – Timothy</option>
-      </optgroup>
-
-      <optgroup label="SHARON (Girls)">
-        <option>Sharon – Elizabeth</option>
-        <option>Sharon – Esther</option>
-        <option>Sharon – Eunice</option>
-        <option>Sharon – Hannah</option>
-        <option>Sharon – Lydia</option>
-        <option>Sharon – Mary</option>
-        <option>Sharon – Priscilla</option>
-        <option>Sharon – Rebecca</option>
-        <option>Sharon – Sarah</option>
-      </optgroup>
-    </select>
-  </td>
-
-  <td>❌</td>
-  <td>1500</td>
-  <td>ONSITE</td>
-  <td>❌</td>
-  <td>🟠</td>
-  <td>M</td>
-  <td>❌</td>
-  <td>❌</td>
-
-  <!-- 🚫 ROOM_AC -->
-  <td>ROOM_AC</td>
-</tr>
-
-</tbody>
 </table>
 </div>
-
 <script>
 
 
@@ -297,14 +301,9 @@ let allData = [];
 let roomCount = {};
 let updatingRows = new Set();
 
-/* 🔥 ADDED: selected row for top dropdown */
-let selectedRowId = null;
-
 const clean = v => (v || "").toString().trim();
 
-/* =========================
-   ICONS
-========================= */
+/* ================= ICONS ================= */
 function payIcon(v){
   if(!v) return "❌ NOT PAID";
   if(v.includes("NOT")) return "❌ NOT PAID";
@@ -320,9 +319,7 @@ function attIcon(v){
   return "🟠 WAITING";
 }
 
-/* =========================
-   STATS
-========================= */
+/* ================= STATS ================= */
 function updateStats(){
   let paid = 0, waiting = 0;
 
@@ -336,9 +333,7 @@ function updateStats(){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* =========================
-   ROOM COUNTS
-========================= */
+/* ================= ROOM COUNT ================= */
 function computeRoomCounts(){
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
@@ -364,9 +359,7 @@ function updateRoomStats(){
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* =========================
-   SEND
-========================= */
+/* ================= SEND ================= */
 function send(action,data){
   let fd = new FormData();
   fd.append("action",action);
@@ -376,321 +369,15 @@ function send(action,data){
   }
 
   let id = String(data.rowIndex);
-
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
     .then(r=>r.json())
-    .then(()=>{
-      setTimeout(()=>{
-        updatingRows.delete(id);
-      },3000);
-    })
-    .catch(()=>{
-      updatingRows.delete(id);
-    });
-}
-
-/* =========================
-   CREATE ROW
-========================= */
-function createRow(p){
-
-  let tr = document.createElement("tr");
-  tr.dataset.id = p.rowIndex;
-
-  tr.innerHTML = `
-    <td>${p.rowIndex}</td>
-    <td>${p.firstName || ""} ${p.lastName || ""}</td>
-    <td>${p.gender || ""}</td>
-    <td>${p.room_ac || ""}</td>
-
-    <td class="payment">${payIcon(p.payment_indicator)}</td>
-    <td class="amount">${p.amount || ""}</td>
-
-    <td>
-      <select class="mode">
-        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
-        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
-      </select>
-    </td>
-
-    <td class="pay">${payIcon(p.payment_indicator)}</td>
-    <td class="att">${attIcon(p.attendance_status)}</td>
-
-    <td>
-      <select class="shirt">
-        <option ${p.shirt_size==="S"?"selected":""}>S</option>
-        <option ${p.shirt_size==="M"?"selected":""}>M</option>
-        <option ${p.shirt_size==="L"?"selected":""}>L</option>
-        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
-        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
-        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
-      </select>
-    </td>
-
-    <td class="kit">${p.kit_distribution || "❌"}</td>
-    <td class="aircon">${p.aircon_pref || "❌"}</td>
-
-    <td>
-      <select class="roomac"></select>
-    </td>
-  `;
-
-  tbody.appendChild(tr);
-
-  const roomSelect = tr.querySelector(".roomac");
-
-  function refreshRooms(){
-    roomSelect.innerHTML =
-      `<option value="">ROOM AC</option>` +
-      AC_ROOMS.map(r=>{
-        let count = roomCount[r] || 0;
-        let full = count >= ROOM_LIMIT;
-
-        return `
-          <option value="${r}"
-            ${p.room_ac===r?"selected":""}
-            ${full && p.room_ac!==r?"disabled":""}>
-            ${r} ${full?"(FULL)":""}
-          </option>
-        `;
-      }).join("");
-  }
-
-  refreshRooms();
-
-  /* 🔥 ROW SELECT FOR TOP DROPDOWN */
-  tr.onclick = () => {
-    selectedRowId = p.rowIndex;
-
-    document.querySelectorAll("tr").forEach(r=>{
-      r.style.outline = "";
-    });
-    tr.style.outline = "2px solid #ff6a00";
-  };
-
-  /* MODE */
-  tr.querySelector(".mode").onchange = (e)=>{
-    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* PAYMENT */
-  tr.querySelector(".pay").onclick = ()=>{
-
-    let state = p.payment_indicator;
-
-    let next;
-    if(state === "NOT PAID ❌") next = "ONSITE 🟠";
-    else if(state === "ONSITE 🟠") next = "PAID ✔";
-    else next = "NOT PAID ❌";
-
-    p.payment_indicator = next;
-
-    tr.querySelector(".pay").textContent = payIcon(next);
-    tr.querySelector(".payment").textContent = payIcon(next);
-
-    send("payment",{rowIndex:p.rowIndex,value:next});
-    updateStats();
-  };
-
-  /* ATTENDANCE */
-  tr.querySelector(".att").onclick = ()=>{
-
-    let next;
-    if(p.attendance_status === "Cancelled") next = "ON-waiting";
-    else if(p.attendance_status === "ON-waiting") next = "Attended";
-    else next = "Cancelled";
-
-    p.attendance_status = next;
-    tr.querySelector(".att").textContent = attIcon(next);
-
-    send("attendance",{rowIndex:p.rowIndex,status:next});
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    let next = p.kit_distribution==="❌"?"🟠":p.kit_distribution==="🟠"?"✔":"❌";
-    p.kit_distribution = next;
-
-    tr.querySelector(".kit").textContent = next;
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* AIRCON */
-  tr.querySelector(".aircon").onclick = ()=>{
-    let next = p.aircon_pref==="❌"?"🟠":p.aircon_pref==="🟠"?"✔":"❌";
-    p.aircon_pref = next;
-
-    tr.querySelector(".aircon").textContent = next;
-    send("aircon",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* ROOM AC */
-  roomSelect.onchange = (e)=>{
-    let val = clean(e.target.value);
-
-    let tempCount = {...roomCount};
-    tempCount[val] = (tempCount[val] || 0) + 1;
-
-    if(val && tempCount[val] > ROOM_LIMIT && val !== p.room_ac){
-      alert("ROOM FULL (9 MAX)");
-      e.target.value = p.room_ac;
-      return;
-    }
-
-    p.room_ac = val;
-
-    send("room_ac",{rowIndex:p.rowIndex,value:val});
-
-    updateRoomStats();
-    refreshRooms();
-  };
-
-  /* SHIRT */
-  tr.querySelector(".shirt").onchange = (e)=>{
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-}
-
-/* =========================
-   TOP DROPDOWN FUNCTION (ADDED)
-========================= */
-document.getElementById("roomDropdown").onchange = (e)=>{
-
-  let val = clean(e.target.value);
-
-  if(!selectedRowId){
-    alert("Please select a camper row first.");
-    e.target.value = "";
-    return;
-  }
-
-  send("room_ac",{rowIndex:selectedRowId,value:val});
-
-  let row = document.querySelector(`tr[data-id="${selectedRowId}"]`);
-  if(row){
-    let cell = row.querySelector("td:nth-child(4)");
-    if(cell) cell.textContent = val;
-  }
-
-  updateRoomStats();
-  e.target.value = "";
-};
-
-/* =========================
-   LOAD DATA
-========================= */
-async function loadData(){
-  let res = await fetch(BASE_URL+"?sheet="+SHEET);
-  let data = await res.json();
-
-  data.forEach(newRow=>{
-    let id = String(newRow.rowIndex);<script>
-
-const BASE_URL = "https://script.google.com/macros/s/AKfycbwLaZlaSDJKLwuSGQejc2Mi3R34VLAhvPzRtI_uDsUY_6RaAKlsLBnOBRYHcuu42xqA/exec";
-const SHEET = "WALK-IN";
-
-const ROOM_LIMIT = 9;
-
-const AC_ROOMS = [
-  "Berean Area",
-  "Berean – Abraham 2",
-  "Berean – Joshua 3",
-  "Berean – Elijah 3",
-  "Berean – Elisha 3",
-  "Sharon – Deborah 2",
-  "Sharon – Martha 3",
-  "Sharon – Abigail 2",
-  "Sharon – Eve 2"
-];
-
-let tbody = document.querySelector("tbody");
-let allData = [];
-let roomCount = {};
-let updatingRows = new Set();
-let selectedRowId = null;
-
-const clean = v => (v || "").toString().trim();
-
-/* ========================= ICONS ========================= */
-function payIcon(v){
-  if(!v) return "❌ NOT PAID";
-  if(v.includes("NOT")) return "❌ NOT PAID";
-  if(v.includes("ONSITE")) return "🟠 ONSITE";
-  if(v.includes("ONLINE")) return "💳 ONLINE";
-  if(v.includes("PAID")) return "✔ PAID";
-  return v;
-}
-
-function attIcon(v){
-  if(v === "Attended") return "✔ ATTENDED";
-  if(v === "Cancelled") return "❌ CANCELLED";
-  return "🟠 WAITING";
-}
-
-/* ========================= STATS ========================= */
-function updateStats(){
-  let paid = 0, waiting = 0;
-
-  allData.forEach(p=>{
-    if((p.payment_indicator||"").includes("PAID")) paid++;
-    if(p.attendance_status === "ON-waiting") waiting++;
-  });
-
-  document.getElementById("total").textContent = allData.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
-}
-
-/* ========================= ROOM COUNTS ========================= */
-function computeRoomCounts(){
-  roomCount = {};
-  AC_ROOMS.forEach(r => roomCount[r] = 0);
-
-  allData.forEach(p=>{
-    let r = clean(p.room_ac);
-    if(roomCount[r] !== undefined) roomCount[r]++;
-  });
-}
-
-function updateRoomStats(){
-  computeRoomCounts();
-
-  let html = "<b>ROOM AC STATUS</b><br>";
-
-  AC_ROOMS.forEach(r=>{
-    let c = roomCount[r];
-    let full = c >= ROOM_LIMIT;
-
-    html += `${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
-  });
-
-  document.getElementById("roomStats").innerHTML = html;
-}
-
-/* ========================= SEND ========================= */
-function send(action,data){
-  let fd = new FormData();
-  fd.append("action",action);
-
-  for(let k in data){
-    fd.append(k,data[k]);
-  }
-
-  let id = String(data.rowIndex);
-
-  updatingRows.add(id);
-
-  fetch(BASE_URL,{method:"POST",body:fd})
-    .then(r=>r.json())
-    .then(()=>{
-      setTimeout(()=> updatingRows.delete(id),3000);
-    })
+    .then(()=> setTimeout(()=> updatingRows.delete(id),3000))
     .catch(()=> updatingRows.delete(id));
 }
 
-/* ========================= CREATE ROW ========================= */
+/* ================= CREATE ROW ================= */
 function createRow(p){
 
   let tr = document.createElement("tr");
@@ -701,10 +388,11 @@ function createRow(p){
     <td>${p.firstName || ""} ${p.lastName || ""}</td>
     <td>${p.gender || ""}</td>
 
-    <!-- ROOM ASSIGNMENT DROPDOWN -->
+    <!-- ✅ ROOM ASSIGNMENT DROPDOWN -->
     <td>
       <select class="roomAssign">
         <option value="">Select Room</option>
+
         <optgroup label="BEREAN (Boys)">
           <option ${p.room_assignment==="Berean – Barnabas"?"selected":""}>Berean – Barnabas</option>
           <option ${p.room_assignment==="Berean – Caleb"?"selected":""}>Berean – Caleb</option>
@@ -717,6 +405,7 @@ function createRow(p){
           <option ${p.room_assignment==="Berean – Stephen"?"selected":""}>Berean – Stephen</option>
           <option ${p.room_assignment==="Berean – Timothy"?"selected":""}>Berean – Timothy</option>
         </optgroup>
+
         <optgroup label="SHARON (Girls)">
           <option ${p.room_assignment==="Sharon – Elizabeth"?"selected":""}>Sharon – Elizabeth</option>
           <option ${p.room_assignment==="Sharon – Esther"?"selected":""}>Sharon – Esther</option>
@@ -758,7 +447,7 @@ function createRow(p){
     <td class="kit">${p.kit_distribution || "❌"}</td>
     <td class="aircon">${p.aircon_pref || "❌"}</td>
 
-    <!-- ROOM_AC untouched -->
+    <!-- ❗ ROOM_AC UNTOUCHED -->
     <td>
       <select class="roomac"></select>
     </td>
@@ -766,23 +455,16 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
+  /* ================= ROOM ASSIGNMENT SAVE ================= */
   const roomAssign = tr.querySelector(".roomAssign");
+  roomAssign.onchange = (e)=>{
+    send("room_assignment",{
+      rowIndex:p.rowIndex,
+      value:clean(e.target.value)
+    });
+  };
 
-  /* ROOM ASSIGNMENT HANDLER */
-  if(roomAssign){
-    roomAssign.value = p.room_assignment || "";
-
-    roomAssign.onchange = (e)=>{
-      let val = clean(e.target.value);
-      p.room_assignment = val;
-
-      send("room_assignment",{
-        rowIndex:p.rowIndex,
-        value:val
-      });
-    };
-  }
-
+  /* ================= ROOM AC ================= */
   const roomSelect = tr.querySelector(".roomac");
 
   function refreshRooms(){
@@ -807,41 +489,37 @@ function createRow(p){
   roomSelect.onchange = (e)=>{
     let val = clean(e.target.value);
 
-    let tempCount = {...roomCount};
-    tempCount[val] = (tempCount[val] || 0) + 1;
+    let temp = {...roomCount};
+    temp[val] = (temp[val] || 0) + 1;
 
-    if(val && tempCount[val] > ROOM_LIMIT && val !== p.room_ac){
+    if(val && temp[val] > ROOM_LIMIT && val !== p.room_ac){
       alert("ROOM FULL (9 MAX)");
       e.target.value = p.room_ac;
       return;
     }
 
-    p.room_ac = val;
     send("room_ac",{rowIndex:p.rowIndex,value:val});
-
     updateRoomStats();
     refreshRooms();
   };
 }
 
-/* ========================= LOAD ========================= */
+/* ================= LOAD ================= */
 async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  data.forEach(newRow=>{
-    let id = String(newRow.rowIndex);
+  data.forEach(p=>{
+    let id = String(p.rowIndex);
     if(updatingRows.has(id)) return;
 
     let existing = document.querySelector(`tr[data-id="${id}"]`);
 
     if(existing){
       let roomSel = existing.querySelector(".roomAssign");
-      if(roomSel){
-        roomSel.value = newRow.room_assignment || "";
-      }
+      if(roomSel) roomSel.value = p.room_assignment || "";
     } else {
-      createRow(newRow);
+      createRow(p);
     }
   });
 
