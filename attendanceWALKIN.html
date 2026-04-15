@@ -313,6 +313,9 @@ let allData = [];
 let roomCount = {};
 let updatingRows = new Set();
 
+/* 🔥 ADDED: selected row for top dropdown */
+let selectedRowId = null;
+
 const clean = v => (v || "").toString().trim();
 
 /* =========================
@@ -378,7 +381,7 @@ function updateRoomStats(){
 }
 
 /* =========================
-   SEND (STRONG LOCK SYSTEM)
+   SEND
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -390,16 +393,14 @@ function send(action,data){
 
   let id = String(data.rowIndex);
 
-  // 🔒 HARD LOCK (no snapback)
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
     .then(r=>r.json())
     .then(()=>{
-      // longer delay = NO snapback even if sheet is slow
       setTimeout(()=>{
         updatingRows.delete(id);
-      },3000); 
+      },3000);
     })
     .catch(()=>{
       updatingRows.delete(id);
@@ -475,6 +476,16 @@ function createRow(p){
 
   refreshRooms();
 
+  /* 🔥 ROW SELECT FOR TOP DROPDOWN */
+  tr.onclick = () => {
+    selectedRowId = p.rowIndex;
+
+    document.querySelectorAll("tr").forEach(r=>{
+      r.style.outline = "";
+    });
+    tr.style.outline = "2px solid #ff6a00";
+  };
+
   /* MODE */
   tr.querySelector(".mode").onchange = (e)=>{
     send("mode",{rowIndex:p.rowIndex,value:e.target.value});
@@ -531,7 +542,7 @@ function createRow(p){
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  /* ROOM AC (STRICT LIMIT 9) */
+  /* ROOM AC */
   roomSelect.onchange = (e)=>{
     let val = clean(e.target.value);
 
@@ -559,7 +570,32 @@ function createRow(p){
 }
 
 /* =========================
-   LOAD DATA (NO SNAPBACK VERSION)
+   TOP DROPDOWN FUNCTION (ADDED)
+========================= */
+document.getElementById("roomDropdown").onchange = (e)=>{
+
+  let val = clean(e.target.value);
+
+  if(!selectedRowId){
+    alert("Please select a camper row first.");
+    e.target.value = "";
+    return;
+  }
+
+  send("room_ac",{rowIndex:selectedRowId,value:val});
+
+  let row = document.querySelector(`tr[data-id="${selectedRowId}"]`);
+  if(row){
+    let cell = row.querySelector("td:nth-child(4)");
+    if(cell) cell.textContent = val;
+  }
+
+  updateRoomStats();
+  e.target.value = "";
+};
+
+/* =========================
+   LOAD DATA
 ========================= */
 async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -568,7 +604,6 @@ async function loadData(){
   data.forEach(newRow=>{
     let id = String(newRow.rowIndex);
 
-    // 🔒 DO NOT TOUCH rows being edited
     if(updatingRows.has(id)) return;
 
     let existing = document.querySelector(`tr[data-id="${id}"]`);
@@ -591,9 +626,8 @@ async function loadData(){
 
 /* INIT */
 loadData();
-
-/* SLOW REFRESH = SMOOTH */
 setInterval(loadData,12000);
+
 </script>
 
 </body>
