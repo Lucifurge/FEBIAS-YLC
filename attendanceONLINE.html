@@ -236,28 +236,28 @@ Loading...
 </table>
 </div>
 
-
-
-
 <script>
-
 
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
-const ROOM_LIMIT = 18; // ✅ FINAL
+const ROOM_LIMIT = 18;
 
-const AC_ROOMS = [
-  "Berean Area",
-  "Berean – Abraham 2",
-  "Berean – Joshua 3",
-  "Berean – Elijah 3",
-  "Berean – Elisha 3",
-  "Sharon – Deborah 2",
-  "Sharon – Martha 3",
-  "Sharon – Abigail 2",
-  "Sharon – Eve 2"
-];
+/* ✅ STRICT ROOM MAPPING */
+const AC_STRUCTURE = {
+  "Berean": {
+    "Abraham": "Berean – Abraham (2)",
+    "Elijah": "Berean – Elijah (2)",
+    "Joshua": "Berean – Joshua (3)",
+    "Elisha": "Berean – Elisha (3)"
+  },
+  "Sharon": {
+    "Deborah": "Sharon – Deborah (2)",
+    "Abigail": "Sharon – Abigail (2)",
+    "Martha": "Sharon – Martha (3)",
+    "Eve": "Sharon – Eve (3)"
+  }
+};
 
 let tbody = document.querySelector("tbody");
 let allData = [];
@@ -266,6 +266,29 @@ let localChanges = {};
 
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
+
+/* 🔥 AUTO ROOM DETECTOR (FROM ROOM COLUMN) */
+function getAutoRoomAC(room){
+  if(!room) return "";
+
+  let r = room.toLowerCase();
+
+  if(r.includes("berean")){
+    if(r.includes("abraham")) return AC_STRUCTURE["Berean"]["Abraham"];
+    if(r.includes("elijah")) return AC_STRUCTURE["Berean"]["Elijah"];
+    if(r.includes("joshua")) return AC_STRUCTURE["Berean"]["Joshua"];
+    if(r.includes("elisha")) return AC_STRUCTURE["Berean"]["Elisha"];
+  }
+
+  if(r.includes("sharon")){
+    if(r.includes("deborah")) return AC_STRUCTURE["Sharon"]["Deborah"];
+    if(r.includes("abigail")) return AC_STRUCTURE["Sharon"]["Abigail"];
+    if(r.includes("martha")) return AC_STRUCTURE["Sharon"]["Martha"];
+    if(r.includes("eve")) return AC_STRUCTURE["Sharon"]["Eve"];
+  }
+
+  return "";
+}
 
 /* ICONS */
 function payIcon(v){
@@ -280,7 +303,7 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* LOCAL CACHE (ANTI SNAPBACK) */
+/* LOCAL CACHE */
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
   localChanges[row][field] = val;
@@ -312,20 +335,34 @@ function updateStats(){
 /* ROOM COUNT */
 function updateRoomStats(){
   roomCount = {};
-  AC_ROOMS.forEach(r=>roomCount[r]=0);
+
+  Object.values(AC_STRUCTURE).forEach(group=>{
+    Object.values(group).forEach(room=>{
+      roomCount[room] = 0;
+    });
+  });
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
-    if(roomCount[r]!==undefined) roomCount[r]++;
+    if(roomCount[r] !== undefined){
+      roomCount[r]++;
+    }
   });
 
-  let html="<b>ROOM AC STATUS</b><br>";
+  let html = "<b>ROOM AC STATUS</b><br>";
 
-  AC_ROOMS.forEach(r=>{
-    let c=roomCount[r];
-    let full=c>=ROOM_LIMIT;
+  Object.entries(AC_STRUCTURE).forEach(([group, subs])=>{
+    html += `<br><b>${group}</b><br>`;
 
-    html+=`${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
+    Object.values(subs).forEach(room=>{
+      let c = roomCount[room] || 0;
+      let full = c >= ROOM_LIMIT;
+
+      html += `${room} 
+        <span class="badge ${full?"full":"available"}">
+        ${c}/${ROOM_LIMIT}
+        </span><br>`;
+    });
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -399,41 +436,33 @@ function createRow(p){
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  /* ROOM */
+  /* 🔒 ROOM AC AUTO + LOCKED */
   const roomSelect = tr.querySelector(".roomac");
 
-  function refreshRoom(){
-    roomSelect.innerHTML=`<option value="">ROOM AC</option>`+
-    AC_ROOMS.map(r=>{
-      let c=roomCount[r]||0;
-      let full=c>=ROOM_LIMIT;
+  let autoRoom = getAutoRoomAC(p.room);
 
-      return `<option value="${r}"
-        ${p.ROOM_AC===r?"selected":""}
-        ${full&&p.ROOM_AC!==r?"disabled":""}>
-        ${r} ${full?"(FULL)":""}</option>`;
-    }).join("");
+  // auto assign if empty
+  if(!p.ROOM_AC && autoRoom){
+    p.ROOM_AC = autoRoom;
+    saveLocal(p.rowIndex,"ROOM_AC",autoRoom);
+    send("room_ac",{rowIndex:p.rowIndex,value:autoRoom});
   }
 
-  refreshRoom();
+  // display locked
+  if(autoRoom){
+    roomSelect.innerHTML = `
+      <option value="${autoRoom}" selected>
+        ${autoRoom} (AUTO)
+      </option>
+    `;
+  }else{
+    roomSelect.innerHTML = `<option value="">NO ROOM</option>`;
+  }
 
-  roomSelect.onchange = e=>{
-    let val=clean(e.target.value);
-    let old=clean(p.ROOM_AC);
-
-    if(val && roomCount[val]>=ROOM_LIMIT && val!==old){
-      alert("ROOM FULL ("+ROOM_LIMIT+")");
-      e.target.value=old;
-      return;
-    }
-
-    p.ROOM_AC=val;
-    saveLocal(p.rowIndex,"ROOM_AC",val);
-
-    send("room_ac",{rowIndex:p.rowIndex,value:val});
-
-    updateRoomStats();
-    refreshRoom();
+  // block changes
+  roomSelect.onchange = ()=>{
+    alert("❌ ROOM is auto-assigned based on delegate ROOM.");
+    roomSelect.value = p.ROOM_AC || "";
   };
 
   /* PAYMENT */
