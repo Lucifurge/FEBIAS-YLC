@@ -197,7 +197,6 @@ select{
 </div>
 <script>
 
-
 const BASE_URL = "https://script.google.com/macros/s/AKfycbwLaZlaSDJKLwuSGQejc2Mi3R34VLAhvPzRtI_uDsUY_6RaAKlsLBnOBRYHcuu42xqA/exec";
 const SHEET = "WALK-IN";
 
@@ -226,6 +225,30 @@ function attIcon(v){
 }
 
 /* =========================
+   ROOM OPTIONS
+========================= */
+function getRoomOptions(p){
+
+  const berean = [
+    "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
+    "Berean – David","Berean – Joseph","Berean – Moses",
+    "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy"
+  ];
+
+  const sharon = [
+    "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
+    "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
+    "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah"
+  ];
+
+  const list = (p.gender === "Male") ? berean : sharon;
+
+  return list.map(r=>{
+    return `<option ${p.room_assignment===r?"selected":""}>${r}</option>`;
+  }).join("");
+}
+
+/* =========================
    STATS
 ========================= */
 function updateStats(){
@@ -242,7 +265,7 @@ function updateStats(){
 }
 
 /* =========================
-   SEND (ANTI SNAPBACK LOCK)
+   SEND (ANTI SNAPBACK)
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -253,19 +276,14 @@ function send(action,data){
   }
 
   let id = String(data.rowIndex);
-
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
     .then(r=>r.json())
     .then(()=>{
-      setTimeout(()=>{
-        updatingRows.delete(id);
-      },3000);
+      setTimeout(()=> updatingRows.delete(id),3000);
     })
-    .catch(()=>{
-      updatingRows.delete(id);
-    });
+    .catch(()=> updatingRows.delete(id));
 }
 
 /* =========================
@@ -280,7 +298,19 @@ function createRow(p){
     <td>${p.rowIndex}</td>
     <td>${p.firstName || ""} ${p.lastName || ""}</td>
     <td>${p.gender || ""}</td>
-    <td>${p.room || ""}</td>
+
+    <td>
+      <select class="classification">
+        <option ${p.classification==="BEREAN"?"selected":""}>BEREAN</option>
+        <option ${p.classification==="SHARON"?"selected":""}>SHARON</option>
+      </select>
+    </td>
+
+    <td>
+      <select class="room">
+        ${getRoomOptions(p)}
+      </select>
+    </td>
 
     <td class="payment">${payIcon(p.payment_indicator)}</td>
     <td class="amount">${p.amount || ""}</td>
@@ -311,12 +341,22 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
+  /* CLASSIFICATION */
+  tr.querySelector(".classification").onchange = (e)=>{
+    send("classification",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
+  /* ROOM */
+  tr.querySelector(".room").onchange = (e)=>{
+    send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+
   /* MODE */
   tr.querySelector(".mode").onchange = (e)=>{
     send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* PAYMENT (FIXED FLOW) */
+  /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
 
     let current = p.payment_indicator || "";
@@ -331,11 +371,11 @@ function createRow(p){
     tr.querySelector(".pay").textContent = payIcon(next);
     tr.querySelector(".payment").textContent = payIcon(next);
 
-    send("payment",{rowIndex:p.rowIndex,value:next});
+    send("payment",{rowIndex:p.rowIndex,payment_by:next});
     updateStats();
   };
 
-  /* ATTENDANCE (FIXED LOOP) */
+  /* ATTENDANCE */
   tr.querySelector(".att").onclick = ()=>{
 
     let current = p.attendance_status;
@@ -356,7 +396,6 @@ function createRow(p){
   /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
     let current = p.kit_distribution || "❌";
-
     let next = current==="❌"?"🟠":current==="🟠"?"✔":"❌";
 
     p.kit_distribution = next;
@@ -372,7 +411,7 @@ function createRow(p){
 }
 
 /* =========================
-   LOAD DATA (STABLE)
+   LOAD DATA
 ========================= */
 async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -390,6 +429,8 @@ async function loadData(){
       existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
       existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
       existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
+
+      existing.querySelector(".room").value = newRow.room_assignment || "";
     } else {
       createRow(newRow);
     }
