@@ -207,19 +207,32 @@ let allData = {};
 let updatingRows = new Set();
 
 /* =========================
-   ICONS
+   SAFE NORMALIZERS
+========================= */
+const norm = v => (v || "").toString().toUpperCase();
+
+/* =========================
+   ICONS (BULLETPROOF)
 ========================= */
 function payIcon(v){
-  if(!v) return "🟠 WAITING";
+  v = norm(v);
   if(v.includes("PAID")) return "✔ PAID";
+  if(v.includes("CANCEL")) return "❌ CANCELLED";
   if(v.includes("ONSITE")) return "🟠 ONSITE";
-  if(v.includes("ONLINE")) return "💳 ONLINE";
   return "🟠 WAITING";
 }
 
 function attIcon(v){
-  if(v === "Attended") return "✔ ATTENDED";
-  if(v === "Cancelled") return "❌ CANCELLED";
+  v = (v || "").toString().toLowerCase();
+  if(v.includes("attended")) return "✔ ATTENDED";
+  if(v.includes("cancel")) return "❌ CANCELLED";
+  return "🟠 WAITING";
+}
+
+function kitIcon(v){
+  v = (v || "").toString().toLowerCase();
+  if(v === "✔" || v.includes("given")) return "✔ GIVEN";
+  if(v === "❌" || v.includes("not")) return "❌ NOT GIVEN";
   return "🟠 WAITING";
 }
 
@@ -228,31 +241,22 @@ function attIcon(v){
 ========================= */
 function getRoomOptions(selected){
   return `
-    <option value="No room" ${!selected || selected==="No room" ? "selected" : ""}>🚫 No room</option>
-
-    <optgroup label="BEREAN (Boys)">
-      ${[
-        "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
-        "Berean – David","Berean – Joseph","Berean – Moses",
-        "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy"
-      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
+    <option value="No room" ${!selected ? "selected":""}>🚫 No room</option>
+    <optgroup label="BEREAN">
+      ${["Barnabas","Caleb","Daniel","David","Joseph","Moses","Nehemiah","Paul","Stephen","Timothy"]
+      .map(r=>`<option ${selected===("Berean – "+r)?"selected":""}>Berean – ${r}</option>`).join("")}
     </optgroup>
-
-    <optgroup label="SHARON (Girls)">
-      ${[
-        "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
-        "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
-        "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah"
-      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
+    <optgroup label="SHARON">
+      ${["Elizabeth","Esther","Eunice","Hannah","Lydia","Mary","Priscilla","Rebecca","Sarah"]
+      .map(r=>`<option ${selected===("Sharon – "+r)?"selected":""}>Sharon – ${r}</option>`).join("")}
     </optgroup>
   `;
 }
 
 /* =========================
-   SEND (OPTIMIZED)
+   SEND (STRONG LOCK)
 ========================= */
 function send(action,data){
-
   let id = String(data.rowIndex);
   updatingRows.add(id);
 
@@ -264,9 +268,8 @@ function send(action,data){
   }
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .finally(()=>{
-      setTimeout(()=> updatingRows.delete(id), 300); // smoother unlock
-    });
+    .then(()=> setTimeout(()=> updatingRows.delete(id),500))
+    .catch(()=> updatingRows.delete(id));
 }
 
 /* =========================
@@ -280,90 +283,76 @@ function createRow(p){
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
     <td class="name"></td>
-    <td>${p.gender || ""}</td>
-
+    <td>${p.gender||""}</td>
     <td class="classification"></td>
-
     <td><select class="room"></select></td>
-
     <td class="payment"></td>
     <td class="amount"></td>
-
     <td>
       <select class="mode">
-        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
-        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
+        <option ${norm(p.mode_of_payment)==="ONSITE"?"selected":""}>ONSITE</option>
+        <option ${norm(p.mode_of_payment)==="ONLINE"?"selected":""}>ONLINE</option>
       </select>
     </td>
-
     <td class="pay clickable"></td>
     <td class="att clickable"></td>
-
     <td>
       <select class="shirt">
         <option value="">--</option>
-        <option ${p.shirt_size==="S"?"selected":""}>S</option>
-        <option ${p.shirt_size==="M"?"selected":""}>M</option>
-        <option ${p.shirt_size==="L"?"selected":""}>L</option>
-        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
-        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
-        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
+        ${["S","M","L","XL","XXL","3XL"].map(s=>
+          `<option ${p.shirt_size===s?"selected":""}>${s}</option>`
+        ).join("")}
       </select>
     </td>
-
     <td class="kit clickable"></td>
   `;
 
   tbody.appendChild(tr);
 
   /* CLASSIFICATION */
-  let classSelect = document.createElement("select");
-  classSelect.innerHTML = `
+  let cs = document.createElement("select");
+  cs.innerHTML = `
     <option ${p.classification==="Silver"?"selected":""}>Silver</option>
     <option ${p.classification==="Copper"?"selected":""}>Copper</option>
   `;
-
-  classSelect.onchange = ()=>{
+  cs.onchange = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
-    p.classification = classSelect.value;
-
-    send("classification",{rowIndex:p.rowIndex,value:classSelect.value});
+    p.classification = cs.value;
+    send("classification",{rowIndex:p.rowIndex,value:cs.value});
   };
-
-  tr.querySelector(".classification").appendChild(classSelect);
+  tr.querySelector(".classification").appendChild(cs);
 
   /* ROOM */
   let room = tr.querySelector(".room");
   room.innerHTML = getRoomOptions(p.room_assignment);
-
   room.onchange = e=>{
     if(updatingRows.has(String(p.rowIndex))) return;
     p.room_assignment = e.target.value;
     send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* MODE */
-  tr.querySelector(".mode").onchange = e=>{
-    if(updatingRows.has(String(p.rowIndex))) return;
-    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
-  /* SHIRT (FIXED SYNC) */
-  tr.querySelector(".shirt").onchange = e=>{
+  /* SHIRT (NO SNAPBACK EVER) */
+  let shirt = tr.querySelector(".shirt");
+  shirt.onchange = e=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
-    p.shirt_size = e.target.value;
+    let val = e.target.value;
+    p.shirt_size = val;
 
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+    send("shirt",{rowIndex:p.rowIndex,value:val});
   };
 
   /* PAY */
   tr.querySelector(".pay").onclick = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
-    let next = (p.payment_indicator || "").includes("ONSITE")
-      ? "WAITING"
-      : "ONSITE";
+    let current = norm(p.payment_indicator);
+
+    let next =
+      current.includes("WAIT") ? "ONSITE" :
+      current.includes("ONSITE") ? "PAID" :
+      current.includes("PAID") ? "CANCELLED" :
+      "WAITING";
 
     p.payment_indicator = next;
     updateRowUI(tr,p);
@@ -375,10 +364,12 @@ function createRow(p){
   tr.querySelector(".att").onclick = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
+    let current = (p.attendance_status || "").toLowerCase();
+
     let next =
-      p.attendance_status==="ON-waiting" ? "Attended" :
-      p.attendance_status==="Attended" ? "Cancelled" :
-      "ON-waiting";
+      current.includes("wait") ? "Attended" :
+      current.includes("attended") ? "Cancelled" :
+      "WAITING";
 
     p.attendance_status = next;
     updateRowUI(tr,p);
@@ -390,10 +381,12 @@ function createRow(p){
   tr.querySelector(".kit").onclick = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
+    let current = (p.kit_distribution || "").toString();
+
     let next =
-      p.kit_distribution==="✔" ? "❌" :
-      p.kit_distribution==="❌" ? "🟠" :
-      "✔";
+      current === "" || current === "WAITING" ? "✔" :
+      current === "✔" ? "❌" :
+      "WAITING";
 
     p.kit_distribution = next;
     updateRowUI(tr,p);
@@ -416,18 +409,18 @@ function updateRowUI(tr,p){
   tr.querySelector(".pay").textContent = payIcon(p.payment_indicator);
 
   tr.querySelector(".amount").textContent =
-    (p.payment_indicator||"").includes("ONSITE") ? "₱1500" : "";
+    norm(p.payment_indicator).includes("ONSITE") ||
+    norm(p.payment_indicator).includes("PAID")
+    ? "₱1500" : "";
 
   tr.querySelector(".att").textContent = attIcon(p.attendance_status);
-  tr.querySelector(".kit").textContent = p.kit_distribution || "❌";
+  tr.querySelector(".kit").textContent = kitIcon(p.kit_distribution);
 
-  tr.dataset.search = (
-    (p.firstName||"") + " " + (p.lastName||"")
-  ).toLowerCase();
+  tr.dataset.search = ((p.firstName||"")+" "+(p.lastName||"")).toLowerCase();
 }
 
 /* =========================
-   LOAD (SMART + NO SNAPBACK)
+   LOAD (NO SNAPBACK GUARANTEED)
 ========================= */
 async function loadData(){
 
@@ -459,9 +452,9 @@ async function loadData(){
     if(tr){
       updateRowUI(tr, allData[id]);
 
-      // 🔥 SHIRT SYNC FIX
+      // 🔥 PERFECT SHIRT SYNC
       let shirt = tr.querySelector(".shirt");
-      if(shirt && shirt.value !== p.shirt_size){
+      if(shirt && shirt.value !== (p.shirt_size||"")){
         shirt.value = p.shirt_size || "";
       }
     }
