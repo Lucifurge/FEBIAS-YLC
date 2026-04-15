@@ -210,6 +210,11 @@ If you paid online, please screenshot your receipt and present it during registr
 </div>
 </div>
 
+<!-- ✅ SUBMIT BUTTON -->
+<button type="submit">Confirm Payment</button>
+
+</form>
+
 <div id="loader">Processing payment...</div>
 
 <footer>
@@ -223,6 +228,8 @@ const loader = document.getElementById('loader');
 const paymentBoxes = document.querySelectorAll('.payment-box');
 const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
 
+let selectedMethod = "";
+
 const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
 
 if(!rowIndex){
@@ -233,30 +240,40 @@ if(!rowIndex){
 /* ================= SHOW OPTIONS ================= */
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
-
-    if(radio.value === "Onsite"){
-      processPayment("Onsite");
-    }
-
     if(radio.value === "Online"){
       document.querySelector('.payment-methods').style.display="flex";
+    } else {
+      document.querySelector('.payment-methods').style.display="none";
+      selectedMethod = "";
+      paymentBoxes.forEach(b=>b.classList.remove('selected'));
     }
   });
 });
 
-/* ================= SELECT ONLINE METHOD ================= */
+/* ================= SELECT METHOD ================= */
 paymentBoxes.forEach(box=>{
   box.addEventListener('click',()=>{
     paymentBoxes.forEach(b=>b.classList.remove('selected'));
     box.classList.add('selected');
-
-    const method = box.dataset.method;
-    processPayment("Online", method);
+    selectedMethod = box.dataset.method;
   });
 });
 
-/* ================= MAIN PROCESS ================= */
-async function processPayment(type, method=""){
+/* ================= SUBMIT ================= */
+document.getElementById("payment-form").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+
+  const paymentType = document.querySelector('input[name="payment_by"]:checked')?.value;
+
+  if(!paymentType){
+    alert("Please select payment type");
+    return;
+  }
+
+  if(paymentType === "Online" && !selectedMethod){
+    alert("Please select GCash or Bank");
+    return;
+  }
 
   loader.style.display="block";
 
@@ -267,13 +284,13 @@ async function processPayment(type, method=""){
     postData.append("rowIndex",rowIndex);
 
     postData.append("payment_by",
-      type === "Online"
-        ? `Online (${method})`
+      paymentType === "Online"
+        ? `Online (${selectedMethod})`
         : "Onsite"
     );
 
     postData.append("payment_status",
-      type === "Online"
+      paymentType === "Online"
         ? "Paid (Online - QR)"
         : "To Pay Onsite"
     );
@@ -283,8 +300,8 @@ async function processPayment(type, method=""){
       body:postData
     });
 
-    // ✅ REDIRECT
-    if(type === "Onsite"){
+    // ✅ REDIRECT AFTER SUBMIT
+    if(paymentType === "Onsite"){
       window.location.href = "thankyou.html?rowIndex=" + rowIndex;
     } else {
       window.location.href = "thankyou2.html?rowIndex=" + rowIndex;
@@ -294,7 +311,7 @@ async function processPayment(type, method=""){
     alert("Something went wrong");
     loader.style.display="none";
   }
-}
+});
 </script>
 
 </body>
