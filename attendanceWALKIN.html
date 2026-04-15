@@ -60,22 +60,6 @@ h1{
   outline:none;
 }
 
-.room-dropdown-wrap{
-  display:flex;
-  justify-content:center;
-  margin:8px 0 15px 0;
-}
-
-.room-dropdown-wrap select{
-  width:100%;
-  max-width:500px;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #333;
-  background:#111;
-  color:white;
-  outline:none;
-}
 
 .stats{
   display:flex;
@@ -205,38 +189,6 @@ select{
   <input type="text" placeholder="Search camper name, room, church...">
 </div>
 
-<div class="room-dropdown-wrap">
-  <select id="roomDropdown">
-    <option value="">Select Group</option>
-
-    <optgroup label="Sharon (Girls)">
-      <option>Sarah</option>
-      <option>Esther</option>
-      <option>Eunice</option>
-      <option>Rebecca</option>
-      <option>Lydia</option>
-      <option>Hannah</option>
-      <option>Priscilla</option>
-      <option>Mary</option>
-      <option>Elizabeth</option>
-    </optgroup>
-
-    <optgroup label="Berean (Boys)">
-      <option>Abraham</option>
-      <option>Barnabas</option>
-      <option>Caleb</option>
-      <option>Joseph</option>
-      <option>David</option>
-      <option>Daniel</option>
-      <option>Moses</option>
-      <option>Nehemiah</option>
-      <option>Timothy</option>
-      <option>Stephen</option>
-      <option>Paul</option>
-    </optgroup>
-  </select>
-</div>
-
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
@@ -279,7 +231,7 @@ Loading...
 <script>
 
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbwLaZlaSDJKLwuSGQejc2Mi3R34VLAhvPzRtI_uDsUY_6RaAKlsLBnOBRYHcuu42xqA/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbx-hQxZ-zXpUsK74c1JiAyAY9FLCH2-ml1ZzQf2MnlI58QQH8tHBOoHTkKYBxDeKr9t/exec";
 const SHEET = "WALK-IN";
 
 const ROOM_LIMIT = 9;
