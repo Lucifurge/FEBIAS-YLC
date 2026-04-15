@@ -227,8 +227,11 @@ const sheetUrl = "https://script.google.com/macros/s/AKfycbwV3E2k2RB8rCPySInhXaD
 const loader = document.getElementById('loader');
 const paymentBoxes = document.querySelectorAll('.payment-box');
 const paymentRadios = document.querySelectorAll('input[name="payment_by"]');
+const form = document.getElementById("payment-form");
+const submitBtn = form.querySelector("button");
 
 let selectedMethod = "";
+let isSubmitting = false;
 
 const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
 
@@ -260,8 +263,10 @@ paymentBoxes.forEach(box=>{
 });
 
 /* ================= SUBMIT ================= */
-document.getElementById("payment-form").addEventListener("submit", async (e)=>{
+form.addEventListener("submit", async (e)=>{
   e.preventDefault();
+
+  if(isSubmitting) return; // 🔒 prevent double click
 
   const paymentType = document.querySelector('input[name="payment_by"]:checked')?.value;
 
@@ -275,7 +280,11 @@ document.getElementById("payment-form").addEventListener("submit", async (e)=>{
     return;
   }
 
+  isSubmitting = true;
   loader.style.display="block";
+
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Processing...";
 
   try{
 
@@ -300,7 +309,7 @@ document.getElementById("payment-form").addEventListener("submit", async (e)=>{
       body:postData
     });
 
-    // ✅ REDIRECT AFTER SUBMIT
+    // ✅ REDIRECT
     if(paymentType === "Onsite"){
       window.location.href = "thankyou.html?rowIndex=" + rowIndex;
     } else {
@@ -309,7 +318,11 @@ document.getElementById("payment-form").addEventListener("submit", async (e)=>{
 
   } catch(err){
     alert("Something went wrong");
+
     loader.style.display="none";
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Confirm Payment";
+    isSubmitting = false;
   }
 });
 </script>
