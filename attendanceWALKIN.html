@@ -206,22 +206,13 @@ let searchInput = document.querySelector(".search-bar input");
 let allData = {};
 let updatingRows = new Set();
 
-/* =========================const BASE_URL = "https://script.google.com/macros/s/AKfycbyrQeAIXhIHvfDGaSpkqqCcyFMSuz_Scm0tB1oL0i-H0Ibiq-_ch_c9sZmppUYm45zK/exec";
-const SHEET = "WALK-IN";
-
-let tbody = document.querySelector("tbody");
-let searchInput = document.querySelector(".search-bar input");
-
-let allData = {};
-let updatingRows = new Set();
-
 /* =========================
    ICONS
 ========================= */
 function payIcon(v){
   if(!v) return "🟠 WAITING";
-  if(v.includes("ONSITE")) return "🟠 ONSITE";
   if(v.includes("PAID")) return "✔ PAID";
+  if(v.includes("ONSITE")) return "🟠 ONSITE";
   if(v.includes("ONLINE")) return "💳 ONLINE";
   return "🟠 WAITING";
 }
@@ -258,9 +249,12 @@ function getRoomOptions(selected){
 }
 
 /* =========================
-   SEND
+   SEND (OPTIMIZED)
 ========================= */
 function send(action,data){
+
+  let id = String(data.rowIndex);
+  updatingRows.add(id);
 
   let fd = new FormData();
   fd.append("action",action);
@@ -269,15 +263,14 @@ function send(action,data){
     fd.append(k,data[k]);
   }
 
-  let id = String(data.rowIndex);
-  updatingRows.add(id);
-
   fetch(BASE_URL,{method:"POST",body:fd})
-    .finally(()=> updatingRows.delete(id));
+    .finally(()=>{
+      setTimeout(()=> updatingRows.delete(id), 300); // smoother unlock
+    });
 }
 
 /* =========================
-   CREATE ROW (FULL RESTORE)
+   CREATE ROW
 ========================= */
 function createRow(p){
 
@@ -291,9 +284,7 @@ function createRow(p){
 
     <td class="classification"></td>
 
-    <td>
-      <select class="room"></select>
-    </td>
+    <td><select class="room"></select></td>
 
     <td class="payment"></td>
     <td class="amount"></td>
@@ -334,40 +325,34 @@ function createRow(p){
 
   classSelect.onchange = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
-
     p.classification = classSelect.value;
 
-    send("classification",{
-      rowIndex:p.rowIndex,
-      value:classSelect.value
-    });
+    send("classification",{rowIndex:p.rowIndex,value:classSelect.value});
   };
 
   tr.querySelector(".classification").appendChild(classSelect);
 
   /* ROOM */
-  let roomSelect = tr.querySelector(".room");
-  roomSelect.innerHTML = getRoomOptions(p.room_assignment);
+  let room = tr.querySelector(".room");
+  room.innerHTML = getRoomOptions(p.room_assignment);
 
-  roomSelect.onchange = e=>{
+  room.onchange = e=>{
     if(updatingRows.has(String(p.rowIndex))) return;
-
-    let val = e.target.value || "No room";
-    p.room_assignment = val;
-
-    send("room_assignment",{rowIndex:p.rowIndex,value:val});
+    p.room_assignment = e.target.value;
+    send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
   /* MODE */
   tr.querySelector(".mode").onchange = e=>{
     if(updatingRows.has(String(p.rowIndex))) return;
-
     send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* SHIRT */
+  /* SHIRT (FIXED SYNC) */
   tr.querySelector(".shirt").onchange = e=>{
     if(updatingRows.has(String(p.rowIndex))) return;
+
+    p.shirt_size = e.target.value;
 
     send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
@@ -378,11 +363,10 @@ function createRow(p){
 
     let next = (p.payment_indicator || "").includes("ONSITE")
       ? "WAITING"
-      : "Onsite";
+      : "ONSITE";
 
     p.payment_indicator = next;
-
-    updateRowUI(tr, p);
+    updateRowUI(tr,p);
 
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
   };
@@ -397,8 +381,7 @@ function createRow(p){
       "ON-waiting";
 
     p.attendance_status = next;
-
-    updateRowUI(tr, p);
+    updateRowUI(tr,p);
 
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
@@ -413,8 +396,7 @@ function createRow(p){
       "✔";
 
     p.kit_distribution = next;
-
-    updateRowUI(tr, p);
+    updateRowUI(tr,p);
 
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
@@ -425,52 +407,38 @@ function createRow(p){
 /* =========================
    UPDATE UI
 ========================= */
-function updateRowUI(tr, p){
+function updateRowUI(tr,p){
 
   tr.querySelector(".name").textContent =
-    (p.lastName || "") + ", " + (p.firstName || "");
+    (p.lastName||"") + ", " + (p.firstName||"");
 
-  tr.querySelector(".payment").textContent =
-    payIcon(p.payment_indicator);
-
-  tr.querySelector(".pay").textContent =
-    payIcon(p.payment_indicator);
+  tr.querySelector(".payment").textContent = payIcon(p.payment_indicator);
+  tr.querySelector(".pay").textContent = payIcon(p.payment_indicator);
 
   tr.querySelector(".amount").textContent =
-    (p.payment_indicator || "").includes("ONSITE") ? "₱1500" : "";
+    (p.payment_indicator||"").includes("ONSITE") ? "₱1500" : "";
 
-  tr.querySelector(".att").textContent =
-    attIcon(p.attendance_status);
-
-  tr.querySelector(".kit").textContent =
-    p.kit_distribution || "❌";
+  tr.querySelector(".att").textContent = attIcon(p.attendance_status);
+  tr.querySelector(".kit").textContent = p.kit_distribution || "❌";
 
   tr.dataset.search = (
-    (p.firstName||"") + " " +
-    (p.lastName||"")
+    (p.firstName||"") + " " + (p.lastName||"")
   ).toLowerCase();
 }
 
 /* =========================
-   LOAD (ALPHABETICAL FIX)
+   LOAD (SMART + NO SNAPBACK)
 ========================= */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  // ✅ PROPER SORT (LAST NAME FIRST)
   data.sort((a,b)=>{
-    let lastA = (a.lastName||"").toLowerCase();
-    let lastB = (b.lastName||"").toLowerCase();
-
-    if(lastA < lastB) return -1;
-    if(lastA > lastB) return 1;
-
-    let firstA = (a.firstName||"").toLowerCase();
-    let firstB = (b.firstName||"").toLowerCase();
-
-    return firstA.localeCompare(firstB);
+    let la=(a.lastName||"").toLowerCase();
+    let lb=(b.lastName||"").toLowerCase();
+    if(la!==lb) return la.localeCompare(lb);
+    return (a.firstName||"").localeCompare(b.firstName||"");
   });
 
   data.forEach(p=>{
@@ -478,9 +446,9 @@ async function loadData(){
 
     if(!allData[id]){
       allData[id] = p;
-
       let tr = createRow(p);
-      updateRowUI(tr, p);
+      updateRowUI(tr,p);
+      return;
     }
 
     if(updatingRows.has(id)) return;
@@ -490,25 +458,27 @@ async function loadData(){
     let tr = document.querySelector(`tr[data-id="${id}"]`);
     if(tr){
       updateRowUI(tr, allData[id]);
+
+      // 🔥 SHIRT SYNC FIX
+      let shirt = tr.querySelector(".shirt");
+      if(shirt && shirt.value !== p.shirt_size){
+        shirt.value = p.shirt_size || "";
+      }
     }
   });
 }
 
-/* =========================
-   SEARCH
-========================= */
-searchInput.addEventListener("input", ()=>{
-  let value = searchInput.value.toLowerCase();
-
+/* SEARCH */
+searchInput.addEventListener("input",()=>{
+  let v = searchInput.value.toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
-    let text = tr.dataset.search || "";
-    tr.style.display = text.includes(value) ? "" : "none";
+    tr.style.display = (tr.dataset.search||"").includes(v) ? "" : "none";
   });
 });
 
 /* INIT */
 loadData();
-setInterval(loadData,12000);
+setInterval(loadData,10000);
 </script>
  </body>
 </html>
