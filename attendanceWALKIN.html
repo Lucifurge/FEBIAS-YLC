@@ -63,7 +63,7 @@ h1{
   outline:none;
 }
 
-/* 🔽 NEW DROPDOWN STYLE */
+/* DROPDOWN STYLE */
 .room-dropdown-wrap{
   display:flex;
   justify-content:center;
@@ -117,46 +117,6 @@ h1{
   color:#ccc;
 }
 
-/* BADGES */
-.badge{
-  padding:4px 10px;
-  border-radius:8px;
-  font-size:12px;
-  margin-left:8px;
-  font-weight:bold;
-}
-
-.full{
-  background:#ff2e2e;
-  color:white;
-}
-
-.available{
-  background:#1db954;
-  color:white;
-}
-
-/* BUTTON */
-button{
-  display:block;
-  margin:15px auto;
-  padding:12px 22px;
-  border:none;
-  border-radius:10px;
-  background:linear-gradient(45deg,#ff6a00,#ff2e00);
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.2s;
-  box-shadow:0 0 10px rgba(255,106,0,0.3);
-  font-size:14px;
-}
-
-button:hover{
-  transform:translateY(-2px);
-  box-shadow:0 0 18px rgba(255,106,0,0.5);
-}
-
 /* TABLE */
 .table-wrap{
   overflow-x:auto;
@@ -175,7 +135,6 @@ th{
   padding:12px;
   position:sticky;
   top:0;
-  z-index:2;
 }
 
 td{
@@ -199,71 +158,6 @@ select{
 
 <body>
 
-<h1>YLC 2026 WALK IN ADMIN ATTENDANCE SYSTEM</h1>
-<div class="sub">FEBIAS College of Bible System</div>
-
-<div class="instructions">
-<b>HOW TO USE SYSTEM:</b><br>
-1. Search campers instantly using the search bar.<br>
-2. Click PAY → toggles PAID / NOT PAID (₱1500 auto display).<br>
-3. Click ATT → updates attendance status.<br>
-4. Choose Mode (Onsite / GCASH / BANK).<br>
-5. ROOM_AC has max 18 campers per room.<br>
-6. Full rooms are disabled automatically.<br>
-7. Shirt sizes now include up to 3XL.<br>
-</div>
-
-<!-- SEARCH -->
-<div class="search-bar">
-  <input type="text" placeholder="Search camper name, room, church...">
-</div>
-
-<!-- 🔽 DROPDOWN ADDED -->
-<div class="room-dropdown-wrap">
-  <select id="roomDropdown">
-    <option value="">Select Group</option>
-
-    <optgroup label="Sharon (Girls)">
-      <option>Sarah</option>
-      <option>Esther</option>
-      <option>Eunice</option>
-      <option>Rebecca</option>
-      <option>Lydia</option>
-      <option>Hannah</option>
-      <option>Priscilla</option>
-      <option>Mary</option>
-      <option>Elizabeth</option>
-    </optgroup>
-
-    <optgroup label="Berean (Boys)">
-      <option>Abraham</option>
-      <option>Barnabas</option>
-      <option>Caleb</option>
-      <option>Joseph</option>
-      <option>David</option>
-      <option>Daniel</option>
-      <option>Moses</option>
-      <option>Nehemiah</option>
-      <option>Timothy</option>
-      <option>Stephen</option>
-      <option>Paul</option>
-    </optgroup>
-  </select>
-</div>
-
-<div class="stats">
-  <div class="box">Total<br><span id="total">0</span></div>
-  <div class="box">Paid<br><span id="paid">0</span></div>
-  <div class="box">Waiting<br><span id="waiting">0</span></div>
-</div>
-
-<div class="room-box" id="roomStats">
-<b>ROOM AC STATUS</b><br>
-Loading...
-</div>
-
-<button>🔄 REFRESH</button>
-
 <div class="table-wrap">
 <table>
 <thead>
@@ -283,10 +177,63 @@ Loading...
   <th>ROOM_AC</th>
 </tr>
 </thead>
-<tbody></tbody>
+
+<tbody>
+
+<!-- SAMPLE ROW STRUCTURE -->
+<tr>
+  <td>1</td>
+  <td>Sample Name</td>
+  <td>Male</td>
+
+  <!-- ✅ ROOM DROPDOWN -->
+  <td>
+    <select class="roomAssign">
+      <option value="">Select Room</option>
+
+      <optgroup label="BEREAN (Boys)">
+        <option>Berean – Barnabas</option>
+        <option>Berean – Caleb</option>
+        <option>Berean – Daniel</option>
+        <option>Berean – David</option>
+        <option>Berean – Joseph</option>
+        <option>Berean – Moses</option>
+        <option>Berean – Nehemiah</option>
+        <option>Berean – Paul</option>
+        <option>Berean – Stephen</option>
+        <option>Berean – Timothy</option>
+      </optgroup>
+
+      <optgroup label="SHARON (Girls)">
+        <option>Sharon – Elizabeth</option>
+        <option>Sharon – Esther</option>
+        <option>Sharon – Eunice</option>
+        <option>Sharon – Hannah</option>
+        <option>Sharon – Lydia</option>
+        <option>Sharon – Mary</option>
+        <option>Sharon – Priscilla</option>
+        <option>Sharon – Rebecca</option>
+        <option>Sharon – Sarah</option>
+      </optgroup>
+    </select>
+  </td>
+
+  <td>❌ NOT PAID</td>
+  <td>1500</td>
+  <td>ONSITE</td>
+  <td>❌</td>
+  <td>🟠</td>
+  <td>M</td>
+  <td>❌</td>
+  <td>❌</td>
+
+  <!-- 🚫 ROOM_AC UNTOUCHED -->
+  <td>ROOM_AC</td>
+</tr>
+
+</tbody>
 </table>
 </div>
-
 
 <script>
 
@@ -602,18 +549,260 @@ async function loadData(){
   let data = await res.json();
 
   data.forEach(newRow=>{
-    let id = String(newRow.rowIndex);
+    let id = String(newRow.rowIndex);<script>
 
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwLaZlaSDJKLwuSGQejc2Mi3R34VLAhvPzRtI_uDsUY_6RaAKlsLBnOBRYHcuu42xqA/exec";
+const SHEET = "WALK-IN";
+
+const ROOM_LIMIT = 9;
+
+const AC_ROOMS = [
+  "Berean Area",
+  "Berean – Abraham 2",
+  "Berean – Joshua 3",
+  "Berean – Elijah 3",
+  "Berean – Elisha 3",
+  "Sharon – Deborah 2",
+  "Sharon – Martha 3",
+  "Sharon – Abigail 2",
+  "Sharon – Eve 2"
+];
+
+let tbody = document.querySelector("tbody");
+let allData = [];
+let roomCount = {};
+let updatingRows = new Set();
+let selectedRowId = null;
+
+const clean = v => (v || "").toString().trim();
+
+/* ========================= ICONS ========================= */
+function payIcon(v){
+  if(!v) return "❌ NOT PAID";
+  if(v.includes("NOT")) return "❌ NOT PAID";
+  if(v.includes("ONSITE")) return "🟠 ONSITE";
+  if(v.includes("ONLINE")) return "💳 ONLINE";
+  if(v.includes("PAID")) return "✔ PAID";
+  return v;
+}
+
+function attIcon(v){
+  if(v === "Attended") return "✔ ATTENDED";
+  if(v === "Cancelled") return "❌ CANCELLED";
+  return "🟠 WAITING";
+}
+
+/* ========================= STATS ========================= */
+function updateStats(){
+  let paid = 0, waiting = 0;
+
+  allData.forEach(p=>{
+    if((p.payment_indicator||"").includes("PAID")) paid++;
+    if(p.attendance_status === "ON-waiting") waiting++;
+  });
+
+  document.getElementById("total").textContent = allData.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+}
+
+/* ========================= ROOM COUNTS ========================= */
+function computeRoomCounts(){
+  roomCount = {};
+  AC_ROOMS.forEach(r => roomCount[r] = 0);
+
+  allData.forEach(p=>{
+    let r = clean(p.room_ac);
+    if(roomCount[r] !== undefined) roomCount[r]++;
+  });
+}
+
+function updateRoomStats(){
+  computeRoomCounts();
+
+  let html = "<b>ROOM AC STATUS</b><br>";
+
+  AC_ROOMS.forEach(r=>{
+    let c = roomCount[r];
+    let full = c >= ROOM_LIMIT;
+
+    html += `${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
+  });
+
+  document.getElementById("roomStats").innerHTML = html;
+}
+
+/* ========================= SEND ========================= */
+function send(action,data){
+  let fd = new FormData();
+  fd.append("action",action);
+
+  for(let k in data){
+    fd.append(k,data[k]);
+  }
+
+  let id = String(data.rowIndex);
+
+  updatingRows.add(id);
+
+  fetch(BASE_URL,{method:"POST",body:fd})
+    .then(r=>r.json())
+    .then(()=>{
+      setTimeout(()=> updatingRows.delete(id),3000);
+    })
+    .catch(()=> updatingRows.delete(id));
+}
+
+/* ========================= CREATE ROW ========================= */
+function createRow(p){
+
+  let tr = document.createElement("tr");
+  tr.dataset.id = p.rowIndex;
+
+  tr.innerHTML = `
+    <td>${p.rowIndex}</td>
+    <td>${p.firstName || ""} ${p.lastName || ""}</td>
+    <td>${p.gender || ""}</td>
+
+    <!-- ROOM ASSIGNMENT DROPDOWN -->
+    <td>
+      <select class="roomAssign">
+        <option value="">Select Room</option>
+        <optgroup label="BEREAN (Boys)">
+          <option ${p.room_assignment==="Berean – Barnabas"?"selected":""}>Berean – Barnabas</option>
+          <option ${p.room_assignment==="Berean – Caleb"?"selected":""}>Berean – Caleb</option>
+          <option ${p.room_assignment==="Berean – Daniel"?"selected":""}>Berean – Daniel</option>
+          <option ${p.room_assignment==="Berean – David"?"selected":""}>Berean – David</option>
+          <option ${p.room_assignment==="Berean – Joseph"?"selected":""}>Berean – Joseph</option>
+          <option ${p.room_assignment==="Berean – Moses"?"selected":""}>Berean – Moses</option>
+          <option ${p.room_assignment==="Berean – Nehemiah"?"selected":""}>Berean – Nehemiah</option>
+          <option ${p.room_assignment==="Berean – Paul"?"selected":""}>Berean – Paul</option>
+          <option ${p.room_assignment==="Berean – Stephen"?"selected":""}>Berean – Stephen</option>
+          <option ${p.room_assignment==="Berean – Timothy"?"selected":""}>Berean – Timothy</option>
+        </optgroup>
+        <optgroup label="SHARON (Girls)">
+          <option ${p.room_assignment==="Sharon – Elizabeth"?"selected":""}>Sharon – Elizabeth</option>
+          <option ${p.room_assignment==="Sharon – Esther"?"selected":""}>Sharon – Esther</option>
+          <option ${p.room_assignment==="Sharon – Eunice"?"selected":""}>Sharon – Eunice</option>
+          <option ${p.room_assignment==="Sharon – Hannah"?"selected":""}>Sharon – Hannah</option>
+          <option ${p.room_assignment==="Sharon – Lydia"?"selected":""}>Sharon – Lydia</option>
+          <option ${p.room_assignment==="Sharon – Mary"?"selected":""}>Sharon – Mary</option>
+          <option ${p.room_assignment==="Sharon – Priscilla"?"selected":""}>Sharon – Priscilla</option>
+          <option ${p.room_assignment==="Sharon – Rebecca"?"selected":""}>Sharon – Rebecca</option>
+          <option ${p.room_assignment==="Sharon – Sarah"?"selected":""}>Sharon – Sarah</option>
+        </optgroup>
+      </select>
+    </td>
+
+    <td class="payment">${payIcon(p.payment_indicator)}</td>
+    <td class="amount">${p.amount || ""}</td>
+
+    <td>
+      <select class="mode">
+        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
+        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
+      </select>
+    </td>
+
+    <td class="pay">${payIcon(p.payment_indicator)}</td>
+    <td class="att">${attIcon(p.attendance_status)}</td>
+
+    <td>
+      <select class="shirt">
+        <option ${p.shirt_size==="S"?"selected":""}>S</option>
+        <option ${p.shirt_size==="M"?"selected":""}>M</option>
+        <option ${p.shirt_size==="L"?"selected":""}>L</option>
+        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
+        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
+        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
+      </select>
+    </td>
+
+    <td class="kit">${p.kit_distribution || "❌"}</td>
+    <td class="aircon">${p.aircon_pref || "❌"}</td>
+
+    <!-- ROOM_AC untouched -->
+    <td>
+      <select class="roomac"></select>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+
+  const roomAssign = tr.querySelector(".roomAssign");
+
+  /* ROOM ASSIGNMENT HANDLER */
+  if(roomAssign){
+    roomAssign.value = p.room_assignment || "";
+
+    roomAssign.onchange = (e)=>{
+      let val = clean(e.target.value);
+      p.room_assignment = val;
+
+      send("room_assignment",{
+        rowIndex:p.rowIndex,
+        value:val
+      });
+    };
+  }
+
+  const roomSelect = tr.querySelector(".roomac");
+
+  function refreshRooms(){
+    roomSelect.innerHTML =
+      `<option value="">ROOM AC</option>` +
+      AC_ROOMS.map(r=>{
+        let count = roomCount[r] || 0;
+        let full = count >= ROOM_LIMIT;
+
+        return `
+          <option value="${r}"
+            ${p.room_ac===r?"selected":""}
+            ${full && p.room_ac!==r?"disabled":""}>
+            ${r} ${full?"(FULL)":""}
+          </option>
+        `;
+      }).join("");
+  }
+
+  refreshRooms();
+
+  roomSelect.onchange = (e)=>{
+    let val = clean(e.target.value);
+
+    let tempCount = {...roomCount};
+    tempCount[val] = (tempCount[val] || 0) + 1;
+
+    if(val && tempCount[val] > ROOM_LIMIT && val !== p.room_ac){
+      alert("ROOM FULL (9 MAX)");
+      e.target.value = p.room_ac;
+      return;
+    }
+
+    p.room_ac = val;
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
+
+    updateRoomStats();
+    refreshRooms();
+  };
+}
+
+/* ========================= LOAD ========================= */
+async function loadData(){
+  let res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let data = await res.json();
+
+  data.forEach(newRow=>{
+    let id = String(newRow.rowIndex);
     if(updatingRows.has(id)) return;
 
     let existing = document.querySelector(`tr[data-id="${id}"]`);
 
     if(existing){
-      existing.querySelector(".payment").textContent = payIcon(newRow.payment_indicator);
-      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
-      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
-      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
-      existing.querySelector(".aircon").textContent = newRow.aircon_pref || "❌";
+      let roomSel = existing.querySelector(".roomAssign");
+      if(roomSel){
+        roomSel.value = newRow.room_assignment || "";
+      }
     } else {
       createRow(newRow);
     }
@@ -624,7 +813,6 @@ async function loadData(){
   updateStats();
 }
 
-/* INIT */
 loadData();
 setInterval(loadData,12000);
 
