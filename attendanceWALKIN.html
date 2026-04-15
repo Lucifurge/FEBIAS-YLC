@@ -241,7 +241,7 @@ Loading...
 
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbyRl1uSX6QfZD_aGG8OoRw7MtWLP8NmYJSTcFsNJTd4H8V71HXJpWkottMC8DhcgKJq/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbzfNSLthi0tTBQWdenRnkn0OM8dtj6DKk_ivfbd2FTIIdFgzM3usIeQ_66WCRDU2gQn/exec";
 const SHEET = "WALK-IN";
 
 const AC_ROOMS = [
@@ -259,15 +259,15 @@ const AC_ROOMS = [
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
-let lastEdit = 0;
 
 const clean = v => (v || "").toString().trim();
 
 /* =========================
-   ICONS FIXED
+   ICONS SAFE (NO UNDEFINED)
 ========================= */
 function payIcon(v){
-  if(!v || v.includes("NOT")) return "❌ NOT PAID";
+  if(!v) return "❌ NOT PAID";
+  if(v.includes("NOT")) return "❌ NOT PAID";
   if(v.includes("ONSITE")) return "🟠 ONSITE";
   if(v.includes("ONLINE")) return "💳 ONLINE";
   if(v.includes("PAID")) return "✔ PAID";
@@ -276,13 +276,12 @@ function payIcon(v){
 
 function attIcon(v){
   if(v === "Attended") return "✔ ATTENDED";
-  if(v === "ON-waiting") return "🟠 WAITING";
   if(v === "Cancelled") return "❌ CANCELLED";
   return "🟠 WAITING";
 }
 
 /* =========================
-   STATS FIXED
+   STATS SAFE
 ========================= */
 function updateStats(){
   let paid = 0, waiting = 0;
@@ -292,7 +291,7 @@ function updateStats(){
     let att = p.attendance_status || "";
 
     if(pay.includes("PAID")) paid++;
-    if(pay.includes("WAIT") || att.includes("ON-waiting")) waiting++;
+    if(pay.includes("WAIT") || att === "ON-waiting") waiting++;
   });
 
   document.getElementById("total").textContent = allData.length;
@@ -301,7 +300,7 @@ function updateStats(){
 }
 
 /* =========================
-   ROOM COUNT FIXED
+   ROOM COUNTS SAFE
 ========================= */
 function updateRoomStats(){
   roomCount = {};
@@ -325,7 +324,7 @@ function updateRoomStats(){
 }
 
 /* =========================
-   SEND FIXED (MATCH APPSCRIPT)
+   SEND TO APPSCRIPT
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -339,7 +338,7 @@ function send(action,data){
 }
 
 /* =========================
-   ROW
+   ROW BUILDER (FIXED SAFE FIELDS)
 ========================= */
 function createRow(p){
 
@@ -410,22 +409,19 @@ function createRow(p){
   refreshRooms();
 
 /* =========================
-   MODE (ONLINE AUTO ₱1500)
+   MODE
 ========================= */
 tr.querySelector(".mode").onchange = (e)=>{
   let val = e.target.value;
 
-  if(val === "ONLINE"){
-    tr.querySelector(".amount").textContent = "₱1500";
-  } else {
-    tr.querySelector(".amount").textContent = "";
-  }
+  tr.querySelector(".amount").textContent =
+    val === "ONLINE" ? "₱1500" : "";
 
   send("mode",{rowIndex:p.rowIndex,value:val});
 };
 
 /* =========================
-   PAYMENT (FIXED ACTION NAME)
+   PAYMENT (SYNC FIXED)
 ========================= */
 tr.querySelector(".pay").onclick = ()=>{
 
@@ -445,7 +441,7 @@ tr.querySelector(".pay").onclick = ()=>{
 };
 
 /* =========================
-   ATTENDANCE FIXED
+   ATTENDANCE
 ========================= */
 tr.querySelector(".att").onclick = ()=>{
 
@@ -508,10 +504,17 @@ roomSelect.onchange = (e)=>{
 tr.querySelector(".shirt").onchange = (e)=>{
   send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
 };
+
+/* =========================
+   FIX: INITIAL STATS REFRESH
+========================= */
+updateStats();
+updateRoomStats();
+
 }
 
 /* =========================
-   LOAD
+   LOAD DATA
 ========================= */
 async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -527,6 +530,7 @@ async function loadData(){
 
 loadData();
 setInterval(loadData,5000);
+
 </script>
 
 </body>
