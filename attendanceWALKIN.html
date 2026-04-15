@@ -221,10 +221,15 @@ function attIcon(v){
 }
 
 /* =========================
-   ROOM OPTIONS
+   ROOM OPTIONS (FIXED)
 ========================= */
 function getRoomOptions(selected){
+
   return `
+    <option value="No room" ${!selected || selected==="No room" ? "selected" : ""}>
+      🚫 No room
+    </option>
+
     <optgroup label="BEREAN (Boys)">
       ${[
         "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
@@ -260,7 +265,7 @@ function updateStats(){
 }
 
 /* =========================
-   SEND
+   SEND (FIXED NO ROOM)
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -328,23 +333,30 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* EVENTS */
+  /* CLASSIFICATION */
   tr.querySelector(".classification").onchange = e=>{
     send("classification",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
+  /* ROOM (FIXED DEFAULT) */
   tr.querySelector(".room").onchange = e=>{
-    send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
+    send("room_assignment",{
+      rowIndex:p.rowIndex,
+      value: e.target.value || "No room"
+    });
   };
 
+  /* MODE */
   tr.querySelector(".mode").onchange = e=>{
     send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
+  /* SHIRT */
   tr.querySelector(".shirt").onchange = e=>{
     send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
+  /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
     let next = p.kit_distribution==="✔" ? "❌" : "✔";
     p.kit_distribution = next;
@@ -352,6 +364,7 @@ function createRow(p){
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
+  /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
     let next = p.payment_indicator==="PAID" ? "WAITING" : "PAID";
     p.payment_indicator = next;
@@ -361,6 +374,7 @@ function createRow(p){
     updateStats();
   };
 
+  /* ATTENDANCE */
   tr.querySelector(".att").onclick = ()=>{
     let next = p.attendance_status==="ON-waiting" ? "Attended" :
                p.attendance_status==="Attended" ? "Cancelled" : "ON-waiting";
