@@ -211,10 +211,9 @@ let searchQuery = "";
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* 🔥 MEMBER → AC ROOM */
+/* 🔥 ROOM MAPPING */
 function getAutoRoomAC(room){
   if(!room) return "";
-
   let r = room.toLowerCase();
 
   if(r.includes("barnabas") || r.includes("caleb"))
@@ -272,7 +271,7 @@ function applyLocal(data){
   });
 }
 
-/* 🔍 SEARCH */
+/* SEARCH */
 function filterData(data){
   if(!searchQuery) return data;
 
@@ -318,9 +317,7 @@ function updateRoomStats(){
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
-    if(roomCount[r] !== undefined){
-      roomCount[r]++;
-    }
+    if(roomCount[r] !== undefined) roomCount[r]++;
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
@@ -349,7 +346,7 @@ function createRow(p){
     <td>${p.gender}</td>
     <td>${p.room}</td>
 
-    <!-- ✅ FIXED: CLASSIFICATION IN CORRECT COLUMN -->
+    <!-- ✅ CLASSIFICATION -->
     <td class="${p.classification === 'Silver' ? 'silver' : 'copper'}">
       ${p.classification || ""}
     </td>
@@ -370,7 +367,6 @@ function createRow(p){
     <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
     <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
-    <!-- ✅ SHIRT FIX -->
     <td>
       <select class="shirt">
         <option ${p.shirtSize==="S"?"selected":""}>S</option>
@@ -402,28 +398,24 @@ function createRow(p){
   const roomSelect = tr.querySelector(".roomac");
   let allowedRoom = getAutoRoomAC(p.room);
 
-  if(allowedRoom){
-    roomSelect.innerHTML = `
-      <option value="">NO ROOM</option>
-      <option value="${allowedRoom}">${allowedRoom}</option>
-    `;
-    roomSelect.value = p.ROOM_AC || "";
-  }else{
-    roomSelect.innerHTML = `<option value="">NO ROOM</option>`;
-  }
+  roomSelect.innerHTML = allowedRoom
+    ? `<option value="">NO ROOM</option><option value="${allowedRoom}">${allowedRoom}</option>`
+    : `<option value="">NO ROOM</option>`;
+
+  roomSelect.value = p.ROOM_AC || "";
 
   roomSelect.onchange = e=>{
     let val = clean(e.target.value);
     let old = clean(p.ROOM_AC);
 
     if(val && val !== allowedRoom){
-      alert("❌ You can only select your assigned AC room.");
+      alert("❌ Wrong AC room");
       roomSelect.value = old;
       return;
     }
 
     if(val && roomCount[val] >= ROOM_LIMIT){
-      alert("ROOM FULL ("+ROOM_LIMIT+")");
+      alert("ROOM FULL");
       roomSelect.value = old;
       return;
     }
@@ -441,9 +433,7 @@ function send(action,data){
   let fd=new FormData();
   fd.append("action",action);
   fd.append("sheet",SHEET);
-
   for(let k in data) fd.append(k,data[k]);
-
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
