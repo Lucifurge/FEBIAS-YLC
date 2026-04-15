@@ -224,7 +224,7 @@ function attIcon(v){
 }
 
 /* =========================
-   SEND (FAST + SAFE)
+   SEND (FAST)
 ========================= */
 function send(action,data){
 
@@ -243,7 +243,7 @@ function send(action,data){
 }
 
 /* =========================
-   CREATE ROW (ONCE ONLY)
+   CREATE ROW (ONCE)
 ========================= */
 function createRow(p){
 
@@ -255,6 +255,9 @@ function createRow(p){
     <td class="name"></td>
     <td>${p.gender || ""}</td>
 
+    <td class="classification"></td>
+    <td class="room"></td>
+
     <td class="payment"></td>
     <td class="amount"></td>
 
@@ -265,17 +268,44 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* CLICK STYLE */
+  /* CLICKABLE STYLE */
   tr.querySelectorAll(".clickable").forEach(el=>{
     el.style.cursor = "pointer";
   });
 
   /* =========================
-     PAY (FIXED)
+     CLASSIFICATION (FIXED)
+  ========================= */
+  let classSelect = document.createElement("select");
+  classSelect.innerHTML = `
+    <option ${p.classification==="Silver"?"selected":""}>Silver</option>
+    <option ${p.classification==="Copper"?"selected":""}>Copper</option>
+  `;
+
+  classSelect.onchange = ()=>{
+    if(updatingRows.has(String(p.rowIndex))) return;
+
+    p.classification = classSelect.value;
+
+    send("classification",{
+      rowIndex:p.rowIndex,
+      value:classSelect.value
+    });
+  };
+
+  tr.querySelector(".classification").appendChild(classSelect);
+
+  /* =========================
+     ROOM DISPLAY
+  ========================= */
+  tr.querySelector(".room").textContent = p.room_assignment || "No room";
+
+  /* =========================
+     PAYMENT
   ========================= */
   tr.querySelector(".pay").onclick = ()=>{
 
-    if(updatingRows.has(p.rowIndex+"")) return;
+    if(updatingRows.has(String(p.rowIndex))) return;
 
     let next = (p.payment_indicator || "").includes("ONSITE")
       ? "WAITING"
@@ -292,11 +322,11 @@ function createRow(p){
   };
 
   /* =========================
-     ATT
+     ATTENDANCE
   ========================= */
   tr.querySelector(".att").onclick = ()=>{
 
-    if(updatingRows.has(p.rowIndex+"")) return;
+    if(updatingRows.has(String(p.rowIndex))) return;
 
     let next =
       p.attendance_status==="ON-waiting" ? "Attended" :
@@ -311,11 +341,11 @@ function createRow(p){
   };
 
   /* =========================
-     KIT (FIXED)
+     KIT
   ========================= */
   tr.querySelector(".kit").onclick = ()=>{
 
-    if(updatingRows.has(p.rowIndex+"")) return;
+    if(updatingRows.has(String(p.rowIndex))) return;
 
     let next =
       p.kit_distribution==="✔" ? "❌" :
@@ -333,7 +363,7 @@ function createRow(p){
 }
 
 /* =========================
-   UPDATE UI ONLY (NO REBUILD)
+   UPDATE UI ONLY
 ========================= */
 function updateRowUI(tr, p){
 
@@ -362,18 +392,24 @@ function updateRowUI(tr, p){
 }
 
 /* =========================
-   LOAD (REAL FIX)
+   LOAD (SORTED + STABLE)
 ========================= */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
+  // ✅ SORT A-Z
+  data.sort((a,b)=>{
+    let nameA = ((a.firstName||"") + " " + (a.lastName||"")).toLowerCase();
+    let nameB = ((b.firstName||"") + " " + (b.lastName||"")).toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+
   data.forEach(p=>{
 
     let id = String(p.rowIndex);
 
-    // keep memory
     if(!allData[id]){
       allData[id] = p;
 
@@ -381,10 +417,8 @@ async function loadData(){
       updateRowUI(tr, p);
     }
 
-    // prevent overwrite while clicking
     if(updatingRows.has(id)) return;
 
-    // update stored data
     Object.assign(allData[id], p);
 
     let tr = document.querySelector(`tr[data-id="${id}"]`);
