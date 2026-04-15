@@ -203,7 +203,7 @@ const SHEET = "WALK-IN";
 let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
-let allData = [];
+let allData = {};
 let updatingRows = new Set();
 
 /* =========================
@@ -211,8 +211,8 @@ let updatingRows = new Set();
 ========================= */
 function payIcon(v){
   if(!v) return "🟠 WAITING";
-  if(v.includes("PAID")) return "✔ PAID";
   if(v.includes("ONSITE")) return "🟠 ONSITE";
+  if(v.includes("PAID")) return "✔ PAID";
   if(v.includes("ONLINE")) return "💳 ONLINE";
   return "🟠 WAITING";
 }
@@ -224,32 +224,7 @@ function attIcon(v){
 }
 
 /* =========================
-   ROOM OPTIONS
-========================= */
-function getRoomOptions(selected){
-  return `
-    <option value="No room" ${!selected || selected==="No room" ? "selected" : ""}>🚫 No room</option>
-
-    <optgroup label="BEREAN (Boys)">
-      ${[
-        "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
-        "Berean – David","Berean – Joseph","Berean – Moses",
-        "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy"
-      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
-    </optgroup>
-
-    <optgroup label="SHARON (Girls)">
-      ${[
-        "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
-        "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
-        "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah"
-      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
-    </optgroup>
-  `;
-}
-
-/* =========================
-   FAST SEND (NO DELAY)
+   SEND (FAST + SAFE)
 ========================= */
 function send(action,data){
 
@@ -264,12 +239,11 @@ function send(action,data){
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .then(()=> updatingRows.delete(id))
-    .catch(()=> updatingRows.delete(id));
+    .finally(()=> updatingRows.delete(id));
 }
 
 /* =========================
-   CREATE ROW
+   CREATE ROW (ONCE ONLY)
 ========================= */
 function createRow(p){
 
@@ -278,70 +252,38 @@ function createRow(p){
 
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
-    <td>${p.firstName || ""} ${p.lastName || ""}</td>
+    <td class="name"></td>
     <td>${p.gender || ""}</td>
 
-    <td>
-      <select class="classification">
-        <option ${p.classification==="Silver"?"selected":""}>Silver</option>
-        <option ${p.classification==="Copper"?"selected":""}>Copper</option>
-      </select>
-    </td>
+    <td class="payment"></td>
+    <td class="amount"></td>
 
-    <td>
-      <select class="room">${getRoomOptions(p.room_assignment)}</select>
-    </td>
-
-    <td class="payment">${payIcon(p.payment_indicator)}</td>
-    <td class="amount">${p.payment_indicator?.includes("ONSITE") || p.payment_indicator?.includes("PAID") ? "₱1500" : ""}</td>
-
-    <td>
-      <select class="mode">
-        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
-        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
-      </select>
-    </td>
-
-    <td class="pay clickable">${payIcon(p.payment_indicator)}</td>
-    <td class="att clickable">${attIcon(p.attendance_status)}</td>
-
-    <td>
-      <select class="shirt">
-        <option value="">--</option>
-        <option ${p.shirt_size==="S"?"selected":""}>S</option>
-        <option ${p.shirt_size==="M"?"selected":""}>M</option>
-        <option ${p.shirt_size==="L"?"selected":""}>L</option>
-        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
-        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
-        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
-      </select>
-    </td>
-
-    <td class="kit clickable">${p.kit_distribution || "❌"}</td>
+    <td class="pay clickable"></td>
+    <td class="att clickable"></td>
+    <td class="kit clickable"></td>
   `;
 
   tbody.appendChild(tr);
 
-  /* pointer */
+  /* CLICK STYLE */
   tr.querySelectorAll(".clickable").forEach(el=>{
     el.style.cursor = "pointer";
   });
 
   /* =========================
-     PAYMENT FIX (IMPORTANT)
+     PAY (FIXED)
   ========================= */
   tr.querySelector(".pay").onclick = ()=>{
 
-    let isPaid = p.payment_indicator && p.payment_indicator.includes("ONSITE");
+    if(updatingRows.has(p.rowIndex+"")) return;
 
-    let next = isPaid ? "Waiting" : "Onsite";
+    let next = (p.payment_indicator || "").includes("ONSITE")
+      ? "WAITING"
+      : "Onsite";
 
-    // instant UI
     p.payment_indicator = next;
 
-    tr.querySelector(".pay").textContent = payIcon(next);
-    tr.querySelector(".payment").textContent = payIcon(next);
-    tr.querySelector(".amount").textContent = next === "Onsite" ? "₱1500" : "";
+    updateRowUI(tr, p);
 
     send("payment",{
       rowIndex:p.rowIndex,
@@ -349,61 +291,107 @@ function createRow(p){
     });
   };
 
-  /* ATT */
+  /* =========================
+     ATT
+  ========================= */
   tr.querySelector(".att").onclick = ()=>{
+
+    if(updatingRows.has(p.rowIndex+"")) return;
+
     let next =
       p.attendance_status==="ON-waiting" ? "Attended" :
       p.attendance_status==="Attended" ? "Cancelled" :
       "ON-waiting";
 
     p.attendance_status = next;
-    tr.querySelector(".att").textContent = attIcon(next);
+
+    updateRowUI(tr, p);
 
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
-  /* ROOM */
-  tr.querySelector(".room").onchange = e=>{
-    let val = e.target.value || "No room";
-    p.room_assignment = val;
-    send("room_assignment",{rowIndex:p.rowIndex,value:val});
+  /* =========================
+     KIT (FIXED)
+  ========================= */
+  tr.querySelector(".kit").onclick = ()=>{
+
+    if(updatingRows.has(p.rowIndex+"")) return;
+
+    let next =
+      p.kit_distribution==="✔" ? "❌" :
+      p.kit_distribution==="❌" ? "🟠" :
+      "✔";
+
+    p.kit_distribution = next;
+
+    updateRowUI(tr, p);
+
+    send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
-  /* SEARCH INDEX */
+  return tr;
+}
+
+/* =========================
+   UPDATE UI ONLY (NO REBUILD)
+========================= */
+function updateRowUI(tr, p){
+
+  tr.querySelector(".name").textContent =
+    (p.firstName || "") + " " + (p.lastName || "");
+
+  tr.querySelector(".payment").textContent =
+    payIcon(p.payment_indicator);
+
+  tr.querySelector(".pay").textContent =
+    payIcon(p.payment_indicator);
+
+  tr.querySelector(".amount").textContent =
+    (p.payment_indicator || "").includes("ONSITE") ? "₱1500" : "";
+
+  tr.querySelector(".att").textContent =
+    attIcon(p.attendance_status);
+
+  tr.querySelector(".kit").textContent =
+    p.kit_distribution || "❌";
+
   tr.dataset.search = (
     (p.firstName||"") + " " +
-    (p.lastName||"") + " " +
-    (p.room_assignment||"")
+    (p.lastName||"")
   ).toLowerCase();
 }
 
 /* =========================
-   LOAD (NO SNAPBACK)
+   LOAD (REAL FIX)
 ========================= */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  data.forEach(newRow=>{
+  data.forEach(p=>{
 
-    let id = String(newRow.rowIndex);
+    let id = String(p.rowIndex);
 
+    // keep memory
+    if(!allData[id]){
+      allData[id] = p;
+
+      let tr = createRow(p);
+      updateRowUI(tr, p);
+    }
+
+    // prevent overwrite while clicking
     if(updatingRows.has(id)) return;
 
-    let existing = document.querySelector(`tr[data-id="${id}"]`);
+    // update stored data
+    Object.assign(allData[id], p);
 
-    if(!existing){
-      createRow(newRow);
-    } else {
-      existing.querySelector(".payment").textContent = payIcon(newRow.payment_indicator);
-      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
-      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
-      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
+    let tr = document.querySelector(`tr[data-id="${id}"]`);
+    if(tr){
+      updateRowUI(tr, allData[id]);
     }
   });
-
-  allData = data;
 }
 
 /* =========================
