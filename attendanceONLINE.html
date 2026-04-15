@@ -325,7 +325,7 @@ function applyLocal(data){
   });
 }
 
-/* 🔍 SEARCH FILTER */
+/* 🔍 SEARCH */
 function filterData(data){
   if(!searchQuery) return data;
 
@@ -336,6 +336,7 @@ function filterData(data){
       ${p.room}
       ${p.gender}
       ${p.classification}
+      ${p.ROOM_AC}
     `.toLowerCase();
 
     return text.includes(searchQuery);
@@ -402,6 +403,7 @@ function createRow(p){
     <td>${p.gender}</td>
     <td>${p.room}</td>
 
+    <!-- ✅ CLASSIFICATION FIXED -->
     <td class="${p.classification === 'Silver' ? 'silver' : 'copper'}">
       ${p.classification || ""}
     </td>
@@ -432,21 +434,20 @@ function createRow(p){
     <td class="clickable kit">${p.kit || "❌"}</td>
     <td class="clickable aircon">${p.aircon || "❌"}</td>
 
+    <!-- ✅ ROOM AC CORRECT -->
     <td><select class="roomac"></select></td>
   `;
 
   tbody.appendChild(tr);
 
-  /* ROOM LOGIC (same as yours) */
+  /* ROOM LOGIC */
   const roomSelect = tr.querySelector(".roomac");
   let allowedRoom = getAutoRoomAC(p.room);
 
   if(allowedRoom){
     roomSelect.innerHTML = `
       <option value="">NO ROOM</option>
-      <option value="${allowedRoom}">
-        ${allowedRoom}
-      </option>
+      <option value="${allowedRoom}">${allowedRoom}</option>
     `;
     roomSelect.value = p.ROOM_AC || "";
   }else{
@@ -475,7 +476,6 @@ function createRow(p){
     send("room_ac",{rowIndex:p.rowIndex,value:val});
     updateRoomStats();
   };
-
 }
 
 /* SEND */
@@ -504,12 +504,13 @@ async function loadData(){
   updateStats(filtered);
 }
 
-/* 🔍 SEARCH EVENT */
+/* SEARCH */
 document.querySelector(".search-bar input").addEventListener("input", e=>{
   searchQuery = e.target.value.toLowerCase();
   loadData();
 });
 
+/* INIT */
 loadData();
 setInterval(loadData,4000);
 
