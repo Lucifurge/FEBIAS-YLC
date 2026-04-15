@@ -240,7 +240,7 @@ Loading...
 <script>
 
 // =====================
-// CONFIG (MUST BE ON TOP)
+// CONFIG
 // =====================
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
@@ -383,7 +383,9 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  // ✅ MODE FIX (NO SNAPBACK)
+  // =====================
+  // MODE (FIXED - NO SNAPBACK)
+  // =====================
   let modeSelect = tr.querySelector(".mode");
   modeSelect.value = clean(p.mode_of_payment) || "ONSITE";
 
@@ -393,7 +395,9 @@ function createRow(p){
     send("mode",{rowIndex:p.rowIndex,value:val});
   };
 
+  // =====================
   // PAYMENT
+  // =====================
   tr.querySelector(".pay").onclick = ()=>{
     let next;
     if(!p.paymentIndicator || p.paymentIndicator==="NOT PAID") next="ON-WAITING PAYMENT";
@@ -410,7 +414,9 @@ function createRow(p){
     updateStats();
   };
 
+  // =====================
   // ATTENDANCE
+  // =====================
   tr.querySelector(".att").onclick = ()=>{
     let next;
     if(p.attendanceStatus==="Cancelled") next="ON-waiting";
@@ -423,7 +429,9 @@ function createRow(p){
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
+  // =====================
   // KIT
+  // =====================
   tr.querySelector(".kit").onclick = ()=>{
     let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
     p.kit = next;
@@ -431,7 +439,9 @@ function createRow(p){
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
+  // =====================
   // AIRCON
+  // =====================
   tr.querySelector(".aircon").onclick = ()=>{
     let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
     p.aircon = next;
@@ -439,7 +449,9 @@ function createRow(p){
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
+  // =====================
   // ROOM AC
+  // =====================
   const roomSelect = tr.querySelector(".roomac");
 
   function refreshRooms(){
@@ -475,14 +487,13 @@ function createRow(p){
 }
 
 // =====================
-// LOAD DATA (FIXED)
+// LOAD DATA (FINAL FIX)
 // =====================
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let raw = await res.json();
 
-  // 🔥 MAP DATA FROM APPSCRIPT
   let data = raw.map(p => ({
     ...p,
     paymentIndicator: p.payment_indicator,
@@ -521,7 +532,9 @@ async function loadData(){
 loadData();
 setInterval(loadData,5000);
 
+// =====================
 // SEARCH
+// =====================
 document.querySelector(".search-bar input").addEventListener("input", e=>{
   let q = e.target.value.toLowerCase();
 
@@ -529,7 +542,6 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
     r.style.display = r.innerText.toLowerCase().includes(q)?"":"none";
   });
 });
-
 </script>
 
 </body>
