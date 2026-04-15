@@ -249,7 +249,7 @@ function getRoomOptions(selected){
 }
 
 /* =========================
-   FAST SEND (NO DELAY LOCK)
+   FAST SEND (NO DELAY)
 ========================= */
 function send(action,data){
 
@@ -261,7 +261,6 @@ function send(action,data){
   }
 
   let id = String(data.rowIndex);
-
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
@@ -294,7 +293,7 @@ function createRow(p){
     </td>
 
     <td class="payment">${payIcon(p.payment_indicator)}</td>
-    <td class="amount">${p.payment_indicator?.includes("PAID") ? "₱1500" : ""}</td>
+    <td class="amount">${p.payment_indicator?.includes("ONSITE") || p.payment_indicator?.includes("PAID") ? "₱1500" : ""}</td>
 
     <td>
       <select class="mode">
@@ -323,21 +322,31 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* POINTER FIX */
+  /* pointer */
   tr.querySelectorAll(".clickable").forEach(el=>{
     el.style.cursor = "pointer";
   });
 
-  /* PAYMENT */
+  /* =========================
+     PAYMENT FIX (IMPORTANT)
+  ========================= */
   tr.querySelector(".pay").onclick = ()=>{
-    let next = p.payment_indicator==="PAID" ? "WAITING" : "PAID";
+
+    let isPaid = p.payment_indicator && p.payment_indicator.includes("ONSITE");
+
+    let next = isPaid ? "Waiting" : "Onsite";
+
+    // instant UI
     p.payment_indicator = next;
 
     tr.querySelector(".pay").textContent = payIcon(next);
     tr.querySelector(".payment").textContent = payIcon(next);
-    tr.querySelector(".amount").textContent = next==="PAID" ? "₱1500" : "";
+    tr.querySelector(".amount").textContent = next === "Onsite" ? "₱1500" : "";
 
-    send("payment",{rowIndex:p.rowIndex,payment_by:next});
+    send("payment",{
+      rowIndex:p.rowIndex,
+      payment_by: next
+    });
   };
 
   /* ATT */
@@ -348,7 +357,6 @@ function createRow(p){
       "ON-waiting";
 
     p.attendance_status = next;
-
     tr.querySelector(".att").textContent = attIcon(next);
 
     send("attendance",{rowIndex:p.rowIndex,status:next});
@@ -361,7 +369,7 @@ function createRow(p){
     send("room_assignment",{rowIndex:p.rowIndex,value:val});
   };
 
-  /* SEARCH */
+  /* SEARCH INDEX */
   tr.dataset.search = (
     (p.firstName||"") + " " +
     (p.lastName||"") + " " +
@@ -381,7 +389,6 @@ async function loadData(){
 
     let id = String(newRow.rowIndex);
 
-    // DO NOT override active row
     if(updatingRows.has(id)) return;
 
     let existing = document.querySelector(`tr[data-id="${id}"]`);
