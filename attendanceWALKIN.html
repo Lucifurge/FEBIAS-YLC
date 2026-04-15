@@ -204,7 +204,6 @@ let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
 let allData = {};
-let dirty = new Set(); // 🔥 rows being edited
 
 /* ========================= */
 const norm = v => (v || "").toString().toUpperCase();
@@ -232,11 +231,8 @@ function kitIcon(v){
   return "🟠 WAITING";
 }
 
-/* ========================= SEND (NO LOCK, NO WAIT) */
+/* ========================= SEND */
 function send(action,data){
-  let id = String(data.rowIndex);
-  dirty.add(id); // mark as editing
-
   let fd = new FormData();
   fd.append("action",action);
 
@@ -245,9 +241,7 @@ function send(action,data){
   }
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .finally(()=>{
-      setTimeout(()=> dirty.delete(id), 800); // 🔥 short protection only
-    });
+    .catch(()=>console.log("send failed"));
 }
 
 /* ========================= CREATE ROW */
@@ -260,31 +254,45 @@ function createRow(p){
     <td>${p.rowIndex}</td>
     <td class="name"></td>
     <td>${p.gender||""}</td>
+
     <td class="classification"></td>
-    <td><select class="room"></select></td>
+
+    <td></td>
     <td class="payment"></td>
     <td class="amount"></td>
-    <td>
-      <select class="mode">
-        <option ${norm(p.mode_of_payment)==="ONSITE"?"selected":""}>ONSITE</option>
-        <option ${norm(p.mode_of_payment)==="ONLINE"?"selected":""}>ONLINE</option>
-      </select>
-    </td>
+    <td></td>
+
     <td class="pay clickable"></td>
     <td class="att clickable"></td>
-    <td>
-      <select class="shirt">
-        <option value="">--</option>
-        ${["S","M","L","XL","XXL","3XL"].map(s=>`<option>${s}</option>`).join("")}
-      </select>
-    </td>
+    <td></td>
     <td class="kit clickable"></td>
   `;
 
   tbody.appendChild(tr);
 
-  /* EVENTS */
+  /* ========================= CLASSIFICATION (NEW FIX) */
+  let classSelect = document.createElement("select");
 
+  let currentClass = p.classification || "No class";
+
+  classSelect.innerHTML = `
+    <option ${currentClass==="No class"?"selected":""}>No class</option>
+    <option ${currentClass==="Silver"?"selected":""}>Silver</option>
+    <option ${currentClass==="Copper"?"selected":""}>Copper</option>
+  `;
+
+  classSelect.onchange = ()=>{
+    let val = classSelect.value;
+
+    p.classification = val;
+    allData[p.rowIndex].classification = val;
+
+    send("classification",{rowIndex:p.rowIndex,value:val});
+  };
+
+  tr.querySelector(".classification").appendChild(classSelect);
+
+  /* ========================= PAY */
   tr.querySelector(".pay").onclick = ()=>{
     let current = norm(p.payment_indicator);
 
@@ -295,10 +303,13 @@ function createRow(p){
       "WAITING";
 
     p.payment_indicator = next;
+    allData[p.rowIndex].payment_indicator = next;
+
     updateRowUI(tr,p);
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
   };
 
+  /* ========================= ATT */
   tr.querySelector(".att").onclick = ()=>{
     let current = (p.attendance_status || "").toLowerCase();
 
@@ -308,10 +319,13 @@ function createRow(p){
       "WAITING";
 
     p.attendance_status = next;
+    allData[p.rowIndex].attendance_status = next;
+
     updateRowUI(tr,p);
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
+  /* ========================= KIT */
   tr.querySelector(".kit").onclick = ()=>{
     let current = p.kit_distribution || "";
 
@@ -321,6 +335,8 @@ function createRow(p){
       "WAITING";
 
     p.kit_distribution = next;
+    allData[p.rowIndex].kit_distribution = next;
+
     updateRowUI(tr,p);
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
@@ -354,31 +370,37 @@ async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  data.sort((a,b)=>{
-    let la=(a.lastName||"").toLowerCase();
-    let lb=(b.lastName||"").toLowerCase();
-    if(la!==lb) return la.localeCompare(lb);
-    return (a.firstName||"").localeCompare(b.firstName||"");
-  });
-
-  data.forEach(p=>{
-    let id = String(p.rowIndex);
-
-    // 🔥 SKIP rows being edited
-    if(dirty.has(id)) return;
+  data.forEach(server=>{
+    let id = String(server.rowIndex);
 
     if(!allData[id]){
-      allData[id] = p;
-      let tr = createRow(p);
-      updateRowUI(tr,p);
+      allData[id] = server;
+      let tr = createRow(server);
+      updateRowUI(tr,server);
       return;
     }
 
-    Object.assign(allData[id], p);
+    let local = allData[id];
 
-    let tr = document.querySelector(`tr[data-id="${id}"]`);
-    if(tr){
-      updateRowUI(tr, allData[id]);
+    let changed =
+      local.payment_indicator !== server.payment_indicator ||
+      local.attendance_status !== server.attendance_status ||
+      local.kit_distribution !== server.kit_distribution ||
+      local.classification !== server.classification;
+
+    if(changed){
+      Object.assign(local, server);
+
+      let tr = document.querySelector(`tr[data-id="${id}"]`);
+      if(tr){
+        updateRowUI(tr, local);
+
+        // 🔥 update classification dropdown too
+        let sel = tr.querySelector(".classification select");
+        if(sel && sel.value !== (server.classification || "No class")){
+          sel.value = server.classification || "No class";
+        }
+      }
     }
   });
 }
@@ -393,7 +415,7 @@ searchInput.addEventListener("input",()=>{
 
 /* INIT */
 loadData();
-setInterval(loadData,12000); // slower refresh = smoother
+setInterval(loadData,15000);
 </script>
  </body>
 </html>
