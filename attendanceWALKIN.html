@@ -294,6 +294,11 @@ function createRow(p){
   let tr = document.createElement("tr");
   tr.dataset.id = p.rowIndex;
 
+  // 💰 FIX: SHOW ₱1500 IF PAID (ON LOAD)
+  let displayAmount = (p.payment_indicator && p.payment_indicator.includes("PAID")) 
+    ? "₱1500" 
+    : (p.amount || "");
+
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
     <td>${p.firstName || ""} ${p.lastName || ""}</td>
@@ -313,7 +318,7 @@ function createRow(p){
     </td>
 
     <td>${payIcon(p.payment_indicator)}</td>
-    <td class="amount">${p.amount || ""}</td>
+    <td class="amount">${displayAmount}</td>
 
     <td>
       <select class="mode">
@@ -342,7 +347,7 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* PAYMENT (₱1500 AUTO) */
+  /* PAY CLICK (FIXED) */
   tr.querySelector(".pay").onclick = ()=>{
     if(updatingRows.has(String(p.rowIndex))) return;
 
@@ -351,8 +356,8 @@ function createRow(p){
 
     tr.querySelector(".pay").textContent = payIcon(next);
 
-    // 💰 AUTO AMOUNT
     let amountCell = tr.querySelector(".amount");
+
     if(next === "PAID"){
       amountCell.textContent = "₱1500";
     } else {
@@ -363,7 +368,7 @@ function createRow(p){
     updateStats();
   };
 
-  /* SEARCH SUPPORT (store text) */
+  /* SEARCH TEXT */
   tr.dataset.search = (
     (p.firstName||"") + " " +
     (p.lastName||"") + " " +
@@ -372,22 +377,15 @@ function createRow(p){
 }
 
 /* =========================
-   SEARCH (LIVE FILTER)
+   SEARCH
 ========================= */
 searchInput.addEventListener("input", ()=>{
-
   let value = searchInput.value.toLowerCase();
 
   document.querySelectorAll("tbody tr").forEach(tr=>{
     let text = tr.dataset.search || "";
-
-    if(text.includes(value)){
-      tr.style.display = "";
-    } else {
-      tr.style.display = "none";
-    }
+    tr.style.display = text.includes(value) ? "" : "none";
   });
-
 });
 
 /* =========================
