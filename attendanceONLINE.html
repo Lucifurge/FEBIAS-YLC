@@ -261,10 +261,7 @@ const AC_ROOMS = [
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
-let lastEdit = 0;
-
-/* 🔥 LOCAL CACHE (ANTI SNAP BACK) */
-let localChanges = {}; // {rowIndex: {field:value}}
+let localChanges = {};
 
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
@@ -282,12 +279,16 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* APPLY LOCAL OVERRIDE */
-function applyLocalChanges(data){
+/* LOCAL CACHE */
+function saveLocal(row, field, val){
+  if(!localChanges[row]) localChanges[row] = {};
+  localChanges[row][field] = val;
+}
+
+function applyLocal(data){
   return data.map(p=>{
-    let local = localChanges[p.rowIndex];
-    if(local){
-      return {...p, ...local};
+    if(localChanges[p.rowIndex]){
+      return {...p, ...localChanges[p.rowIndex]};
     }
     return p;
   });
@@ -295,46 +296,37 @@ function applyLocalChanges(data){
 
 /* STATS */
 function updateStats(){
-  let paid = 0, waiting = 0;
-
+  let paid=0, waiting=0;
   allData.forEach(p=>{
-    if(p.paymentIndicator === "PAID") paid++;
-    if(p.paymentIndicator === "ON-WAITING PAYMENT") waiting++;
+    if(p.paymentIndicator==="PAID") paid++;
+    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
   });
 
-  document.getElementById("total").textContent = allData.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
+  total.textContent = allData.length;
+  paid.textContent = paid;
+  waiting.textContent = waiting;
 }
 
 /* ROOM COUNT */
 function updateRoomStats(){
   roomCount = {};
-  AC_ROOMS.forEach(r => roomCount[r] = 0);
+  AC_ROOMS.forEach(r=>roomCount[r]=0);
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
-    if(roomCount[r] !== undefined){
-      roomCount[r]++;
-    }
+    if(roomCount[r]!==undefined) roomCount[r]++;
   });
 
-  let html = "<b>ROOM AC STATUS</b><br>";
+  let html="<b>ROOM AC STATUS</b><br>";
 
   AC_ROOMS.forEach(r=>{
-    let c = roomCount[r];
-    let full = c >= ROOM_LIMIT;
+    let c=roomCount[r];
+    let full=c>=ROOM_LIMIT;
 
-    html += `${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
+    html+=`${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
   });
 
-  document.getElementById("roomStats").innerHTML = html;
-}
-
-/* SAVE LOCAL CHANGE */
-function saveLocal(rowIndex, field, value){
-  if(!localChanges[rowIndex]) localChanges[rowIndex] = {};
-  localChanges[rowIndex][field] = value;
+  roomStats.innerHTML = html;
 }
 
 /* CREATE ROW */
@@ -374,82 +366,94 @@ function createRow(p){
     <td class="clickable kit">${p.kit || "❌"}</td>
     <td class="clickable aircon">${p.aircon || "❌"}</td>
 
-    <td>
-      <select class="roomac"></select>
-    </td>
+    <td><select class="roomac"></select></td>
   `;
 
   tbody.appendChild(tr);
 
   /* MODE */
-  tr.querySelector(".mode").onchange = (e)=>{
-    let val = e.target.value;
-    lastEdit = Date.now();
+  tr.querySelector(".mode").onchange = e=>{
+    let v=e.target.value;
+    p.modeOfPayment=v;
+    saveLocal(p.rowIndex,"modeOfPayment",v);
+    send("mode",{rowIndex:p.rowIndex,value:v});
+  };
 
-    p.modeOfPayment = val;
-    saveLocal(p.rowIndex,"modeOfPayment",val);
+  /* KIT 🔥 FIXED */
+  tr.querySelector(".kit").onclick = ()=>{
+    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
 
-    send("mode",{rowIndex:p.rowIndex,value:val});
+    p.kit = next;
+    saveLocal(p.rowIndex,"kit",next);
+
+    tr.querySelector(".kit").textContent = next;
+
+    send("kit",{rowIndex:p.rowIndex,state:next});
+  };
+
+  /* AIRCON 🔥 FIXED */
+  tr.querySelector(".aircon").onclick = ()=>{
+    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+
+    p.aircon = next;
+    saveLocal(p.rowIndex,"aircon",next);
+
+    tr.querySelector(".aircon").textContent = next;
+
+    send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
   /* ROOM */
   const roomSelect = tr.querySelector(".roomac");
 
-  function refreshRoomOptions(){
-    roomSelect.innerHTML = `<option value="">ROOM AC</option>` +
-      AC_ROOMS.map(r=>{
-        let count = roomCount[r] || 0;
-        let full = count >= ROOM_LIMIT;
+  function refreshRoom(){
+    roomSelect.innerHTML=`<option value="">ROOM AC</option>`+
+    AC_ROOMS.map(r=>{
+      let c=roomCount[r]||0;
+      let full=c>=ROOM_LIMIT;
 
-        return `
-          <option value="${r}"
-            ${p.ROOM_AC===r?"selected":""}
-            ${full && p.ROOM_AC!==r?"disabled":""}>
-            ${r} ${full?"(FULL)":""}
-          </option>
-        `;
-      }).join("");
+      return `<option value="${r}"
+        ${p.ROOM_AC===r?"selected":""}
+        ${full&&p.ROOM_AC!==r?"disabled":""}>
+        ${r} ${full?"(FULL)":""}</option>`;
+    }).join("");
   }
 
-  refreshRoomOptions();
+  refreshRoom();
 
-  roomSelect.onchange = (e)=>{
-    let val = clean(e.target.value);
-    let old = clean(p.ROOM_AC);
+  roomSelect.onchange = e=>{
+    let val=clean(e.target.value);
+    let old=clean(p.ROOM_AC);
 
-    if(val && roomCount[val] >= ROOM_LIMIT && val !== old){
+    if(val && roomCount[val]>=ROOM_LIMIT && val!==old){
       alert("ROOM FULL (9)");
-      e.target.value = old;
+      e.target.value=old;
       return;
     }
 
-    lastEdit = Date.now();
-
-    p.ROOM_AC = val;
+    p.ROOM_AC=val;
     saveLocal(p.rowIndex,"ROOM_AC",val);
 
     send("room_ac",{rowIndex:p.rowIndex,value:val});
 
     updateRoomStats();
-    refreshRoomOptions();
+    refreshRoom();
   };
 
   /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
-    lastEdit = Date.now();
+    let next=p.paymentIndicator==="PAID"
+      ?"NOT PAID"
+      :p.paymentIndicator==="ON-WAITING PAYMENT"
+      ?"PAID"
+      :"ON-WAITING PAYMENT";
 
-    let next = p.paymentIndicator==="PAID"
-      ? "NOT PAID"
-      : p.paymentIndicator==="ON-WAITING PAYMENT"
-      ? "PAID"
-      : "ON-WAITING PAYMENT";
-
-    p.paymentIndicator = next;
+    p.paymentIndicator=next;
     saveLocal(p.rowIndex,"paymentIndicator",next);
 
-    tr.querySelector(".pay").textContent = payIcon(next);
-    tr.querySelector(".paytxt").textContent = payIcon(next);
-    tr.querySelector(".amt").textContent = next==="PAID"?"₱1500":"";
+    tr.querySelector(".pay").textContent=payIcon(next);
+    tr.querySelector(".paytxt").textContent=payIcon(next);
+    tr.querySelector(".amt").textContent=next==="PAID"?"₱1500":"";
 
     send("payment",{rowIndex:p.rowIndex,value:next});
     updateStats();
@@ -457,18 +461,16 @@ function createRow(p){
 
   /* ATT */
   tr.querySelector(".att").onclick = ()=>{
-    lastEdit = Date.now();
+    let next=p.attendanceStatus==="Cancelled"
+      ?"ON-waiting"
+      :p.attendanceStatus==="ON-waiting"
+      ?"Attended"
+      :"Cancelled";
 
-    let next = p.attendanceStatus==="Cancelled"
-      ? "ON-waiting"
-      : p.attendanceStatus==="ON-waiting"
-      ? "Attended"
-      : "Cancelled";
-
-    p.attendanceStatus = next;
+    p.attendanceStatus=next;
     saveLocal(p.rowIndex,"attendanceStatus",next);
 
-    tr.querySelector(".att").textContent = attIcon(next);
+    tr.querySelector(".att").textContent=attIcon(next);
 
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
@@ -477,46 +479,31 @@ function createRow(p){
 
 /* SEND */
 function send(action,data){
-  let fd = new FormData();
+  let fd=new FormData();
   fd.append("action",action);
   fd.append("sheet",SHEET);
 
-  for(let k in data){
-    fd.append(k,data[k]);
-  }
+  for(let k in data) fd.append(k,data[k]);
 
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
 /* LOAD */
 async function loadData(){
+  let res=await fetch(BASE_URL+"?sheet="+SHEET);
+  let data=await res.json();
 
-  let res = await fetch(BASE_URL+"?sheet="+SHEET);
-  let data = await res.json();
-
-  /* 🔥 APPLY LOCAL OVERRIDE */
-  allData = applyLocalChanges(data);
+  allData=applyLocal(data);
 
   tbody.innerHTML="";
   updateRoomStats();
   allData.forEach(createRow);
-
   updateStats();
 }
 
 loadData();
 setInterval(loadData,4000);
 
-/* SEARCH */
-document.querySelector(".search-bar input").addEventListener("input", e=>{
-  let q = e.target.value.toLowerCase();
-
-  document.querySelectorAll("tbody tr").forEach(r=>{
-    r.style.display = r.innerText.toLowerCase().includes(q)?"":"none";
-  });
-});
-
 </script>
-
 </body>
 </html>
