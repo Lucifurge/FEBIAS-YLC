@@ -204,16 +204,16 @@ let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
 let allData = {};
-let lastEdit = {}; // 🔥 strong anti-snapback
+let lastEdit = {}; // anti snapback
 
 const norm = v => (v || "").toString().toUpperCase();
 
-/* ========================= ICONS (FIXED) */
+/* ========================= ICONS */
 function payIcon(v){
   v = norm(v);
   if(v.includes("PAID")) return "✔ PAID";
   if(v.includes("CANCEL")) return "❌ CANCELLED";
-  return "🟠 WAITING"; // 🔥 no more onsite display
+  return "🟠 WAITING";
 }
 
 function attIcon(v){
@@ -233,7 +233,7 @@ function kitIcon(v){
 /* ========================= SEND */
 function send(action,data){
   let id = String(data.rowIndex);
-  lastEdit[id] = Date.now(); // 🔥 mark edit time
+  lastEdit[id] = Date.now();
 
   let fd = new FormData();
   fd.append("action",action);
@@ -268,11 +268,32 @@ function createRow(p){
 
     <td class="pay clickable"></td>
     <td class="att clickable"></td>
-    <td></td>
+
+    <td class="shirt"></td>
+
     <td class="kit clickable"></td>
   `;
 
   tbody.appendChild(tr);
+
+  /* ========================= SHIRT (FIXED) */
+  let shirtSelect = document.createElement("select");
+
+  let sizes = ["","S","M","L","XL","XXL","3XL"];
+
+  shirtSelect.innerHTML = sizes.map(s=>{
+    return `<option value="${s}" ${p.shirt_size===s?"selected":""}>${s||"--"}</option>`;
+  }).join("");
+
+  shirtSelect.onchange = ()=>{
+    let val = shirtSelect.value;
+    p.shirt_size = val;
+    allData[p.rowIndex].shirt_size = val;
+
+    send("shirt",{rowIndex:p.rowIndex,value:val});
+  };
+
+  tr.querySelector(".shirt").appendChild(shirtSelect);
 
   /* ========================= MODE */
   let modeSelect = document.createElement("select");
@@ -282,14 +303,16 @@ function createRow(p){
   `;
 
   modeSelect.onchange = ()=>{
-    p.mode_of_payment = modeSelect.value;
-    allData[p.rowIndex].mode_of_payment = modeSelect.value;
-    send("mode",{rowIndex:p.rowIndex,value:modeSelect.value});
+    let val = modeSelect.value;
+    p.mode_of_payment = val;
+    allData[p.rowIndex].mode_of_payment = val;
+
+    send("mode",{rowIndex:p.rowIndex,value:val});
   };
 
   tr.querySelector(".mode").appendChild(modeSelect);
 
-  /* ========================= PAY (FIXED LOGIC) */
+  /* ========================= PAY */
   tr.querySelector(".pay").onclick = ()=>{
     let current = norm(p.payment_indicator || "WAITING");
 
@@ -358,7 +381,7 @@ function updateRowUI(tr,p){
   tr.querySelector(".kit").textContent = kitIcon(p.kit_distribution);
 }
 
-/* ========================= LOAD (TRUE NO SNAPBACK) */
+/* ========================= LOAD (NO SNAPBACK) */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -374,23 +397,23 @@ async function loadData(){
       return;
     }
 
-    // 🔥 HARD BLOCK overwrite if recently edited (5 seconds)
+    // 🔥 block overwrite for 5s after user action
     if(lastEdit[id] && Date.now() - lastEdit[id] < 5000){
       return;
     }
 
     let local = allData[id];
 
-    if(
-      local.payment_indicator !== server.payment_indicator ||
-      local.attendance_status !== server.attendance_status ||
-      local.kit_distribution !== server.kit_distribution
-    ){
-      Object.assign(local, server);
+    Object.assign(local, server);
 
-      let tr = document.querySelector(`tr[data-id="${id}"]`);
-      if(tr){
-        updateRowUI(tr, local);
+    let tr = document.querySelector(`tr[data-id="${id}"]`);
+    if(tr){
+      updateRowUI(tr, local);
+
+      // 🔥 sync shirt safely
+      let shirt = tr.querySelector(".shirt select");
+      if(shirt && shirt.value !== (server.shirt_size || "")){
+        shirt.value = server.shirt_size || "";
       }
     }
   });
@@ -400,7 +423,7 @@ async function loadData(){
 searchInput.addEventListener("input",()=>{
   let v = searchInput.value.toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
-    tr.style.display = (tr.textContent.toLowerCase().includes(v)) ? "" : "none";
+    tr.style.display = tr.textContent.toLowerCase().includes(v) ? "" : "none";
   });
 });
 
