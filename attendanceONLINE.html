@@ -259,9 +259,26 @@ let allData = [];
 let roomCount = {};
 let localChanges = {};
 let searchQuery = "";
-let isUpdating = false; // 🔥 prevents snapback
+let isUpdating = false;
 
 const clean = v => (v || "").toString().trim();
+
+/* AUTO ROOM */
+function getAutoRoomAC(room){
+  if(!room) return "";
+  let r = room.toLowerCase();
+
+  if(r.includes("barnabas") || r.includes("caleb")) return "Berean – Abraham (2)";
+  if(r.includes("joseph") || r.includes("david") || r.includes("daniel")) return "Berean – Elijah (2)";
+  if(r.includes("moses") || r.includes("nehemiah")) return "Berean – Joshua (3)";
+  if(r.includes("timothy") || r.includes("stephen") || r.includes("paul")) return "Berean – Elisha (3)";
+  if(r.includes("esther") || r.includes("eunice")) return "Sharon – Deborah (2)";
+  if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah")) return "Sharon – Abigail (2)";
+  if(r.includes("priscilla") || r.includes("sarah")) return "Sharon – Martha (3)";
+  if(r.includes("mary") || r.includes("elizabeth")) return "Sharon – Eve (3)";
+
+  return "";
+}
 
 /* ICONS */
 function payIcon(v){
@@ -276,13 +293,12 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* SAVE LOCAL */
+/* LOCAL */
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
   localChanges[row][field] = val;
 }
 
-/* APPLY LOCAL */
 function applyLocal(data){
   return data.map(p=>{
     if(localChanges[p.rowIndex]){
@@ -295,26 +311,11 @@ function applyLocal(data){
 /* FILTER */
 function filterData(data){
   if(!searchQuery) return data;
-
-  return data.filter(p=>{
-    return `${p.firstName} ${p.lastName} ${p.room} ${p.gender} ${p.classification}`
-      .toLowerCase()
-      .includes(searchQuery);
-  });
-}
-
-/* STATS */
-function updateStats(data){
-  let paid=0, waiting=0;
-
-  data.forEach(p=>{
-    if(p.paymentIndicator==="PAID") paid++;
-    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
-  });
-
-  document.getElementById("total").textContent = data.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
+  return data.filter(p =>
+    `${p.firstName} ${p.lastName} ${p.room} ${p.gender} ${p.classification}`
+    .toLowerCase()
+    .includes(searchQuery)
+  );
 }
 
 /* ROOM COUNT */
@@ -332,9 +333,7 @@ function updateRoomStats(){
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
-    if(roomCount[r] !== undefined){
-      roomCount[r]++;
-    }
+    if(roomCount[r] !== undefined) roomCount[r]++;
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
@@ -343,7 +342,7 @@ function updateRoomStats(){
     let c = roomCount[room];
     let full = c >= ROOM_LIMIT;
 
-    html += `${room} 
+    html += `${room}
       <span class="badge ${full?"full":"available"}">
       ${c}/${ROOM_LIMIT}
       </span><br>`;
@@ -354,6 +353,9 @@ function updateRoomStats(){
 
 /* CREATE ROW */
 function createRow(p){
+
+  let shirt = clean(p.shirtSize || p.shirt || "");
+  let allowedRoom = getAutoRoomAC(p.room);
 
   let tr = document.createElement("tr");
 
@@ -381,15 +383,26 @@ function createRow(p){
 
     <td>
       <select class="shirt">
-        <option>S</option><option>M</option><option>L</option>
-        <option>XL</option><option>XXL</option><option>3XL</option>
+        <option value="">Select</option>
+        <option ${shirt==="S"?"selected":""}>S</option>
+        <option ${shirt==="M"?"selected":""}>M</option>
+        <option ${shirt==="L"?"selected":""}>L</option>
+        <option ${shirt==="XL"?"selected":""}>XL</option>
+        <option ${shirt==="XXL"?"selected":""}>XXL</option>
+        <option ${shirt==="3XL"?"selected":""}>3XL</option>
       </select>
     </td>
 
     <td class="clickable kit">${p.kit || "❌"}</td>
     <td class="clickable aircon">${p.aircon || "❌"}</td>
 
-    <td>${p.ROOM_AC || ""}</td>
+    <!-- ✅ ROOM AC BACK -->
+    <td>
+      <select class="roomac">
+        <option value="">NO ROOM</option>
+        ${allowedRoom ? `<option value="${allowedRoom}">${allowedRoom}</option>` : ""}
+      </select>
+    </td>
 
     <td class="${p.classification === 'Silver' ? 'silver' : 'copper'}">
       ${p.classification || ""}
@@ -397,11 +410,14 @@ function createRow(p){
   `;
 
   tr.dataset.id = p.rowIndex;
-
   tbody.appendChild(tr);
+
+  /* SET VALUE */
+  let roomSelect = tr.querySelector(".roomac");
+  roomSelect.value = p.ROOM_AC || "";
 }
 
-/* 🔥 EVENT DELEGATION (NO LAG, NO SNAPBACK) */
+/* 🔥 EVENT DELEGATION */
 tbody.addEventListener("click", e=>{
   let row = e.target.closest("tr");
   if(!row) return;
@@ -412,59 +428,82 @@ tbody.addEventListener("click", e=>{
 
   isUpdating = true;
 
-  /* PAY */
   if(e.target.classList.contains("pay")){
-    let newVal =
-      p.paymentIndicator === "PAID" ? "NOT PAID" : "PAID";
+    let val = p.paymentIndicator === "PAID" ? "NOT PAID" : "PAID";
+    p.paymentIndicator = val;
+    saveLocal(id,"paymentIndicator",val);
 
-    p.paymentIndicator = newVal;
-    saveLocal(id,"paymentIndicator",newVal);
+    row.querySelector(".pay").textContent = payIcon(val);
+    row.querySelector(".paytxt").textContent = payIcon(val);
+    row.querySelector(".amt").textContent = val==="PAID"?"₱1500":"";
 
-    row.querySelector(".pay").textContent = payIcon(newVal);
-    row.querySelector(".paytxt").textContent = payIcon(newVal);
-    row.querySelector(".amt").textContent = newVal==="PAID"?"₱1500":"";
-
-    send("payment",{rowIndex:id,value:newVal});
+    send("payment",{rowIndex:id,value:val});
   }
 
-  /* ATT */
   if(e.target.classList.contains("att")){
-    let newVal =
-      p.attendanceStatus === "Attended" ? "ON-waiting" : "Attended";
+    let val = p.attendanceStatus === "Attended" ? "ON-waiting" : "Attended";
+    p.attendanceStatus = val;
+    saveLocal(id,"attendanceStatus",val);
 
-    p.attendanceStatus = newVal;
-    saveLocal(id,"attendanceStatus",newVal);
+    row.querySelector(".att").textContent = attIcon(val);
 
-    row.querySelector(".att").textContent = attIcon(newVal);
-
-    send("attendance",{rowIndex:id,value:newVal});
+    send("attendance",{rowIndex:id,value:val});
   }
 
-  /* KIT */
   if(e.target.classList.contains("kit")){
-    let newVal = p.kit === "✔" ? "❌" : "✔";
-
-    p.kit = newVal;
-    saveLocal(id,"kit",newVal);
-
-    e.target.textContent = newVal;
-
-    send("kit",{rowIndex:id,value:newVal});
+    let val = p.kit === "✔" ? "❌" : "✔";
+    p.kit = val;
+    saveLocal(id,"kit",val);
+    e.target.textContent = val;
+    send("kit",{rowIndex:id,value:val});
   }
 
-  /* AIRCON */
   if(e.target.classList.contains("aircon")){
-    let newVal = p.aircon === "✔" ? "❌" : "✔";
-
-    p.aircon = newVal;
-    saveLocal(id,"aircon",newVal);
-
-    e.target.textContent = newVal;
-
-    send("aircon",{rowIndex:id,value:newVal});
+    let val = p.aircon === "✔" ? "❌" : "✔";
+    p.aircon = val;
+    saveLocal(id,"aircon",val);
+    e.target.textContent = val;
+    send("aircon",{rowIndex:id,value:val});
   }
 
   setTimeout(()=> isUpdating = false, 800);
+});
+
+/* ✅ CHANGE EVENTS */
+tbody.addEventListener("change", e=>{
+  let row = e.target.closest("tr");
+  let id = row.dataset.id;
+  let p = allData.find(x => x.rowIndex == id);
+
+  if(e.target.classList.contains("shirt")){
+    let val = clean(e.target.value);
+    p.shirtSize = val;
+    saveLocal(id,"shirtSize",val);
+    send("shirt",{rowIndex:id,value:val});
+  }
+
+  if(e.target.classList.contains("roomac")){
+    let val = clean(e.target.value);
+    let allowed = getAutoRoomAC(p.room);
+
+    if(val && val !== allowed){
+      alert("❌ Not allowed room");
+      e.target.value = p.ROOM_AC || "";
+      return;
+    }
+
+    if(val && roomCount[val] >= ROOM_LIMIT){
+      alert("ROOM FULL");
+      e.target.value = p.ROOM_AC || "";
+      return;
+    }
+
+    p.ROOM_AC = val;
+    saveLocal(id,"ROOM_AC",val);
+    send("room_ac",{rowIndex:id,value:val});
+
+    updateRoomStats();
+  }
 });
 
 /* SEND */
@@ -472,27 +511,23 @@ function send(action,data){
   let fd=new FormData();
   fd.append("action",action);
   fd.append("sheet",SHEET);
-
   for(let k in data) fd.append(k,data[k]);
-
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
 /* LOAD */
 async function loadData(){
-  if(isUpdating) return; // 🔥 prevents snapback
+  if(isUpdating) return;
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
   allData = applyLocal(data);
-
   let filtered = filterData(allData);
 
   tbody.innerHTML="";
   updateRoomStats();
   filtered.forEach(createRow);
-  updateStats(filtered);
 }
 
 /* SEARCH */
@@ -501,12 +536,10 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
   loadData();
 });
 
-/* 🔥 SMART REFRESH (NO FIGHTING USER) */
+/* REFRESH SAFE */
 setInterval(()=>{
-  if(!isUpdating){
-    loadData();
-  }
-}, 6000);
+  if(!isUpdating) loadData();
+},6000);
 
 loadData();
 </script>
