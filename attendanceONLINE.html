@@ -240,59 +240,47 @@ Loading...
 
 
 <script>
+
+
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
-/* 🔒 SUB ROOM → AC ROOM LOCK */
-const SUBROOM_TO_AC = {
-  // BEREAN
-  "barnabas": "BEREAN - Abraham",
-  "caleb": "BEREAN - Abraham",
+const ROOM_LIMIT = 18; // ✅ FINAL
 
-  "joseph": "BEREAN - Elijah",
-  "david": "BEREAN - Elijah",
-  "daniel": "BEREAN - Elijah",
-
-  "moses": "BEREAN - Joshua",
-  "nehemiah": "BEREAN - Joshua",
-
-  "timothy": "BEREAN - Elisha",
-  "stephen": "BEREAN - Elisha",
-
-  // SHARON
-  "esther": "SHARON - Deborah",
-  "eunice": "SHARON - Deborah",
-
-  "rebecca": "SHARON - Abigail",
-  "lydia": "SHARON - Abigail",
-  "hannah": "SHARON - Abigail",
-
-  "priscilla": "SHARON - Martha",
-  "sarah": "SHARON - Martha",
-
-  "mary": "SHARON - Eve",
-  "elizabeth": "SHARON - Eve"
-};
+const AC_ROOMS = [
+  "Berean Area",
+  "Berean – Abraham 2",
+  "Berean – Joshua 3",
+  "Berean – Elijah 3",
+  "Berean – Elisha 3",
+  "Sharon – Deborah 2",
+  "Sharon – Martha 3",
+  "Sharon – Abigail 2",
+  "Sharon – Eve 2"
+];
 
 let tbody = document.querySelector("tbody");
 let allData = [];
+let roomCount = {};
 let localChanges = {};
-let loading = false;
 
+/* CLEAN */
 const clean = v => (v || "").toString().trim();
 
 /* ICONS */
-const payIcon = v =>
-  v === "PAID" ? "✅ PAID" :
-  v === "ON-WAITING PAYMENT" ? "🟠 WAITING" :
-  "❌ NOT PAID";
+function payIcon(v){
+  if(v === "PAID") return "✅ PAID";
+  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
+  return "❌ NOT PAID";
+}
 
-const attIcon = v =>
-  v === "Attended" ? "✔ ATTENDED" :
-  v === "ON-waiting" ? "🟠 WAITING" :
-  "❌ CANCELLED";
+function attIcon(v){
+  if(v === "Attended") return "✔ ATTENDED";
+  if(v === "ON-waiting") return "🟠 WAITING";
+  return "❌ CANCELLED";
+}
 
-/* LOCAL CACHE */
+/* LOCAL CACHE (ANTI SNAPBACK) */
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
   localChanges[row][field] = val;
@@ -307,24 +295,37 @@ function applyLocal(data){
   });
 }
 
-/* ROOM STATUS */
-function updateRoomStats(){
-  let counts = {};
+/* STATS */
+function updateStats(){
+  let paid=0, waiting=0;
 
-  Object.values(SUBROOM_TO_AC).forEach(r=>counts[r]=0);
+  allData.forEach(p=>{
+    if(p.paymentIndicator==="PAID") paid++;
+    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+  });
+
+  document.getElementById("total").textContent = allData.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+}
+
+/* ROOM COUNT */
+function updateRoomStats(){
+  roomCount = {};
+  AC_ROOMS.forEach(r=>roomCount[r]=0);
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
-    if(counts.hasOwnProperty(r)) counts[r]++;
+    if(roomCount[r]!==undefined) roomCount[r]++;
   });
 
   let html="<b>ROOM AC STATUS</b><br>";
 
-  Object.keys(counts).forEach(r=>{
-    html += `
-      ${r.replace("BEREAN - ","").replace("SHARON - ","")}
-      <span class="badge available">${counts[r]}</span><br>
-    `;
+  AC_ROOMS.forEach(r=>{
+    let c=roomCount[r];
+    let full=c>=ROOM_LIMIT;
+
+    html+=`${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -347,9 +348,10 @@ function createRow(p){
     <td>
       <select class="mode">
         <option value="">Select</option>
-        <option value="Onsite (BO)" ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite</option>
-        <option value="Online (GCASH)" ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>GCASH</option>
-        <option value="Online (BANK)" ${p.modeOfPayment==="Online (BANK)"?"selected":""}>BANK</option>
+        <option value="Onsite (BO)" ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite (BO)</option>
+        <option value="Onsite (orange tag)" ${p.modeOfPayment==="Onsite (orange tag)"?"selected":""}>Onsite (orange tag)</option>
+        <option value="Online (GCASH)" ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>Online (GCASH)</option>
+        <option value="Online (BANK)" ${p.modeOfPayment==="Online (BANK)"?"selected":""}>Online (BANK)</option>
       </select>
     </td>
 
@@ -371,56 +373,102 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
+  /* MODE */
+  tr.querySelector(".mode").onchange = e=>{
+    let v=e.target.value;
+    p.modeOfPayment=v;
+    saveLocal(p.rowIndex,"modeOfPayment",v);
+    send("mode",{rowIndex:p.rowIndex,value:v});
+  };
+
+  /* KIT */
+  tr.querySelector(".kit").onclick = ()=>{
+    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
+    p.kit = next;
+    saveLocal(p.rowIndex,"kit",next);
+    tr.querySelector(".kit").textContent = next;
+    send("kit",{rowIndex:p.rowIndex,state:next});
+  };
+
+  /* AIRCON */
+  tr.querySelector(".aircon").onclick = ()=>{
+    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
+    p.aircon = next;
+    saveLocal(p.rowIndex,"aircon",next);
+    tr.querySelector(".aircon").textContent = next;
+    send("aircon",{rowIndex:p.rowIndex,state:next});
+  };
+
+  /* ROOM */
   const roomSelect = tr.querySelector(".roomac");
 
-  /* 🔒 LOCKED ROOM */
   function refreshRoom(){
+    roomSelect.innerHTML=`<option value="">ROOM AC</option>`+
+    AC_ROOMS.map(r=>{
+      let c=roomCount[r]||0;
+      let full=c>=ROOM_LIMIT;
 
-    let sub = clean(p.room).toLowerCase();
-    let allowedRoom = SUBROOM_TO_AC[sub];
-
-    let html = `<option value="">ROOM AC</option>`;
-
-    if(allowedRoom){
-      html += `
-        <option value="${allowedRoom}" selected>
-          ${allowedRoom.replace("BEREAN - ","").replace("SHARON - ","")}
-        </option>
-      `;
-    } else {
-      html += `
-        <option value="${p.ROOM_AC || ""}">
-          ${p.ROOM_AC || "No Assigned Room"}
-        </option>
-      `;
-    }
-
-    roomSelect.innerHTML = html;
+      return `<option value="${r}"
+        ${p.ROOM_AC===r?"selected":""}
+        ${full&&p.ROOM_AC!==r?"disabled":""}>
+        ${r} ${full?"(FULL)":""}</option>`;
+    }).join("");
   }
 
   refreshRoom();
 
-  /* 🔒 HARD LOCK */
   roomSelect.onchange = e=>{
-    let val = clean(e.target.value);
-    let old = clean(p.ROOM_AC);
+    let val=clean(e.target.value);
+    let old=clean(p.ROOM_AC);
 
-    let sub = clean(p.room).toLowerCase();
-    let allowedRoom = SUBROOM_TO_AC[sub];
-
-    if(allowedRoom && val !== allowedRoom){
-      alert("❌ Locked: This camper is assigned to a specific AC room");
-      e.target.value = old;
+    if(val && roomCount[val]>=ROOM_LIMIT && val!==old){
+      alert("ROOM FULL ("+ROOM_LIMIT+")");
+      e.target.value=old;
       return;
     }
 
-    p.ROOM_AC = val;
-
+    p.ROOM_AC=val;
     saveLocal(p.rowIndex,"ROOM_AC",val);
 
     send("room_ac",{rowIndex:p.rowIndex,value:val});
 
     updateRoomStats();
+    refreshRoom();
+  };
+
+  /* PAYMENT */
+  tr.querySelector(".pay").onclick = ()=>{
+    let next=p.paymentIndicator==="PAID"
+      ?"NOT PAID"
+      :p.paymentIndicator==="ON-WAITING PAYMENT"
+      ?"PAID"
+      :"ON-WAITING PAYMENT";
+
+    p.paymentIndicator=next;
+    saveLocal(p.rowIndex,"paymentIndicator",next);
+
+    tr.querySelector(".pay").textContent=payIcon(next);
+    tr.querySelector(".paytxt").textContent=payIcon(next);
+    tr.querySelector(".amt").textContent=next==="PAID"?"₱1500":"";
+
+    send("payment",{rowIndex:p.rowIndex,value:next});
+    updateStats();
+  };
+
+  /* ATT */
+  tr.querySelector(".att").onclick = ()=>{
+    let next=p.attendanceStatus==="Cancelled"
+      ?"ON-waiting"
+      :p.attendanceStatus==="ON-waiting"
+      ?"Attended"
+      :"Cancelled";
+
+    p.attendanceStatus=next;
+    saveLocal(p.rowIndex,"attendanceStatus",next);
+
+    tr.querySelector(".att").textContent=attIcon(next);
+
+    send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
 }
@@ -438,9 +486,6 @@ function send(action,data){
 
 /* LOAD */
 async function loadData(){
-  if(loading) return;
-  loading=true;
-
   let res=await fetch(BASE_URL+"?sheet="+SHEET);
   let data=await res.json();
 
@@ -449,12 +494,12 @@ async function loadData(){
   tbody.innerHTML="";
   updateRoomStats();
   allData.forEach(createRow);
-
-  loading=false;
+  updateStats();
 }
 
 loadData();
 setInterval(loadData,4000);
-  <script>
+
+</script>
 </body>
 </html>
