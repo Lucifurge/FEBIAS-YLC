@@ -519,8 +519,9 @@ button:hover{
 
   <div id="response"></div>
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyUmPbXLVWTDs3peBSZRH95MWA8xNegVvoMkB5WfRxBi6ItRM1R4wZJxHaIAv4tVIdE/exec";
-document.getElementById("ylcForm").addEventListener("submit", function(e){
+const scriptURL = "https://script.google.com/macros/s/AKfycbwE7fKdNHST7B_lxaNPI1KjKhJiPeEfsPoDaONqmCyo3RmmNvzu7rP14Bt_380Ec6hV/exec";
+
+document.getElementById("ylcForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
   const loader = document.getElementById("loader");
@@ -532,7 +533,7 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
   const form = new FormData(this);
   const formData = {};
 
-  // ✅ VALIDATION: must select all 4 health declarations
+  /* ✅ VALIDATE HEALTH DECLARATION */
   const healthChecks = form.getAll("healthDeclaration");
   if (healthChecks.length !== 4) {
     loader.classList.remove("active");
@@ -541,15 +542,14 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     return;
   }
 
-  // ✅ BUILD FORM DATA (NO NAMEMAP)
+  /* ✅ BUILD FORM DATA */
   for (let [key, value] of form.entries()) {
 
-    // Clean email
     if (key === "email") {
       value = value.toString().trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
     }
 
-    // Handle multiple values (checkboxes)
+    // Handle checkboxes (ministries etc.)
     if (formData[key]) {
       if (Array.isArray(formData[key])) {
         formData[key].push(value);
@@ -561,33 +561,74 @@ document.getElementById("ylcForm").addEventListener("submit", function(e){
     }
   }
 
-  // Optional extra flags
+  /* =========================
+     🔥 FIX FIELD ALIGNMENT
+  ========================= */
+
+  // Merge ministry checkboxes properly
+  if (Array.isArray(formData.ministries)) {
+    formData.ministries = formData.ministries.join(", ");
+  }
+
+  // FIX: map fields to match Apps Script
+  formData.allergyDetails =
+    formData.allergyDetails || formData.allergyTriggers || "";
+
+  formData.dietaryRestrictions =
+    formData.dietaryRestrictions === "Yes"
+      ? (formData.dietaryDetails || formData.dietarySpecify || "")
+      : "No";
+
+  formData.healthConditions =
+    formData.healthConditions === "Yes"
+      ? (formData.healthConditionDetails || formData.healthConditionSpecify || "")
+      : "No";
+
+  /* REMOVE UNUSED FIELDS (clean payload) */
+  delete formData.allergyTriggers;
+  delete formData.dietaryDetails;
+  delete formData.dietarySpecify;
+  delete formData.healthConditionDetails;
+  delete formData.healthConditionSpecify;
+  delete formData.healthDeclaration;
+  delete formData.otherMinistries;
+  delete formData.learnAboutYLC;
+  delete formData.firstTimeYLC;
+  delete formData.privacyConsent;
+
+  /* FLAGS FOR APPS SCRIPT */
   formData.action = "register";
   formData.sheet = "WALK-IN";
 
-  fetch(scriptURL, {
-    method: "POST",
-    body: new URLSearchParams(formData)
-  })
-  .then(res => res.json())
-  .then(data => {
+  try {
+    const res = await fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams(formData)
+    });
+
+    const text = await res.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Server returned invalid response");
+    }
+
     loader.classList.remove("active");
 
     if (data.result === "success" && data.rowIndex) {
       window.location.href = "payment2.html?rowIndex=" + data.rowIndex;
     } else {
-      document.getElementById("response").innerText =
-        "Error: " + (data.error || "Something went wrong.");
-      submitBtn.disabled = false;
+      throw new Error(data.error || "Submission failed");
     }
-  })
-  .catch(err => {
+
+  } catch (err) {
+    console.error(err);
     loader.classList.remove("active");
     submitBtn.disabled = false;
-    document.getElementById("response").innerText =
-      "Submission failed. Please try again.";
-    console.error(err);
-  });
+    alert(err.message || "Something went wrong");
+  }
 });
 </script>
 </body>
