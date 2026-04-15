@@ -243,41 +243,29 @@ Loading...
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
-/* ✅ ROOM CONFIG */
-const ROOM_CONFIG = {
-  "BEREAN - Abraham": 2,
-  "BEREAN - Elijah": 2,
-  "BEREAN - Joshua": 3,
-  "BEREAN - Elisha": 3,
+/* 🔥 ROOM + SLOT CONFIG */
+const ROOM_SLOTS = {
+  "BEREAN - Abraham": ["Barnabas","Caleb"],
+  "BEREAN - Elijah": ["Joseph","David","Daniel"],
+  "BEREAN - Joshua": ["Moses","Nehemiah"],
+  "BEREAN - Elisha": ["Timothy","Stephen"],
 
-  "SHARON - Deborah": 2,
-  "SHARON - Abigail": 2,
-  "SHARON - Martha": 3,
-  "SHARON - Eve": 3
+  "SHARON - Deborah": ["Esther","Eunice"],
+  "SHARON - Abigail": ["Rebecca","Lydia","Hannah"],
+  "SHARON - Martha": ["Priscilla","Sarah"],
+  "SHARON - Eve": ["Mary","Elizabeth"]
 };
 
 const ROOM_GROUPS = {
-  "BEREAN (Boys)": [
-    "BEREAN - Abraham",
-    "BEREAN - Elijah",
-    "BEREAN - Joshua",
-    "BEREAN - Elisha"
-  ],
-  "SHARON (Girls)": [
-    "SHARON - Deborah",
-    "SHARON - Abigail",
-    "SHARON - Martha",
-    "SHARON - Eve"
-  ]
+  "BEREAN (Boys)": Object.keys(ROOM_SLOTS).filter(r=>r.startsWith("BEREAN")),
+  "SHARON (Girls)": Object.keys(ROOM_SLOTS).filter(r=>r.startsWith("SHARON"))
 };
 
 let tbody = document.querySelector("tbody");
 let allData = [];
-let roomCount = {};
 let localChanges = {};
 let loading = false;
 
-/* CLEAN */
 const clean = v => (v || "").toString().trim();
 
 /* ICONS */
@@ -306,44 +294,19 @@ function applyLocal(data){
   });
 }
 
-/* STATS */
-function updateStats(){
-  let paid=0, waiting=0;
-
-  allData.forEach(p=>{
-    if(p.paymentIndicator==="PAID") paid++;
-    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
-  });
-
-  document.getElementById("total").textContent = allData.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
-}
-
-/* ✅ SAFE ROOM COUNT (NO DUP BUG) */
+/* ROOM STATUS (NOW SLOT-BASED) */
 function updateRoomStats(){
-  roomCount = {};
-
-  Object.keys(ROOM_CONFIG).forEach(r=>roomCount[r]=0);
-
-  allData.forEach(p=>{
-    let r = clean(p.ROOM_AC);
-    if(roomCount.hasOwnProperty(r)){
-      roomCount[r]++;
-    }
-  });
-
   let html="<b>ROOM AC STATUS</b><br>";
 
-  Object.keys(ROOM_CONFIG).forEach(r=>{
-    let count = roomCount[r];
-    let limit = ROOM_CONFIG[r];
-    let full = count >= limit;
+  Object.keys(ROOM_SLOTS).forEach(room=>{
+    let slots = ROOM_SLOTS[room];
+
+    let used = allData.filter(p=>clean(p.ROOM_AC)===room).length;
 
     html += `
-      ${r.replace("BEREAN - ","").replace("SHARON - ","")}
-      <span class="badge ${full?"full":"available"}">
-        ${count}/${limit}
+      ${room.replace("BEREAN - ","").replace("SHARON - ","")}
+      <span class="badge ${used>=slots.length?"full":"available"}">
+        ${used}/${slots.length}
       </span><br>
     `;
   });
@@ -368,10 +331,9 @@ function createRow(p){
     <td>
       <select class="mode">
         <option value="">Select</option>
-        <option value="Onsite (BO)" ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite (BO)</option>
-        <option value="Onsite (orange tag)" ${p.modeOfPayment==="Onsite (orange tag)"?"selected":""}>Onsite (orange tag)</option>
-        <option value="Online (GCASH)" ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>Online (GCASH)</option>
-        <option value="Online (BANK)" ${p.modeOfPayment==="Online (BANK)"?"selected":""}>Online (BANK)</option>
+        <option value="Onsite (BO)" ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite</option>
+        <option value="Online (GCASH)" ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>GCASH</option>
+        <option value="Online (BANK)" ${p.modeOfPayment==="Online (BANK)"?"selected":""}>BANK</option>
       </select>
     </td>
 
@@ -388,131 +350,103 @@ function createRow(p){
     <td class="clickable kit">${p.kit || "❌"}</td>
     <td class="clickable aircon">${p.aircon || "❌"}</td>
 
-    <td><select class="roomac"></select></td>
+    <td>
+      <select class="roomac"></select><br>
+      <select class="roomslot"></select>
+    </td>
   `;
 
   tbody.appendChild(tr);
 
-  /* MODE */
-  tr.querySelector(".mode").onchange = e=>{
-    let v=e.target.value;
-    p.modeOfPayment=v;
-    saveLocal(p.rowIndex,"modeOfPayment",v);
-    send("mode",{rowIndex:p.rowIndex,value:v});
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-    p.kit = next;
-    saveLocal(p.rowIndex,"kit",next);
-    tr.querySelector(".kit").textContent = next;
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* AIRCON */
-  tr.querySelector(".aircon").onclick = ()=>{
-    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-    p.aircon = next;
-    saveLocal(p.rowIndex,"aircon",next);
-    tr.querySelector(".aircon").textContent = next;
-    send("aircon",{rowIndex:p.rowIndex,state:next});
-  };
+  const roomSelect = tr.querySelector(".roomac");
+  const slotSelect = tr.querySelector(".roomslot");
 
   /* ROOM DROPDOWN */
-  const roomSelect = tr.querySelector(".roomac");
-
   function refreshRoom(){
+    let html = `<option value="">ROOM</option>`;
 
-    let html = `<option value="">ROOM AC</option>`;
+    let allowed = p.gender==="Male" ? "BEREAN (Boys)" : "SHARON (Girls)";
 
-    for(let group in ROOM_GROUPS){
-      html += `<optgroup label="${group}">`;
-
-      ROOM_GROUPS[group].forEach(r=>{
-        let count = roomCount[r] || 0;
-        let limit = ROOM_CONFIG[r];
-        let full = count >= limit;
-
-        html += `
-          <option value="${r}"
-            ${p.ROOM_AC===r?"selected":""}
-            ${full && p.ROOM_AC!==r ? "disabled":""}>
-            ${r.replace("BEREAN - ","").replace("SHARON - ","")}
-            ${full ? "(FULL)" : ""}
-          </option>
-        `;
-      });
-
-      html += `</optgroup>`;
-    }
+    ROOM_GROUPS[allowed].forEach(r=>{
+      html += `<option value="${r}" ${p.ROOM_AC===r?"selected":""}>
+        ${r.replace("BEREAN - ","").replace("SHARON - ","")}
+      </option>`;
+    });
 
     roomSelect.innerHTML = html;
   }
 
-  refreshRoom();
+  /* SLOT DROPDOWN */
+  function refreshSlots(){
+    let room = clean(p.ROOM_AC);
 
-  roomSelect.onchange = e=>{
-    let val = clean(e.target.value);
-    let old = clean(p.ROOM_AC);
-
-    /* LIVE COUNT FIX (NO DELAY BUG) */
-    if(old && roomCount[old] > 0) roomCount[old]--;
-
-    let count = roomCount[val] || 0;
-    let limit = ROOM_CONFIG[val];
-
-    if(val && count >= limit){
-      alert("ROOM FULL ("+limit+")");
-      roomCount[old]++; // restore
-      e.target.value = old;
+    if(!ROOM_SLOTS[room]){
+      slotSelect.innerHTML = `<option>No Slots</option>`;
       return;
     }
 
-    if(val) roomCount[val]++;
+    let used = allData
+      .filter(x=>clean(x.ROOM_AC)===room)
+      .map(x=>clean(x.ROOM_SLOT));
+
+    let html = `<option value="">Slot</option>`;
+
+    ROOM_SLOTS[room].forEach(slot=>{
+      let taken = used.includes(slot);
+
+      html += `
+        <option value="${slot}"
+          ${p.ROOM_SLOT===slot?"selected":""}
+          ${taken && p.ROOM_SLOT!==slot ? "disabled":""}>
+          ${slot} ${taken?"(TAKEN)":""}
+        </option>
+      `;
+    });
+
+    slotSelect.innerHTML = html;
+  }
+
+  refreshRoom();
+  refreshSlots();
+
+  /* ROOM CHANGE */
+  roomSelect.onchange = e=>{
+    let val = clean(e.target.value);
 
     p.ROOM_AC = val;
+    p.ROOM_SLOT = "";
+
     saveLocal(p.rowIndex,"ROOM_AC",val);
+    saveLocal(p.rowIndex,"ROOM_SLOT","");
 
     send("room_ac",{rowIndex:p.rowIndex,value:val});
 
     updateRoomStats();
-    refreshRoom();
+    refreshSlots();
   };
 
-  /* PAYMENT */
-  tr.querySelector(".pay").onclick = ()=>{
-    let next=p.paymentIndicator==="PAID"
-      ?"NOT PAID"
-      :p.paymentIndicator==="ON-WAITING PAYMENT"
-      ?"PAID"
-      :"ON-WAITING PAYMENT";
+  /* SLOT CHANGE */
+  slotSelect.onchange = e=>{
+    let val = clean(e.target.value);
 
-    p.paymentIndicator=next;
-    saveLocal(p.rowIndex,"paymentIndicator",next);
+    let taken = allData.some(x =>
+      clean(x.ROOM_AC)===clean(p.ROOM_AC) &&
+      clean(x.ROOM_SLOT)===val &&
+      x.rowIndex !== p.rowIndex
+    );
 
-    tr.querySelector(".pay").textContent=payIcon(next);
-    tr.querySelector(".paytxt").textContent=payIcon(next);
-    tr.querySelector(".amt").textContent=next==="PAID"?"₱1500":"";
+    if(taken){
+      alert("Slot already taken!");
+      e.target.value="";
+      return;
+    }
 
-    send("payment",{rowIndex:p.rowIndex,value:next});
-    updateStats();
-  };
+    p.ROOM_SLOT = val;
+    saveLocal(p.rowIndex,"ROOM_SLOT",val);
 
-  /* ATT */
-  tr.querySelector(".att").onclick = ()=>{
-    let next=p.attendanceStatus==="Cancelled"
-      ?"ON-waiting"
-      :p.attendanceStatus==="ON-waiting"
-      ?"Attended"
-      :"Cancelled";
+    send("room_slot",{rowIndex:p.rowIndex,value:val});
 
-    p.attendanceStatus=next;
-    saveLocal(p.rowIndex,"attendanceStatus",next);
-
-    tr.querySelector(".att").textContent=attIcon(next);
-
-    send("attendance",{rowIndex:p.rowIndex,status:next});
+    updateRoomStats();
   };
 
 }
@@ -522,37 +456,29 @@ function send(action,data){
   let fd=new FormData();
   fd.append("action",action);
   fd.append("sheet",SHEET);
-
   for(let k in data) fd.append(k,data[k]);
-
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
 /* LOAD */
 async function loadData(){
   if(loading) return;
-  loading = true;
+  loading=true;
 
-  try{
-    let res=await fetch(BASE_URL+"?sheet="+SHEET);
-    let data=await res.json();
+  let res=await fetch(BASE_URL+"?sheet="+SHEET);
+  let data=await res.json();
 
-    allData=applyLocal(data);
+  allData=applyLocal(data);
 
-    tbody.innerHTML="";
-    updateRoomStats();
-    allData.forEach(createRow);
-    updateStats();
+  tbody.innerHTML="";
+  updateRoomStats();
+  allData.forEach(createRow);
 
-  }catch(err){
-    console.error("Load error:",err);
-  }
-
-  loading = false;
+  loading=false;
 }
 
 loadData();
 setInterval(loadData,4000);
-</script>
+  <script>
 </body>
 </html>
