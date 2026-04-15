@@ -240,47 +240,58 @@ Loading...
 
 
 <script>
-
-
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
-const ROOM_LIMIT = 18; // ✅ FINAL
+/* ✅ ROOM CONFIG */
+const ROOM_CONFIG = {
+  "BEREAN - Abraham": 2,
+  "BEREAN - Elijah": 2,
+  "BEREAN - Joshua": 3,
+  "BEREAN - Elisha": 3,
 
-const AC_ROOMS = [
-  "Berean Area",
-  "Berean – Abraham 2",
-  "Berean – Joshua 3",
-  "Berean – Elijah 3",
-  "Berean – Elisha 3",
-  "Sharon – Deborah 2",
-  "Sharon – Martha 3",
-  "Sharon – Abigail 2",
-  "Sharon – Eve 2"
-];
+  "SHARON - Deborah": 2,
+  "SHARON - Abigail": 2,
+  "SHARON - Martha": 3,
+  "SHARON - Eve": 3
+};
+
+const ROOM_GROUPS = {
+  "BEREAN (Boys)": [
+    "BEREAN - Abraham",
+    "BEREAN - Elijah",
+    "BEREAN - Joshua",
+    "BEREAN - Elisha"
+  ],
+  "SHARON (Girls)": [
+    "SHARON - Deborah",
+    "SHARON - Abigail",
+    "SHARON - Martha",
+    "SHARON - Eve"
+  ]
+};
 
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
 let localChanges = {};
+let loading = false;
 
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
 
 /* ICONS */
-function payIcon(v){
-  if(v === "PAID") return "✅ PAID";
-  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
-  return "❌ NOT PAID";
-}
+const payIcon = v =>
+  v === "PAID" ? "✅ PAID" :
+  v === "ON-WAITING PAYMENT" ? "🟠 WAITING" :
+  "❌ NOT PAID";
 
-function attIcon(v){
-  if(v === "Attended") return "✔ ATTENDED";
-  if(v === "ON-waiting") return "🟠 WAITING";
-  return "❌ CANCELLED";
-}
+const attIcon = v =>
+  v === "Attended" ? "✔ ATTENDED" :
+  v === "ON-waiting" ? "🟠 WAITING" :
+  "❌ CANCELLED";
 
-/* LOCAL CACHE (ANTI SNAPBACK) */
+/* LOCAL CACHE */
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
   localChanges[row][field] = val;
@@ -309,23 +320,32 @@ function updateStats(){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* ROOM COUNT */
+/* ✅ SAFE ROOM COUNT (NO DUP BUG) */
 function updateRoomStats(){
   roomCount = {};
-  AC_ROOMS.forEach(r=>roomCount[r]=0);
+
+  Object.keys(ROOM_CONFIG).forEach(r=>roomCount[r]=0);
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
-    if(roomCount[r]!==undefined) roomCount[r]++;
+    if(roomCount.hasOwnProperty(r)){
+      roomCount[r]++;
+    }
   });
 
   let html="<b>ROOM AC STATUS</b><br>";
 
-  AC_ROOMS.forEach(r=>{
-    let c=roomCount[r];
-    let full=c>=ROOM_LIMIT;
+  Object.keys(ROOM_CONFIG).forEach(r=>{
+    let count = roomCount[r];
+    let limit = ROOM_CONFIG[r];
+    let full = count >= limit;
 
-    html+=`${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
+    html += `
+      ${r.replace("BEREAN - ","").replace("SHARON - ","")}
+      <span class="badge ${full?"full":"available"}">
+        ${count}/${limit}
+      </span><br>
+    `;
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -399,35 +419,59 @@ function createRow(p){
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  /* ROOM */
+  /* ROOM DROPDOWN */
   const roomSelect = tr.querySelector(".roomac");
 
   function refreshRoom(){
-    roomSelect.innerHTML=`<option value="">ROOM AC</option>`+
-    AC_ROOMS.map(r=>{
-      let c=roomCount[r]||0;
-      let full=c>=ROOM_LIMIT;
 
-      return `<option value="${r}"
-        ${p.ROOM_AC===r?"selected":""}
-        ${full&&p.ROOM_AC!==r?"disabled":""}>
-        ${r} ${full?"(FULL)":""}</option>`;
-    }).join("");
+    let html = `<option value="">ROOM AC</option>`;
+
+    for(let group in ROOM_GROUPS){
+      html += `<optgroup label="${group}">`;
+
+      ROOM_GROUPS[group].forEach(r=>{
+        let count = roomCount[r] || 0;
+        let limit = ROOM_CONFIG[r];
+        let full = count >= limit;
+
+        html += `
+          <option value="${r}"
+            ${p.ROOM_AC===r?"selected":""}
+            ${full && p.ROOM_AC!==r ? "disabled":""}>
+            ${r.replace("BEREAN - ","").replace("SHARON - ","")}
+            ${full ? "(FULL)" : ""}
+          </option>
+        `;
+      });
+
+      html += `</optgroup>`;
+    }
+
+    roomSelect.innerHTML = html;
   }
 
   refreshRoom();
 
   roomSelect.onchange = e=>{
-    let val=clean(e.target.value);
-    let old=clean(p.ROOM_AC);
+    let val = clean(e.target.value);
+    let old = clean(p.ROOM_AC);
 
-    if(val && roomCount[val]>=ROOM_LIMIT && val!==old){
-      alert("ROOM FULL ("+ROOM_LIMIT+")");
-      e.target.value=old;
+    /* LIVE COUNT FIX (NO DELAY BUG) */
+    if(old && roomCount[old] > 0) roomCount[old]--;
+
+    let count = roomCount[val] || 0;
+    let limit = ROOM_CONFIG[val];
+
+    if(val && count >= limit){
+      alert("ROOM FULL ("+limit+")");
+      roomCount[old]++; // restore
+      e.target.value = old;
       return;
     }
 
-    p.ROOM_AC=val;
+    if(val) roomCount[val]++;
+
+    p.ROOM_AC = val;
     saveLocal(p.rowIndex,"ROOM_AC",val);
 
     send("room_ac",{rowIndex:p.rowIndex,value:val});
@@ -486,20 +530,29 @@ function send(action,data){
 
 /* LOAD */
 async function loadData(){
-  let res=await fetch(BASE_URL+"?sheet="+SHEET);
-  let data=await res.json();
+  if(loading) return;
+  loading = true;
 
-  allData=applyLocal(data);
+  try{
+    let res=await fetch(BASE_URL+"?sheet="+SHEET);
+    let data=await res.json();
 
-  tbody.innerHTML="";
-  updateRoomStats();
-  allData.forEach(createRow);
-  updateStats();
+    allData=applyLocal(data);
+
+    tbody.innerHTML="";
+    updateRoomStats();
+    allData.forEach(createRow);
+    updateStats();
+
+  }catch(err){
+    console.error("Load error:",err);
+  }
+
+  loading = false;
 }
 
 loadData();
 setInterval(loadData,4000);
-
 </script>
 </body>
 </html>
