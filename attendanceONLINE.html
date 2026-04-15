@@ -244,22 +244,6 @@ const SHEET = "Pre-Registration";
 
 const ROOM_LIMIT = 18;
 
-/* ✅ STRICT ROOM MAPPING */
-const AC_STRUCTURE = {
-  "Berean": {
-    "Abraham": "Berean – Abraham (2)",
-    "Elijah": "Berean – Elijah (2)",
-    "Joshua": "Berean – Joshua (3)",
-    "Elisha": "Berean – Elisha (3)"
-  },
-  "Sharon": {
-    "Deborah": "Sharon – Deborah (2)",
-    "Abigail": "Sharon – Abigail (2)",
-    "Martha": "Sharon – Martha (3)",
-    "Eve": "Sharon – Eve (3)"
-  }
-};
-
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
@@ -268,25 +252,37 @@ let localChanges = {};
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* 🔥 AUTO ROOM DETECTOR (FROM ROOM COLUMN) */
+/* 🔥 FINAL MEMBER → AC ROOM MAPPING */
 function getAutoRoomAC(room){
   if(!room) return "";
 
   let r = room.toLowerCase();
 
-  if(r.includes("berean")){
-    if(r.includes("abraham")) return AC_STRUCTURE["Berean"]["Abraham"];
-    if(r.includes("elijah")) return AC_STRUCTURE["Berean"]["Elijah"];
-    if(r.includes("joshua")) return AC_STRUCTURE["Berean"]["Joshua"];
-    if(r.includes("elisha")) return AC_STRUCTURE["Berean"]["Elisha"];
-  }
+  // 🟦 BEREAN
+  if(r.includes("barnabas") || r.includes("caleb"))
+    return "Berean – Abraham (2)";
 
-  if(r.includes("sharon")){
-    if(r.includes("deborah")) return AC_STRUCTURE["Sharon"]["Deborah"];
-    if(r.includes("abigail")) return AC_STRUCTURE["Sharon"]["Abigail"];
-    if(r.includes("martha")) return AC_STRUCTURE["Sharon"]["Martha"];
-    if(r.includes("eve")) return AC_STRUCTURE["Sharon"]["Eve"];
-  }
+  if(r.includes("joseph") || r.includes("david") || r.includes("daniel"))
+    return "Berean – Elijah (2)";
+
+  if(r.includes("moses") || r.includes("nehemiah"))
+    return "Berean – Joshua (3)";
+
+  if(r.includes("timothy") || r.includes("stephen"))
+    return "Berean – Elisha (3)";
+
+  // 🟪 SHARON
+  if(r.includes("esther") || r.includes("eunice"))
+    return "Sharon – Deborah (2)";
+
+  if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah"))
+    return "Sharon – Abigail (2)";
+
+  if(r.includes("priscilla") || r.includes("sarah"))
+    return "Sharon – Martha (3)";
+
+  if(r.includes("mary") || r.includes("elizabeth"))
+    return "Sharon – Eve (3)";
 
   return "";
 }
@@ -335,13 +331,16 @@ function updateStats(){
 
 /* ROOM COUNT */
 function updateRoomStats(){
-  roomCount = {};
-
-  Object.values(AC_STRUCTURE).forEach(group=>{
-    Object.values(group).forEach(room=>{
-      roomCount[room] = 0;
-    });
-  });
+  roomCount = {
+    "Berean – Abraham (2)":0,
+    "Berean – Elijah (2)":0,
+    "Berean – Joshua (3)":0,
+    "Berean – Elisha (3)":0,
+    "Sharon – Deborah (2)":0,
+    "Sharon – Abigail (2)":0,
+    "Sharon – Martha (3)":0,
+    "Sharon – Eve (3)":0
+  };
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
@@ -352,18 +351,14 @@ function updateRoomStats(){
 
   let html = "<b>ROOM AC STATUS</b><br>";
 
-  Object.entries(AC_STRUCTURE).forEach(([group, subs])=>{
-    html += `<br><b>${group}</b><br>`;
+  Object.keys(roomCount).forEach(room=>{
+    let c = roomCount[room];
+    let full = c >= ROOM_LIMIT;
 
-    Object.values(subs).forEach(room=>{
-      let c = roomCount[room] || 0;
-      let full = c >= ROOM_LIMIT;
-
-      html += `${room} 
-        <span class="badge ${full?"full":"available"}">
-        ${c}/${ROOM_LIMIT}
-        </span><br>`;
-    });
+    html += `${room} 
+      <span class="badge ${full?"full":"available"}">
+      ${c}/${ROOM_LIMIT}
+      </span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -442,14 +437,12 @@ function createRow(p){
 
   let autoRoom = getAutoRoomAC(p.room);
 
-  // auto assign if empty
   if(!p.ROOM_AC && autoRoom){
     p.ROOM_AC = autoRoom;
     saveLocal(p.rowIndex,"ROOM_AC",autoRoom);
     send("room_ac",{rowIndex:p.rowIndex,value:autoRoom});
   }
 
-  // display locked
   if(autoRoom){
     roomSelect.innerHTML = `
       <option value="${autoRoom}" selected>
@@ -460,9 +453,8 @@ function createRow(p){
     roomSelect.innerHTML = `<option value="">NO ROOM</option>`;
   }
 
-  // block changes
   roomSelect.onchange = ()=>{
-    alert("❌ ROOM is auto-assigned based on delegate ROOM.");
+    alert("❌ ROOM is auto-assigned based on sub-room.");
     roomSelect.value = p.ROOM_AC || "";
   };
 
@@ -529,8 +521,6 @@ async function loadData(){
 
 loadData();
 setInterval(loadData,4000);
-
-</script>
 
 </script>
 </body>
