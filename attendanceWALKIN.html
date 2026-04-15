@@ -204,18 +204,15 @@ let tbody = document.querySelector("tbody");
 let allData = [];
 let updatingRows = new Set();
 
-const clean = v => (v || "").toString().trim();
-
 /* =========================
    ICONS
 ========================= */
 function payIcon(v){
-  if(!v) return "❌ NOT PAID";
-  if(v.includes("NOT")) return "❌ NOT PAID";
+  if(!v) return "🟠 WAITING";
+  if(v.includes("PAID")) return "✔ PAID";
   if(v.includes("ONSITE")) return "🟠 ONSITE";
   if(v.includes("ONLINE")) return "💳 ONLINE";
-  if(v.includes("PAID")) return "✔ PAID";
-  return v;
+  return "🟠 WAITING";
 }
 
 function attIcon(v){
@@ -225,27 +222,27 @@ function attIcon(v){
 }
 
 /* =========================
-   ROOM OPTIONS
+   ROOM OPTIONS (GROUPED)
 ========================= */
-function getRoomOptions(p){
+function getRoomOptions(selected){
 
-  const berean = [
-    "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
-    "Berean – David","Berean – Joseph","Berean – Moses",
-    "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy"
-  ];
+  return `
+    <optgroup label="BEREAN (Boys)">
+      ${[
+        "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
+        "Berean – David","Berean – Joseph","Berean – Moses",
+        "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy"
+      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
+    </optgroup>
 
-  const sharon = [
-    "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
-    "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
-    "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah"
-  ];
-
-  const list = (p.gender === "Male") ? berean : sharon;
-
-  return list.map(r=>{
-    return `<option ${p.room_assignment===r?"selected":""}>${r}</option>`;
-  }).join("");
+    <optgroup label="SHARON (Girls)">
+      ${[
+        "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
+        "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
+        "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah"
+      ].map(r=>`<option ${selected===r?"selected":""}>${r}</option>`).join("")}
+    </optgroup>
+  `;
 }
 
 /* =========================
@@ -265,7 +262,7 @@ function updateStats(){
 }
 
 /* =========================
-   SEND (ANTI SNAPBACK)
+   SEND
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -279,15 +276,12 @@ function send(action,data){
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .then(r=>r.json())
-    .then(()=>{
-      setTimeout(()=> updatingRows.delete(id),3000);
-    })
+    .then(()=> setTimeout(()=> updatingRows.delete(id),3000))
     .catch(()=> updatingRows.delete(id));
 }
 
 /* =========================
-   CREATE ROW
+   CREATE ROW (FINAL FIX)
 ========================= */
 function createRow(p){
 
@@ -301,14 +295,14 @@ function createRow(p){
 
     <td>
       <select class="classification">
-        <option ${p.classification==="BEREAN"?"selected":""}>BEREAN</option>
-        <option ${p.classification==="SHARON"?"selected":""}>SHARON</option>
+        <option ${p.classification==="Silver"?"selected":""}>Silver</option>
+        <option ${p.classification==="Copper"?"selected":""}>Copper</option>
       </select>
     </td>
 
     <td>
       <select class="room">
-        ${getRoomOptions(p)}
+        ${getRoomOptions(p.room_assignment)}
       </select>
     </td>
 
@@ -327,6 +321,7 @@ function createRow(p){
 
     <td>
       <select class="shirt">
+        <option value="">--</option>
         <option ${p.shirt_size==="S"?"selected":""}>S</option>
         <option ${p.shirt_size==="M"?"selected":""}>M</option>
         <option ${p.shirt_size==="L"?"selected":""}>L</option>
@@ -342,17 +337,17 @@ function createRow(p){
   tbody.appendChild(tr);
 
   /* CLASSIFICATION */
-  tr.querySelector(".classification").onchange = (e)=>{
+  tr.querySelector(".classification").onchange = e=>{
     send("classification",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
   /* ROOM */
-  tr.querySelector(".room").onchange = (e)=>{
+  tr.querySelector(".room").onchange = e=>{
     send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
   /* MODE */
-  tr.querySelector(".mode").onchange = (e)=>{
+  tr.querySelector(".mode").onchange = e=>{
     send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
@@ -362,9 +357,9 @@ function createRow(p){
     let current = p.payment_indicator || "";
 
     let next;
-    if(current.includes("NOT")) next = "ONSITE 🟠";
-    else if(current.includes("ONSITE")) next = "PAID ✔";
-    else next = "NOT PAID ❌";
+    if(current.includes("WAITING")) next = "ONSITE";
+    else if(current.includes("ONSITE")) next = "PAID";
+    else next = "WAITING";
 
     p.payment_indicator = next;
 
@@ -375,24 +370,53 @@ function createRow(p){
     updateStats();
   };
 
-  /* ATTENDANCE */
+  /* ATT */
   tr.querySelector(".att").onclick = ()=>{
-
     let current = p.attendance_status;
 
-    let next;
-    if(current === "Cancelled") next = "ON-waiting";
-    else if(current === "ON-waiting") next = "Attended";
-    else next = "Cancelled";
+    let next = current==="ON-waiting" ? "Attended" :
+               current==="Attended" ? "Cancelled" : "ON-waiting";
 
     p.attendance_status = next;
 
     tr.querySelector(".att").textContent = attIcon(next);
-
     send("attendance",{rowIndex:p.rowIndex,status:next});
     updateStats();
   };
 
+  /* KIT */
+  tr.querySelector(".kit").onclick = ()=>{
+    let next = p.kit_distribution==="✔" ? "❌" : "✔";
+    p.kit_distribution = next;
+    tr.querySelector(".kit").textContent = next;
+    send("kit",{rowIndex:p.rowIndex,state:next});
+  };
+
+  /* SHIRT */
+  tr.querySelector(".shirt").onchange = e=>{
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  };
+}
+
+/* =========================
+   LOAD
+========================= */
+async function loadData(){
+  let res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let data = await res.json();
+
+  tbody.innerHTML = "";
+
+  data.forEach(p=>{
+    createRow(p);
+  });
+
+  allData = data;
+  updateStats();
+}
+
+loadData();
+setInterval(loadData,12000);
   /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
     let current = p.kit_distribution || "❌";
