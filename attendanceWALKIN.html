@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+my fronted is fine right> <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="refine.ico">
-<title>YLC 2026 Admin ONLINE Attendance System</title>
+<title>YLC 2026 WALK-IN Admin Attendance System</title>
 
 <style>
 body{
@@ -181,7 +181,7 @@ select{
 
 <body>
 
-<h1>YLC 2026 ADMIN ONLINE ATTENDANCE SYSTEM</h1>
+<h1>YLC 2026 WALK IN ADMIN ATTENDANCE SYSTEM</h1>
 <div class="sub">FEBIAS College of Bible System</div>
 
 <div class="instructions">
@@ -236,53 +236,63 @@ Loading...
 </table>
 </div>
 
+
+
+
+<script>
 <script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
-const SHEET = "Pre-Registration";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbzfNSLthi0tTBQWdenRnkn0OM8dtj6DKk_ivfbd2FTIIdFgzM3usIeQ_66WCRDU2gQn/exec";
+const SHEET = "WALK-IN";
+
+const AC_ROOMS = [
+  "Berean Area",
+  "Berean – Abraham 2",
+  "Berean – Joshua 3",
+  "Berean – Elijah 3",
+  "Berean – Elisha 3",
+  "Sharon – Deborah 2",
+  "Sharon – Martha 3",
+  "Sharon – Abigail 2",
+  "Sharon – Eve 2"
+];
 
 let tbody = document.querySelector("tbody");
 let allData = [];
-let localChanges = {};
+let roomCount = {};
 
-/* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* ICONS */
+/* =========================
+   ICONS SAFE (NO UNDEFINED)
+========================= */
 function payIcon(v){
-  if(v === "PAID") return "✅ PAID";
-  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
-  return "❌ NOT PAID";
+  if(!v) return "❌ NOT PAID";
+  if(v.includes("NOT")) return "❌ NOT PAID";
+  if(v.includes("ONSITE")) return "🟠 ONSITE";
+  if(v.includes("ONLINE")) return "💳 ONLINE";
+  if(v.includes("PAID")) return "✔ PAID";
+  return v;
 }
 
 function attIcon(v){
   if(v === "Attended") return "✔ ATTENDED";
-  if(v === "ON-waiting") return "🟠 WAITING";
-  return "❌ CANCELLED";
+  if(v === "Cancelled") return "❌ CANCELLED";
+  return "🟠 WAITING";
 }
 
-/* LOCAL CACHE (ANTI SNAPBACK) */
-function saveLocal(row, field, val){
-  if(!localChanges[row]) localChanges[row] = {};
-  localChanges[row][field] = val;
-}
-
-function applyLocal(data){
-  return data.map(p=>{
-    if(localChanges[p.rowIndex]){
-      return {...p, ...localChanges[p.rowIndex]};
-    }
-    return p;
-  });
-}
-
-/* STATS */
+/* =========================
+   STATS SAFE
+========================= */
 function updateStats(){
-  let paid=0, waiting=0;
+  let paid = 0, waiting = 0;
 
   allData.forEach(p=>{
-    if(p.paymentIndicator==="PAID") paid++;
-    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+    let pay = p.payment_indicator || "";
+    let att = p.attendance_status || "";
+
+    if(pay.includes("PAID")) paid++;
+    if(pay.includes("WAIT") || att === "ON-waiting") waiting++;
   });
 
   document.getElementById("total").textContent = allData.length;
@@ -290,130 +300,240 @@ function updateStats(){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* CREATE ROW */
-function createRow(p){
+/* =========================
+   ROOM COUNTS SAFE
+========================= */
+function updateRoomStats(){
+  roomCount = {};
+  AC_ROOMS.forEach(r => roomCount[r] = 0);
 
-  let tr = document.createElement("tr");
+  allData.forEach(p=>{
+    let r = clean(p.room_ac);
+    if(roomCount[r] !== undefined) roomCount[r]++;
+  });
 
-  tr.innerHTML = `
-    <td>${p.rowIndex}</td>
-    <td>${p.firstName} ${p.lastName}</td>
-    <td>${p.gender}</td>
-    <td>${p.room}</td>
+  let html = "<b>ROOM AC STATUS</b><br>";
 
-    <td class="paytxt">${payIcon(p.paymentIndicator)}</td>
-    <td class="amt">${p.paymentIndicator==="PAID"?"₱1500":""}</td>
+  AC_ROOMS.forEach(r=>{
+    let c = roomCount[r];
+    let full = c >= 18;
 
-    <td>
-      <select class="mode">
-        <option value="">Select</option>
-        <option value="Onsite (BO)">Onsite (BO)</option>
-        <option value="Onsite (orange tag)">Onsite (orange tag)</option>
-        <option value="Online (GCASH)">Online (GCASH)</option>
-        <option value="Online (BANK)">Online (BANK)</option>
-      </select>
-    </td>
+    html += `${r} <span class="badge ${full?"full":"available"}">${c}/18</span><br>`;
+  });
 
-    <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
-    <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
-
-    <td>
-      <select class="shirt">
-        <option>S</option><option>M</option><option>L</option>
-        <option>XL</option><option>XXL</option><option>3XL</option>
-      </select>
-    </td>
-
-    <td class="clickable kit">${p.kit || "❌"}</td>
-  `;
-
-  tbody.appendChild(tr);
-
-  /* MODE */
-  const modeSelect = tr.querySelector(".mode");
-  modeSelect.value = p.modeOfPayment || "";
-
-  modeSelect.onchange = e=>{
-    let v=e.target.value;
-    p.modeOfPayment=v;
-    saveLocal(p.rowIndex,"modeOfPayment",v);
-    send("mode",{rowIndex:p.rowIndex,value:v});
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-    p.kit = next;
-    saveLocal(p.rowIndex,"kit",next);
-    tr.querySelector(".kit").textContent = next;
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* PAYMENT */
-  tr.querySelector(".pay").onclick = ()=>{
-    let next=p.paymentIndicator==="PAID"
-      ?"NOT PAID"
-      :p.paymentIndicator==="ON-WAITING PAYMENT"
-      ?"PAID"
-      :"ON-WAITING PAYMENT";
-
-    p.paymentIndicator=next;
-    saveLocal(p.rowIndex,"paymentIndicator",next);
-
-    tr.querySelector(".pay").textContent=payIcon(next);
-    tr.querySelector(".paytxt").textContent=payIcon(next);
-    tr.querySelector(".amt").textContent=next==="PAID"?"₱1500":"";
-
-    send("payment",{rowIndex:p.rowIndex,value:next});
-    updateStats();
-  };
-
-  /* ATTENDANCE */
-  tr.querySelector(".att").onclick = ()=>{
-    let next=p.attendanceStatus==="Cancelled"
-      ?"ON-waiting"
-      :p.attendanceStatus==="ON-waiting"
-      ?"Attended"
-      :"Cancelled";
-
-    p.attendanceStatus=next;
-    saveLocal(p.rowIndex,"attendanceStatus",next);
-
-    tr.querySelector(".att").textContent=attIcon(next);
-
-    send("attendance",{rowIndex:p.rowIndex,status:next});
-  };
-
+  document.getElementById("roomStats").innerHTML = html;
 }
 
-/* SEND TO BACKEND */
+/* =========================
+   SEND TO APPSCRIPT
+========================= */
 function send(action,data){
-  let fd=new FormData();
+  let fd = new FormData();
   fd.append("action",action);
-  fd.append("sheet",SHEET);
 
-  for(let k in data) fd.append(k,data[k]);
+  for(let k in data){
+    fd.append(k,data[k]);
+  }
 
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
-/* LOAD DATA */
+/* =========================
+   ROW BUILDER (FIXED SAFE FIELDS)
+========================= */
+function createRow(p){
+
+  let tr = document.createElement("tr");
+  tr.dataset.id = p.rowIndex;
+
+  let amount = (p.mode_of_payment === "ONLINE") ? "₱1500" : "";
+
+  tr.innerHTML = `
+    <td>${p.rowIndex}</td>
+    <td>${p.firstName || ""} ${p.lastName || ""}</td>
+    <td>${p.gender || ""}</td>
+    <td>${p.room_ac || ""}</td>
+
+    <td class="paytxt">${payIcon(p.payment_indicator)}</td>
+    <td class="amount">${amount}</td>
+
+    <td>
+      <select class="mode">
+        <option ${p.mode_of_payment==="ONSITE"?"selected":""}>ONSITE</option>
+        <option ${p.mode_of_payment==="ONLINE"?"selected":""}>ONLINE</option>
+      </select>
+    </td>
+
+    <td class="pay">${payIcon(p.payment_indicator)}</td>
+    <td class="att">${attIcon(p.attendance_status)}</td>
+
+    <td>
+      <select class="shirt">
+        <option ${p.shirt_size==="S"?"selected":""}>S</option>
+        <option ${p.shirt_size==="M"?"selected":""}>M</option>
+        <option ${p.shirt_size==="L"?"selected":""}>L</option>
+        <option ${p.shirt_size==="XL"?"selected":""}>XL</option>
+        <option ${p.shirt_size==="XXL"?"selected":""}>XXL</option>
+        <option ${p.shirt_size==="3XL"?"selected":""}>3XL</option>
+      </select>
+    </td>
+
+    <td class="kit">${p.kit_distribution || "❌"}</td>
+    <td class="aircon">${p.aircon_pref || "❌"}</td>
+
+    <td>
+      <select class="roomac"></select>
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+
+  const roomSelect = tr.querySelector(".roomac");
+
+  function refreshRooms(){
+    roomSelect.innerHTML =
+      `<option value="">ROOM AC</option>` +
+      AC_ROOMS.map(r=>{
+        let count = roomCount[r] || 0;
+        let full = count >= 18;
+
+        return `
+          <option value="${r}"
+            ${p.room_ac===r?"selected":""}
+            ${full && p.room_ac!==r?"disabled":""}>
+            ${r} ${full?"(FULL)":""}
+          </option>
+        `;
+      }).join("");
+  }
+
+  refreshRooms();
+
+/* =========================
+   MODE
+========================= */
+tr.querySelector(".mode").onchange = (e)=>{
+  let val = e.target.value;
+
+  tr.querySelector(".amount").textContent =
+    val === "ONLINE" ? "₱1500" : "";
+
+  send("mode",{rowIndex:p.rowIndex,value:val});
+};
+
+/* =========================
+   PAYMENT (SYNC FIXED)
+========================= */
+tr.querySelector(".pay").onclick = ()=>{
+
+  let next;
+
+  if(!p.payment_indicator || p.payment_indicator.includes("NOT")) next = "ONSITE 🟠";
+  else if(p.payment_indicator.includes("ONSITE")) next = "PAID ✔";
+  else next = "NOT PAID ❌";
+
+  p.payment_indicator = next;
+
+  tr.querySelector(".pay").textContent = payIcon(next);
+  tr.querySelector(".paytxt").textContent = payIcon(next);
+
+  send("payment",{rowIndex:p.rowIndex,value:next});
+  updateStats();
+};
+
+/* =========================
+   ATTENDANCE
+========================= */
+tr.querySelector(".att").onclick = ()=>{
+
+  let next;
+
+  if(p.attendance_status === "Cancelled") next = "ON-waiting";
+  else if(p.attendance_status === "ON-waiting") next = "Attended";
+  else next = "Cancelled";
+
+  p.attendance_status = next;
+  tr.querySelector(".att").textContent = attIcon(next);
+
+  send("attendance",{rowIndex:p.rowIndex,status:next});
+};
+
+/* =========================
+   KIT
+========================= */
+tr.querySelector(".kit").onclick = ()=>{
+  let next = p.kit_distribution==="❌"?"🟠":p.kit_distribution==="🟠"?"✔":"❌";
+  p.kit_distribution = next;
+
+  tr.querySelector(".kit").textContent = next;
+  send("kit",{rowIndex:p.rowIndex,state:next});
+};
+
+/* =========================
+   AIRCON
+========================= */
+tr.querySelector(".aircon").onclick = ()=>{
+  let next = p.aircon_pref==="❌"?"🟠":p.aircon_pref==="🟠"?"✔":"❌";
+  p.aircon_pref = next;
+
+  tr.querySelector(".aircon").textContent = next;
+  send("aircon",{rowIndex:p.rowIndex,state:next});
+};
+
+/* =========================
+   ROOM AC
+========================= */
+roomSelect.onchange = (e)=>{
+  let val = clean(e.target.value);
+
+  if(val && roomCount[val] >= 18 && val !== p.room_ac){
+    alert("ROOM FULL");
+    e.target.value = p.room_ac;
+    return;
+  }
+
+  p.room_ac = val;
+  send("room_ac",{rowIndex:p.rowIndex,value:val});
+
+  updateRoomStats();
+  refreshRooms();
+};
+
+/* =========================
+   SHIRT
+========================= */
+tr.querySelector(".shirt").onchange = (e)=>{
+  send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+};
+
+/* =========================
+   FIX: INITIAL STATS REFRESH
+========================= */
+updateStats();
+updateRoomStats();
+
+}
+
+/* =========================
+   LOAD DATA
+========================= */
 async function loadData(){
-  let res=await fetch(BASE_URL+"?sheet="+SHEET);
-  let data=await res.json();
+  let res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let data = await res.json();
 
-  allData=applyLocal(data);
+  allData = data;
 
-  tbody.innerHTML="";
+  tbody.innerHTML = "";
+  updateRoomStats();
   allData.forEach(createRow);
   updateStats();
 }
 
-/* INIT */
 loadData();
-setInterval(loadData,4000);
-
+setInterval(loadData,5000);
 
 </script>
+</script>
+
 </body>
 </html>
