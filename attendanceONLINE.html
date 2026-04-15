@@ -243,22 +243,35 @@ Loading...
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
-/* 🔥 ROOM + SLOT CONFIG */
-const ROOM_SLOTS = {
-  "BEREAN - Abraham": ["Barnabas","Caleb"],
-  "BEREAN - Elijah": ["Joseph","David","Daniel"],
-  "BEREAN - Joshua": ["Moses","Nehemiah"],
-  "BEREAN - Elisha": ["Timothy","Stephen"],
+/* 🔒 SUB ROOM → AC ROOM LOCK */
+const SUBROOM_TO_AC = {
+  // BEREAN
+  "barnabas": "BEREAN - Abraham",
+  "caleb": "BEREAN - Abraham",
 
-  "SHARON - Deborah": ["Esther","Eunice"],
-  "SHARON - Abigail": ["Rebecca","Lydia","Hannah"],
-  "SHARON - Martha": ["Priscilla","Sarah"],
-  "SHARON - Eve": ["Mary","Elizabeth"]
-};
+  "joseph": "BEREAN - Elijah",
+  "david": "BEREAN - Elijah",
+  "daniel": "BEREAN - Elijah",
 
-const ROOM_GROUPS = {
-  "BEREAN (Boys)": Object.keys(ROOM_SLOTS).filter(r=>r.startsWith("BEREAN")),
-  "SHARON (Girls)": Object.keys(ROOM_SLOTS).filter(r=>r.startsWith("SHARON"))
+  "moses": "BEREAN - Joshua",
+  "nehemiah": "BEREAN - Joshua",
+
+  "timothy": "BEREAN - Elisha",
+  "stephen": "BEREAN - Elisha",
+
+  // SHARON
+  "esther": "SHARON - Deborah",
+  "eunice": "SHARON - Deborah",
+
+  "rebecca": "SHARON - Abigail",
+  "lydia": "SHARON - Abigail",
+  "hannah": "SHARON - Abigail",
+
+  "priscilla": "SHARON - Martha",
+  "sarah": "SHARON - Martha",
+
+  "mary": "SHARON - Eve",
+  "elizabeth": "SHARON - Eve"
 };
 
 let tbody = document.querySelector("tbody");
@@ -294,20 +307,23 @@ function applyLocal(data){
   });
 }
 
-/* ROOM STATUS (NOW SLOT-BASED) */
+/* ROOM STATUS */
 function updateRoomStats(){
+  let counts = {};
+
+  Object.values(SUBROOM_TO_AC).forEach(r=>counts[r]=0);
+
+  allData.forEach(p=>{
+    let r = clean(p.ROOM_AC);
+    if(counts.hasOwnProperty(r)) counts[r]++;
+  });
+
   let html="<b>ROOM AC STATUS</b><br>";
 
-  Object.keys(ROOM_SLOTS).forEach(room=>{
-    let slots = ROOM_SLOTS[room];
-
-    let used = allData.filter(p=>clean(p.ROOM_AC)===room).length;
-
+  Object.keys(counts).forEach(r=>{
     html += `
-      ${room.replace("BEREAN - ","").replace("SHARON - ","")}
-      <span class="badge ${used>=slots.length?"full":"available"}">
-        ${used}/${slots.length}
-      </span><br>
+      ${r.replace("BEREAN - ","").replace("SHARON - ","")}
+      <span class="badge available">${counts[r]}</span><br>
     `;
   });
 
@@ -350,101 +366,59 @@ function createRow(p){
     <td class="clickable kit">${p.kit || "❌"}</td>
     <td class="clickable aircon">${p.aircon || "❌"}</td>
 
-    <td>
-      <select class="roomac"></select><br>
-      <select class="roomslot"></select>
-    </td>
+    <td><select class="roomac"></select></td>
   `;
 
   tbody.appendChild(tr);
 
   const roomSelect = tr.querySelector(".roomac");
-  const slotSelect = tr.querySelector(".roomslot");
 
-  /* ROOM DROPDOWN */
+  /* 🔒 LOCKED ROOM */
   function refreshRoom(){
-    let html = `<option value="">ROOM</option>`;
 
-    let allowed = p.gender==="Male" ? "BEREAN (Boys)" : "SHARON (Girls)";
+    let sub = clean(p.room).toLowerCase();
+    let allowedRoom = SUBROOM_TO_AC[sub];
 
-    ROOM_GROUPS[allowed].forEach(r=>{
-      html += `<option value="${r}" ${p.ROOM_AC===r?"selected":""}>
-        ${r.replace("BEREAN - ","").replace("SHARON - ","")}
-      </option>`;
-    });
+    let html = `<option value="">ROOM AC</option>`;
+
+    if(allowedRoom){
+      html += `
+        <option value="${allowedRoom}" selected>
+          ${allowedRoom.replace("BEREAN - ","").replace("SHARON - ","")}
+        </option>
+      `;
+    } else {
+      html += `
+        <option value="${p.ROOM_AC || ""}">
+          ${p.ROOM_AC || "No Assigned Room"}
+        </option>
+      `;
+    }
 
     roomSelect.innerHTML = html;
   }
 
-  /* SLOT DROPDOWN */
-  function refreshSlots(){
-    let room = clean(p.ROOM_AC);
-
-    if(!ROOM_SLOTS[room]){
-      slotSelect.innerHTML = `<option>No Slots</option>`;
-      return;
-    }
-
-    let used = allData
-      .filter(x=>clean(x.ROOM_AC)===room)
-      .map(x=>clean(x.ROOM_SLOT));
-
-    let html = `<option value="">Slot</option>`;
-
-    ROOM_SLOTS[room].forEach(slot=>{
-      let taken = used.includes(slot);
-
-      html += `
-        <option value="${slot}"
-          ${p.ROOM_SLOT===slot?"selected":""}
-          ${taken && p.ROOM_SLOT!==slot ? "disabled":""}>
-          ${slot} ${taken?"(TAKEN)":""}
-        </option>
-      `;
-    });
-
-    slotSelect.innerHTML = html;
-  }
-
   refreshRoom();
-  refreshSlots();
 
-  /* ROOM CHANGE */
+  /* 🔒 HARD LOCK */
   roomSelect.onchange = e=>{
     let val = clean(e.target.value);
+    let old = clean(p.ROOM_AC);
 
-    p.ROOM_AC = val;
-    p.ROOM_SLOT = "";
+    let sub = clean(p.room).toLowerCase();
+    let allowedRoom = SUBROOM_TO_AC[sub];
 
-    saveLocal(p.rowIndex,"ROOM_AC",val);
-    saveLocal(p.rowIndex,"ROOM_SLOT","");
-
-    send("room_ac",{rowIndex:p.rowIndex,value:val});
-
-    updateRoomStats();
-    refreshSlots();
-  };
-
-  /* SLOT CHANGE */
-  slotSelect.onchange = e=>{
-    let val = clean(e.target.value);
-
-    let taken = allData.some(x =>
-      clean(x.ROOM_AC)===clean(p.ROOM_AC) &&
-      clean(x.ROOM_SLOT)===val &&
-      x.rowIndex !== p.rowIndex
-    );
-
-    if(taken){
-      alert("Slot already taken!");
-      e.target.value="";
+    if(allowedRoom && val !== allowedRoom){
+      alert("❌ Locked: This camper is assigned to a specific AC room");
+      e.target.value = old;
       return;
     }
 
-    p.ROOM_SLOT = val;
-    saveLocal(p.rowIndex,"ROOM_SLOT",val);
+    p.ROOM_AC = val;
 
-    send("room_slot",{rowIndex:p.rowIndex,value:val});
+    saveLocal(p.rowIndex,"ROOM_AC",val);
+
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
 
     updateRoomStats();
   };
@@ -456,7 +430,9 @@ function send(action,data){
   let fd=new FormData();
   fd.append("action",action);
   fd.append("sheet",SHEET);
+
   for(let k in data) fd.append(k,data[k]);
+
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
