@@ -245,6 +245,15 @@ const AC_ROOMS = [
   "Sharon – Eve 2"
 ];
 
+// ✅ ROOM ASSIGNMENT OPTIONS
+const ROOMS = [
+  "Berean – Barnabas","Berean – Caleb","Berean – Daniel","Berean – David",
+  "Berean – Joseph","Berean – Moses","Berean – Nehemiah","Berean – Paul",
+  "Berean – Stephen","Berean – Timothy",
+  "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice","Sharon – Hannah",
+  "Sharon – Lydia","Sharon – Mary","Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah"
+];
+
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
@@ -253,11 +262,8 @@ let updatingRows = new Set();
 const clean = v => (v || "").toString().trim();
 
 /* ================= SEARCH ================= */
-const searchInput = document.querySelector(".search-bar input");
-
-searchInput.addEventListener("input", ()=>{
-  const term = clean(searchInput.value).toLowerCase();
-
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  const term = clean(e.target.value).toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
     tr.style.display = tr.innerText.toLowerCase().includes(term) ? "" : "none";
   });
@@ -283,16 +289,12 @@ function attIcon(v){
 function send(action,data){
   let fd = new FormData();
   fd.append("action",action);
-
-  for(let k in data){
-    fd.append(k,data[k]);
-  }
+  for(let k in data) fd.append(k,data[k]);
 
   let id = String(data.rowIndex);
   updatingRows.add(id);
 
   fetch(BASE_URL,{method:"POST",body:fd})
-    .then(r=>r.json())
     .then(()=> setTimeout(()=> updatingRows.delete(id),2000))
     .catch(()=> updatingRows.delete(id));
 }
@@ -309,7 +311,12 @@ function createRow(p){
     <td>${p.gender}</td>
 
     <td>
-      <select class="roomAssign"></select>
+      <select class="roomAssign">
+        <option value="">Select Room</option>
+        ${ROOMS.map(r=>`
+          <option ${p.room_assignment===r?"selected":""}>${r}</option>
+        `).join("")}
+      </select>
     </td>
 
     <td class="payment">${payIcon(p.payment_indicator)}</td>
@@ -344,25 +351,27 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ================= CLICK ACTIONS ================= */
+  /* ================= ACTIONS ================= */
 
-  // PAY CLICK
-  tr.querySelector(".pay").onclick = ()=>{
-    let newVal = p.payment_indicator.includes("PAID") ? "NOT PAID" : "PAID";
-    p.payment_indicator = newVal;
-
-    tr.querySelector(".pay").innerText = payIcon(newVal);
-    tr.querySelector(".payment").innerText = payIcon(newVal);
-
-    send("payment",{rowIndex:p.rowIndex,value:newVal});
+  tr.querySelector(".roomAssign").onchange = e=>{
+    p.room_assignment = e.target.value;
+    send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  // ATT CLICK
+  tr.querySelector(".pay").onclick = ()=>{
+    let val = p.payment_indicator.includes("PAID") ? "NOT PAID" : "PAID";
+    p.payment_indicator = val;
+
+    tr.querySelector(".pay").innerText = payIcon(val);
+    tr.querySelector(".payment").innerText = payIcon(val);
+
+    send("payment",{rowIndex:p.rowIndex,value:val});
+  };
+
   tr.querySelector(".att").onclick = ()=>{
     let next =
-      p.attendance_status === "ON-waiting" ? "Attended" :
-      p.attendance_status === "Attended" ? "Cancelled" :
-      "ON-waiting";
+      p.attendance_status==="ON-waiting"?"Attended":
+      p.attendance_status==="Attended"?"Cancelled":"ON-waiting";
 
     p.attendance_status = next;
     tr.querySelector(".att").innerText = attIcon(next);
@@ -370,33 +379,25 @@ function createRow(p){
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
-  // KIT CLICK
   tr.querySelector(".kit").onclick = ()=>{
-    let next = p.kit_distribution === "✔" ? "❌" : "✔";
+    let next = p.kit_distribution==="✔"?"❌":"✔";
     p.kit_distribution = next;
-
     tr.querySelector(".kit").innerText = next;
-
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
-  // AIRCON CLICK
   tr.querySelector(".aircon").onclick = ()=>{
-    let next = p.aircon_pref === "✔" ? "❌" : "✔";
+    let next = p.aircon_pref==="✔"?"❌":"✔";
     p.aircon_pref = next;
-
     tr.querySelector(".aircon").innerText = next;
-
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  // MODE CHANGE
-  tr.querySelector(".mode").onchange = (e)=>{
+  tr.querySelector(".mode").onchange = e=>{
     send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  // SHIRT
-  tr.querySelector(".shirt").onchange = (e)=>{
+  tr.querySelector(".shirt").onchange = e=>{
     send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
@@ -420,12 +421,9 @@ function createRow(p){
 
   refreshRooms();
 
-  roomSelect.onchange = (e)=>{
-    let val = e.target.value;
-    p.room_ac = val;
-
-    send("room_ac",{rowIndex:p.rowIndex,value:val});
-
+  roomSelect.onchange = e=>{
+    p.room_ac = e.target.value;
+    send("room_ac",{rowIndex:p.rowIndex,value:e.target.value});
     updateRoomStats();
     refreshRooms();
   };
@@ -436,11 +434,9 @@ async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  tbody.innerHTML = ""; // 🔥 IMPORTANT FIX (prevents stale UI)
+  tbody.innerHTML = ""; // clean render
 
-  data.forEach(p=>{
-    createRow(p);
-  });
+  data.forEach(p=>createRow(p));
 
   allData = data;
   updateRoomStats();
@@ -449,20 +445,18 @@ async function loadData(){
 /* ================= ROOM STATS ================= */
 function updateRoomStats(){
   roomCount = {};
-  AC_ROOMS.forEach(r => roomCount[r] = 0);
+  AC_ROOMS.forEach(r => roomCount[r]=0);
 
   allData.forEach(p=>{
     let r = clean(p.room_ac);
-    if(roomCount[r] !== undefined) roomCount[r]++;
+    if(roomCount[r]!==undefined) roomCount[r]++;
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
 
   AC_ROOMS.forEach(r=>{
     let c = roomCount[r];
-    let full = c >= ROOM_LIMIT;
-
-    html += `${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
+    html += `${r} <span class="badge ${c>=ROOM_LIMIT?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
