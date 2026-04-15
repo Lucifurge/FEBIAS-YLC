@@ -197,7 +197,7 @@ select{
 </table>
 </div>
 <script>
-const BASE_URL = "https://script.google.com/macros/s/AKfycbyrQeAIXhIHvfDGaSpkqqCcyFMSuz_Scm0tB1oL0i-H0Ibiq-_ch_c9sZmppUYm45zK/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxWo2z45MQzxvXmWYRJ2gDgrkDJNcRi8JvqeJFfrvUduMrSxAE1HqhN-_9BVHK01vhk/exec";
 const SHEET = "WALK-IN";
 
 let tbody = document.querySelector("tbody");
@@ -253,7 +253,7 @@ function getRoomOptions(selected){
 }
 
 /* =========================
-   SEND (NO DELAY)
+   SEND
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -295,7 +295,7 @@ function createRow(p){
       <select class="shirt">
         <option value="">--</option>
         ${["S","M","L","XL","XXL","3XL"].map(s=>
-          `<option ${p.shirt_size===s?"selected":""}>${s}</option>`
+          `<option ${norm(p.shirt_size)===s?"selected":""}>${s}</option>`
         ).join("")}
       </select>
     </td>
@@ -324,10 +324,12 @@ function createRow(p){
     send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* SHIRT (SYNC FIXED) */
+  /* SHIRT (FIXED MATCH) */
   let shirt = tr.querySelector(".shirt");
+  shirt.value = (p.shirt_size || "").trim();
+
   shirt.onchange = e=>{
-    let val = e.target.value;
+    let val = (e.target.value || "").trim();
 
     p.shirt_size = val;
     allData[p.rowIndex].shirt_size = val;
@@ -407,7 +409,7 @@ function updateRowUI(tr,p){
 }
 
 /* =========================
-   LOAD (FINAL SYNC)
+   LOAD
 ========================= */
 async function loadData(){
 
@@ -424,6 +426,9 @@ async function loadData(){
   data.forEach(p=>{
     let id = String(p.rowIndex);
 
+    // 🔥 normalize shirt here too
+    p.shirt_size = (p.shirt_size || "").trim();
+
     if(!allData[id]){
       allData[id] = p;
       let tr = createRow(p);
@@ -437,16 +442,9 @@ async function loadData(){
     if(tr){
       updateRowUI(tr, allData[id]);
 
-      /* 🔥 PERFECT SHIRT SYNC */
       let shirt = tr.querySelector(".shirt");
-      if(shirt){
-        let sheetVal = (p.shirt_size || "").toString();
-
-        if(shirt.value !== sheetVal){
-          shirt.value = sheetVal;
-        }
-
-        allData[id].shirt_size = sheetVal;
+      if(shirt && shirt.value !== p.shirt_size){
+        shirt.value = p.shirt_size;
       }
     }
   });
