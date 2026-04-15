@@ -240,10 +240,12 @@ Loading...
 
 
 <script>
-<script>
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzfNSLthi0tTBQWdenRnkn0OM8dtj6DKk_ivfbd2FTIIdFgzM3usIeQ_66WCRDU2gQn/exec";
+
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwLaZlaSDJKLwuSGQejc2Mi3R34VLAhvPzRtI_uDsUY_6RaAKlsLBnOBRYHcuu42xqA/exec";
 const SHEET = "WALK-IN";
+
+const ROOM_LIMIT = 9;
 
 const AC_ROOMS = [
   "Berean Area",
@@ -260,11 +262,12 @@ const AC_ROOMS = [
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
+let updatingRows = new Set();
 
 const clean = v => (v || "").toString().trim();
 
 /* =========================
-   ICONS SAFE (NO UNDEFINED)
+   ICONS
 ========================= */
 function payIcon(v){
   if(!v) return "❌ NOT PAID";
@@ -282,17 +285,14 @@ function attIcon(v){
 }
 
 /* =========================
-   STATS SAFE
+   STATS
 ========================= */
 function updateStats(){
   let paid = 0, waiting = 0;
 
   allData.forEach(p=>{
-    let pay = p.payment_indicator || "";
-    let att = p.attendance_status || "";
-
-    if(pay.includes("PAID")) paid++;
-    if(pay.includes("WAIT") || att === "ON-waiting") waiting++;
+    if((p.payment_indicator||"").includes("PAID")) paid++;
+    if(p.attendance_status === "ON-waiting") waiting++;
   });
 
   document.getElementById("total").textContent = allData.length;
@@ -301,9 +301,9 @@ function updateStats(){
 }
 
 /* =========================
-   ROOM COUNTS SAFE
+   ROOM COUNTS
 ========================= */
-function updateRoomStats(){
+function computeRoomCounts(){
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
@@ -311,21 +311,25 @@ function updateRoomStats(){
     let r = clean(p.room_ac);
     if(roomCount[r] !== undefined) roomCount[r]++;
   });
+}
+
+function updateRoomStats(){
+  computeRoomCounts();
 
   let html = "<b>ROOM AC STATUS</b><br>";
 
   AC_ROOMS.forEach(r=>{
     let c = roomCount[r];
-    let full = c >= 18;
+    let full = c >= ROOM_LIMIT;
 
-    html += `${r} <span class="badge ${full?"full":"available"}">${c}/18</span><br>`;
+    html += `${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
 }
 
 /* =========================
-   SEND TO APPSCRIPT
+   SEND (STRONG LOCK SYSTEM)
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -335,18 +339,31 @@ function send(action,data){
     fd.append(k,data[k]);
   }
 
-  fetch(BASE_URL,{method:"POST",body:fd});
+  let id = String(data.rowIndex);
+
+  // 🔒 HARD LOCK (no snapback)
+  updatingRows.add(id);
+
+  fetch(BASE_URL,{method:"POST",body:fd})
+    .then(r=>r.json())
+    .then(()=>{
+      // longer delay = NO snapback even if sheet is slow
+      setTimeout(()=>{
+        updatingRows.delete(id);
+      },3000); 
+    })
+    .catch(()=>{
+      updatingRows.delete(id);
+    });
 }
 
 /* =========================
-   ROW BUILDER (FIXED SAFE FIELDS)
+   CREATE ROW
 ========================= */
 function createRow(p){
 
   let tr = document.createElement("tr");
   tr.dataset.id = p.rowIndex;
-
-  let amount = (p.mode_of_payment === "ONLINE") ? "₱1500" : "";
 
   tr.innerHTML = `
     <td>${p.rowIndex}</td>
@@ -354,8 +371,8 @@ function createRow(p){
     <td>${p.gender || ""}</td>
     <td>${p.room_ac || ""}</td>
 
-    <td class="paytxt">${payIcon(p.payment_indicator)}</td>
-    <td class="amount">${amount}</td>
+    <td class="payment">${payIcon(p.payment_indicator)}</td>
+    <td class="amount">${p.amount || ""}</td>
 
     <td>
       <select class="mode">
@@ -395,7 +412,7 @@ function createRow(p){
       `<option value="">ROOM AC</option>` +
       AC_ROOMS.map(r=>{
         let count = roomCount[r] || 0;
-        let full = count >= 18;
+        let full = count >= ROOM_LIMIT;
 
         return `
           <option value="${r}"
@@ -409,130 +426,125 @@ function createRow(p){
 
   refreshRooms();
 
-/* =========================
-   MODE
-========================= */
-tr.querySelector(".mode").onchange = (e)=>{
-  let val = e.target.value;
+  /* MODE */
+  tr.querySelector(".mode").onchange = (e)=>{
+    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
+  };
 
-  tr.querySelector(".amount").textContent =
-    val === "ONLINE" ? "₱1500" : "";
+  /* PAYMENT */
+  tr.querySelector(".pay").onclick = ()=>{
 
-  send("mode",{rowIndex:p.rowIndex,value:val});
-};
+    let state = p.payment_indicator;
 
-/* =========================
-   PAYMENT (SYNC FIXED)
-========================= */
-tr.querySelector(".pay").onclick = ()=>{
+    let next;
+    if(state === "NOT PAID ❌") next = "ONSITE 🟠";
+    else if(state === "ONSITE 🟠") next = "PAID ✔";
+    else next = "NOT PAID ❌";
 
-  let next;
+    p.payment_indicator = next;
 
-  if(!p.payment_indicator || p.payment_indicator.includes("NOT")) next = "ONSITE 🟠";
-  else if(p.payment_indicator.includes("ONSITE")) next = "PAID ✔";
-  else next = "NOT PAID ❌";
+    tr.querySelector(".pay").textContent = payIcon(next);
+    tr.querySelector(".payment").textContent = payIcon(next);
 
-  p.payment_indicator = next;
+    send("payment",{rowIndex:p.rowIndex,value:next});
+    updateStats();
+  };
 
-  tr.querySelector(".pay").textContent = payIcon(next);
-  tr.querySelector(".paytxt").textContent = payIcon(next);
+  /* ATTENDANCE */
+  tr.querySelector(".att").onclick = ()=>{
 
-  send("payment",{rowIndex:p.rowIndex,value:next});
-  updateStats();
-};
+    let next;
+    if(p.attendance_status === "Cancelled") next = "ON-waiting";
+    else if(p.attendance_status === "ON-waiting") next = "Attended";
+    else next = "Cancelled";
 
-/* =========================
-   ATTENDANCE
-========================= */
-tr.querySelector(".att").onclick = ()=>{
+    p.attendance_status = next;
+    tr.querySelector(".att").textContent = attIcon(next);
 
-  let next;
+    send("attendance",{rowIndex:p.rowIndex,status:next});
+  };
 
-  if(p.attendance_status === "Cancelled") next = "ON-waiting";
-  else if(p.attendance_status === "ON-waiting") next = "Attended";
-  else next = "Cancelled";
+  /* KIT */
+  tr.querySelector(".kit").onclick = ()=>{
+    let next = p.kit_distribution==="❌"?"🟠":p.kit_distribution==="🟠"?"✔":"❌";
+    p.kit_distribution = next;
 
-  p.attendance_status = next;
-  tr.querySelector(".att").textContent = attIcon(next);
+    tr.querySelector(".kit").textContent = next;
+    send("kit",{rowIndex:p.rowIndex,state:next});
+  };
 
-  send("attendance",{rowIndex:p.rowIndex,status:next});
-};
+  /* AIRCON */
+  tr.querySelector(".aircon").onclick = ()=>{
+    let next = p.aircon_pref==="❌"?"🟠":p.aircon_pref==="🟠"?"✔":"❌";
+    p.aircon_pref = next;
 
-/* =========================
-   KIT
-========================= */
-tr.querySelector(".kit").onclick = ()=>{
-  let next = p.kit_distribution==="❌"?"🟠":p.kit_distribution==="🟠"?"✔":"❌";
-  p.kit_distribution = next;
+    tr.querySelector(".aircon").textContent = next;
+    send("aircon",{rowIndex:p.rowIndex,state:next});
+  };
 
-  tr.querySelector(".kit").textContent = next;
-  send("kit",{rowIndex:p.rowIndex,state:next});
-};
+  /* ROOM AC (STRICT LIMIT 9) */
+  roomSelect.onchange = (e)=>{
+    let val = clean(e.target.value);
 
-/* =========================
-   AIRCON
-========================= */
-tr.querySelector(".aircon").onclick = ()=>{
-  let next = p.aircon_pref==="❌"?"🟠":p.aircon_pref==="🟠"?"✔":"❌";
-  p.aircon_pref = next;
+    let tempCount = {...roomCount};
+    tempCount[val] = (tempCount[val] || 0) + 1;
 
-  tr.querySelector(".aircon").textContent = next;
-  send("aircon",{rowIndex:p.rowIndex,state:next});
-};
+    if(val && tempCount[val] > ROOM_LIMIT && val !== p.room_ac){
+      alert("ROOM FULL (9 MAX)");
+      e.target.value = p.room_ac;
+      return;
+    }
 
-/* =========================
-   ROOM AC
-========================= */
-roomSelect.onchange = (e)=>{
-  let val = clean(e.target.value);
+    p.room_ac = val;
 
-  if(val && roomCount[val] >= 18 && val !== p.room_ac){
-    alert("ROOM FULL");
-    e.target.value = p.room_ac;
-    return;
-  }
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
 
-  p.room_ac = val;
-  send("room_ac",{rowIndex:p.rowIndex,value:val});
+    updateRoomStats();
+    refreshRooms();
+  };
 
-  updateRoomStats();
-  refreshRooms();
-};
-
-/* =========================
-   SHIRT
-========================= */
-tr.querySelector(".shirt").onchange = (e)=>{
-  send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
-};
-
-/* =========================
-   FIX: INITIAL STATS REFRESH
-========================= */
-updateStats();
-updateRoomStats();
-
+  /* SHIRT */
+  tr.querySelector(".shirt").onchange = (e)=>{
+    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+  };
 }
 
 /* =========================
-   LOAD DATA
+   LOAD DATA (NO SNAPBACK VERSION)
 ========================= */
 async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
-  allData = data;
+  data.forEach(newRow=>{
+    let id = String(newRow.rowIndex);
 
-  tbody.innerHTML = "";
+    // 🔒 DO NOT TOUCH rows being edited
+    if(updatingRows.has(id)) return;
+
+    let existing = document.querySelector(`tr[data-id="${id}"]`);
+
+    if(existing){
+      existing.querySelector(".payment").textContent = payIcon(newRow.payment_indicator);
+      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
+      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
+      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
+      existing.querySelector(".aircon").textContent = newRow.aircon_pref || "❌";
+    } else {
+      createRow(newRow);
+    }
+  });
+
+  allData = data;
   updateRoomStats();
-  allData.forEach(createRow);
   updateStats();
 }
 
+/* INIT */
 loadData();
-setInterval(loadData,5000);
 
-</script>
+/* SLOW REFRESH = SMOOTH */
+setInterval(loadData,12000);
 </script>
 
 </body>
