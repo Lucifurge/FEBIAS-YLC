@@ -204,17 +204,16 @@ let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
 let allData = {};
+let lastEdit = {}; // 🔥 strong anti-snapback
 
-/* ========================= */
 const norm = v => (v || "").toString().toUpperCase();
 
-/* ========================= ICONS */
+/* ========================= ICONS (FIXED) */
 function payIcon(v){
   v = norm(v);
   if(v.includes("PAID")) return "✔ PAID";
   if(v.includes("CANCEL")) return "❌ CANCELLED";
-  if(v.includes("ONSITE")) return "🟠 ONSITE";
-  return "🟠 WAITING";
+  return "🟠 WAITING"; // 🔥 no more onsite display
 }
 
 function attIcon(v){
@@ -226,13 +225,16 @@ function attIcon(v){
 
 function kitIcon(v){
   v = (v || "").toLowerCase();
-  if(v === "✔" || v.includes("given")) return "✔ GIVEN";
-  if(v === "❌" || v.includes("not")) return "❌ NOT GIVEN";
+  if(v === "✔") return "✔ GIVEN";
+  if(v === "❌") return "❌ NOT GIVEN";
   return "🟠 WAITING";
 }
 
 /* ========================= SEND */
 function send(action,data){
+  let id = String(data.rowIndex);
+  lastEdit[id] = Date.now(); // 🔥 mark edit time
+
   let fd = new FormData();
   fd.append("action",action);
 
@@ -272,44 +274,22 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ========================= CLASSIFICATION */
-  let classSelect = document.createElement("select");
-  let currentClass = p.classification || "No class";
-
-  classSelect.innerHTML = `
-    <option ${currentClass==="No class"?"selected":""}>No class</option>
-    <option ${currentClass==="Silver"?"selected":""}>Silver</option>
-    <option ${currentClass==="Copper"?"selected":""}>Copper</option>
-  `;
-
-  classSelect.onchange = ()=>{
-    let val = classSelect.value;
-    p.classification = val;
-    allData[p.rowIndex].classification = val;
-    send("classification",{rowIndex:p.rowIndex,value:val});
-  };
-
-  tr.querySelector(".classification").appendChild(classSelect);
-
   /* ========================= MODE */
   let modeSelect = document.createElement("select");
-  let modeVal = norm(p.mode_of_payment);
-
   modeSelect.innerHTML = `
-    <option ${modeVal==="ONSITE"?"selected":""}>ONSITE</option>
-    <option ${modeVal==="ONLINE"?"selected":""}>ONLINE</option>
+    <option ${norm(p.mode_of_payment)==="ONSITE"?"selected":""}>ONSITE</option>
+    <option ${norm(p.mode_of_payment)==="ONLINE"?"selected":""}>ONLINE</option>
   `;
 
   modeSelect.onchange = ()=>{
-    let val = modeSelect.value;
-    p.mode_of_payment = val;
-    allData[p.rowIndex].mode_of_payment = val;
-    send("mode",{rowIndex:p.rowIndex,value:val});
+    p.mode_of_payment = modeSelect.value;
+    allData[p.rowIndex].mode_of_payment = modeSelect.value;
+    send("mode",{rowIndex:p.rowIndex,value:modeSelect.value});
   };
 
   tr.querySelector(".mode").appendChild(modeSelect);
 
-  /* ========================= PAY */
+  /* ========================= PAY (FIXED LOGIC) */
   tr.querySelector(".pay").onclick = ()=>{
     let current = norm(p.payment_indicator || "WAITING");
 
@@ -347,7 +327,7 @@ function createRow(p){
     let current = p.kit_distribution || "";
 
     let next =
-      current === "" || current === "WAITING" ? "✔" :
+      current === "" ? "✔" :
       current === "✔" ? "❌" :
       "WAITING";
 
@@ -367,23 +347,18 @@ function updateRowUI(tr,p){
   tr.querySelector(".name").textContent =
     (p.lastName||"") + ", " + (p.firstName||"");
 
-  let payVal = p.payment_indicator || "WAITING";
-
-  tr.querySelector(".payment").textContent = payIcon(payVal);
-  tr.querySelector(".pay").textContent = payIcon(payVal);
+  tr.querySelector(".payment").textContent = payIcon(p.payment_indicator);
+  tr.querySelector(".pay").textContent = payIcon(p.payment_indicator);
 
   tr.querySelector(".amount").textContent =
-    norm(payVal).includes("ONSITE") ||
-    norm(payVal).includes("PAID")
+    norm(p.payment_indicator).includes("PAID")
     ? "₱1500" : "";
 
   tr.querySelector(".att").textContent = attIcon(p.attendance_status);
   tr.querySelector(".kit").textContent = kitIcon(p.kit_distribution);
-
-  tr.dataset.search = ((p.firstName||"")+" "+(p.lastName||"")).toLowerCase();
 }
 
-/* ========================= LOAD (NO SNAPBACK REAL FIX) */
+/* ========================= LOAD (TRUE NO SNAPBACK) */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -399,28 +374,23 @@ async function loadData(){
       return;
     }
 
+    // 🔥 HARD BLOCK overwrite if recently edited (5 seconds)
+    if(lastEdit[id] && Date.now() - lastEdit[id] < 5000){
+      return;
+    }
+
     let local = allData[id];
 
-    // 🔥 ONLY update if server differs (TRUE fix)
     if(
       local.payment_indicator !== server.payment_indicator ||
       local.attendance_status !== server.attendance_status ||
-      local.kit_distribution !== server.kit_distribution ||
-      local.mode_of_payment !== server.mode_of_payment ||
-      local.classification !== server.classification
+      local.kit_distribution !== server.kit_distribution
     ){
       Object.assign(local, server);
 
       let tr = document.querySelector(`tr[data-id="${id}"]`);
       if(tr){
         updateRowUI(tr, local);
-
-        // sync dropdowns
-        let modeSel = tr.querySelector(".mode select");
-        if(modeSel) modeSel.value = server.mode_of_payment || "";
-
-        let classSel = tr.querySelector(".classification select");
-        if(classSel) classSel.value = server.classification || "No class";
       }
     }
   });
@@ -430,7 +400,7 @@ async function loadData(){
 searchInput.addEventListener("input",()=>{
   let v = searchInput.value.toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
-    tr.style.display = (tr.dataset.search||"").includes(v) ? "" : "none";
+    tr.style.display = (tr.textContent.toLowerCase().includes(v)) ? "" : "none";
   });
 });
 
