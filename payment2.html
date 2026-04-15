@@ -46,7 +46,7 @@ h1,h2{
   border-radius: 10px;
   font-size: 14px;
   line-height: 1.6;
-  color: #ffffff; /* white text */
+  color: #ffffff;
   margin-bottom: 25px;
 }
 
@@ -200,12 +200,12 @@ If you paid online, please screenshot your receipt and present it during registr
 
 <div class="payment-methods">
 <div class="payment-box" data-method="Bank Transfer">
-<img src="bank.png" alt="Bank Transfer">
+<img src="bank.png">
 <div>Bank Transfer</div>
 </div>
 
 <div class="payment-box" data-method="GCash">
-<img src="gcash.png" alt="GCash">
+<img src="gcash.png">
 <div>GCash</div>
 </div>
 </div>
@@ -213,7 +213,7 @@ If you paid online, please screenshot your receipt and present it during registr
 <div id="online-upload" style="display:none">
 <h2>Upload Receipt</h2>
 <label>Receipt Name</label>
-<input type="text" id="fileName" placeholder="Enter receipt name">
+<input type="text" id="fileName">
 <label>Upload Receipt Photo</label>
 <input type="file" id="receipt" accept="image/*">
 </div>
@@ -242,13 +242,15 @@ if(!rowIndex){
   window.location.href="ylc.html";
 }
 
-/* SHOW PAYMENT METHODS ONLY FOR ONLINE */
+/* SHOW/HIDE OPTIONS */
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
     if(radio.value === "Online"){
       document.querySelector('.payment-methods').style.display="flex";
+      document.getElementById("online-upload").style.display="block";
     } else {
       document.querySelector('.payment-methods').style.display="none";
+      document.getElementById("online-upload").style.display="none";
     }
   });
 });
@@ -265,7 +267,7 @@ paymentBoxes.forEach(box=>{
 document.getElementById('payment-form').addEventListener('submit', async e=>{
   e.preventDefault();
 
-  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const submitBtn = e.target.querySelector('button');
   const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
   const selectedBox = document.querySelector('.payment-box.selected');
   const method = selectedBox?.dataset.method;
@@ -276,13 +278,13 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
   }
 
   if(paymentBy === "Online" && !method){
-    alert("Select payment method (GCash or Bank)");
+    alert("Select payment method");
     return;
   }
 
-  loader.style.display = "block";
-  submitBtn.disabled = true;
-  submitBtn.innerText = "Processing...";
+  loader.style.display="block";
+  submitBtn.disabled=true;
+  submitBtn.innerText="Processing...";
 
   try{
 
@@ -313,17 +315,21 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
       throw new Error(result.error || "Payment failed");
     }
 
-    window.location.href = "thankyou2.html?rowIndex=" + rowIndex;
+    // ✅ FINAL REDIRECT FIX
+    if(paymentBy === "Onsite"){
+      window.location.href = "thankyou.html?rowIndex=" + rowIndex;
+    } else {
+      window.location.href = "thankyou2.html?rowIndex=" + rowIndex;
+    }
 
   } catch(err){
-    console.error(err);
     alert(err.message || "Something went wrong");
-
-    loader.style.display = "none";
-    submitBtn.disabled = false;
-    submitBtn.innerText = "Confirm Payment";
+    loader.style.display="none";
+    submitBtn.disabled=false;
+    submitBtn.innerText="Confirm Payment";
   }
 });
 </script>
+
 </body>
 </html>
