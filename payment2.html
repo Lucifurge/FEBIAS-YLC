@@ -231,6 +231,7 @@ const form = document.getElementById("payment-form");
 const submitBtn = form.querySelector("button");
 
 let selectedMethod = "";
+let selectedType = "";
 let isSubmitting = false;
 
 const rowIndex = new URLSearchParams(window.location.search).get("rowIndex");
@@ -240,16 +241,34 @@ if(!rowIndex){
   window.location.href="ylc.html";
 }
 
-/* ================= SHOW OPTIONS ================= */
+/* ================= INIT ================= */
+submitBtn.disabled = true; // 🔒 disabled by default
+
+function checkReady(){
+  if(selectedType === "Onsite"){
+    submitBtn.disabled = false;
+  } else if(selectedType === "Online" && selectedMethod){
+    submitBtn.disabled = false;
+  } else {
+    submitBtn.disabled = true;
+  }
+}
+
+/* ================= SELECT TYPE ================= */
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
-    if(radio.value === "Online"){
+
+    selectedType = radio.value;
+
+    if(selectedType === "Online"){
       document.querySelector('.payment-methods').style.display="flex";
     } else {
       document.querySelector('.payment-methods').style.display="none";
       selectedMethod = "";
       paymentBoxes.forEach(b=>b.classList.remove('selected'));
     }
+
+    checkReady();
   });
 });
 
@@ -259,6 +278,8 @@ paymentBoxes.forEach(box=>{
     paymentBoxes.forEach(b=>b.classList.remove('selected'));
     box.classList.add('selected');
     selectedMethod = box.dataset.method;
+
+    checkReady();
   });
 });
 
@@ -266,16 +287,14 @@ paymentBoxes.forEach(box=>{
 form.addEventListener("submit", async (e)=>{
   e.preventDefault();
 
-  if(isSubmitting) return; // 🔒 prevent double click
+  if(isSubmitting) return;
 
-  const paymentType = document.querySelector('input[name="payment_by"]:checked')?.value;
-
-  if(!paymentType){
+  if(!selectedType){
     alert("Please select payment type");
     return;
   }
 
-  if(paymentType === "Online" && !selectedMethod){
+  if(selectedType === "Online" && !selectedMethod){
     alert("Please select GCash or Bank");
     return;
   }
@@ -293,13 +312,13 @@ form.addEventListener("submit", async (e)=>{
     postData.append("rowIndex",rowIndex);
 
     postData.append("payment_by",
-      paymentType === "Online"
+      selectedType === "Online"
         ? `Online (${selectedMethod})`
         : "Onsite"
     );
 
     postData.append("payment_status",
-      paymentType === "Online"
+      selectedType === "Online"
         ? "Paid (Online - QR)"
         : "To Pay Onsite"
     );
@@ -310,7 +329,7 @@ form.addEventListener("submit", async (e)=>{
     });
 
     // ✅ REDIRECT
-    if(paymentType === "Onsite"){
+    if(selectedType === "Onsite"){
       window.location.href = "thankyou.html?rowIndex=" + rowIndex;
     } else {
       window.location.href = "thankyou2.html?rowIndex=" + rowIndex;
