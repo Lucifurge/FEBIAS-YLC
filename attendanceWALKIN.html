@@ -49,10 +49,28 @@ h1{
 .search-bar{
   display:flex;
   justify-content:center;
-  margin:15px 0;
+  margin:15px 0 8px 0;
 }
 
 .search-bar input{
+  width:100%;
+  max-width:500px;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #333;
+  background:#111;
+  color:white;
+  outline:none;
+}
+
+/* 🔽 NEW DROPDOWN STYLE */
+.room-dropdown-wrap{
+  display:flex;
+  justify-content:center;
+  margin:8px 0 15px 0;
+}
+
+.room-dropdown-wrap select{
   width:100%;
   max-width:500px;
   padding:12px;
@@ -195,8 +213,42 @@ select{
 7. Shirt sizes now include up to 3XL.<br>
 </div>
 
+<!-- SEARCH -->
 <div class="search-bar">
   <input type="text" placeholder="Search camper name, room, church...">
+</div>
+
+<!-- 🔽 DROPDOWN ADDED -->
+<div class="room-dropdown-wrap">
+  <select id="roomDropdown">
+    <option value="">Select Group</option>
+
+    <optgroup label="Sharon (Girls)">
+      <option>Sarah</option>
+      <option>Esther</option>
+      <option>Eunice</option>
+      <option>Rebecca</option>
+      <option>Lydia</option>
+      <option>Hannah</option>
+      <option>Priscilla</option>
+      <option>Mary</option>
+      <option>Elizabeth</option>
+    </optgroup>
+
+    <optgroup label="Berean (Boys)">
+      <option>Abraham</option>
+      <option>Barnabas</option>
+      <option>Caleb</option>
+      <option>Joseph</option>
+      <option>David</option>
+      <option>Daniel</option>
+      <option>Moses</option>
+      <option>Nehemiah</option>
+      <option>Timothy</option>
+      <option>Stephen</option>
+      <option>Paul</option>
+    </optgroup>
+  </select>
 </div>
 
 <div class="stats">
@@ -231,12 +283,9 @@ Loading...
   <th>ROOM_AC</th>
 </tr>
 </thead>
-
 <tbody></tbody>
 </table>
 </div>
-
-
 
 
 <script>
