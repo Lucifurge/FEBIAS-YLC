@@ -241,7 +241,6 @@ Loading...
 
 <script>
 
-
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
@@ -265,9 +264,7 @@ let lastEdit = 0;
 /* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* =========================
-   ICONS
-========================= */
+/* ICONS */
 function payIcon(v){
   if(v === "PAID") return "✅ PAID";
   if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
@@ -280,9 +277,7 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* =========================
-   STATS
-========================= */
+/* STATS */
 function updateStats(){
   let paid = 0, waiting = 0;
 
@@ -296,15 +291,13 @@ function updateStats(){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* =========================
-   ROOM COUNT
-========================= */
+/* ROOM COUNT */
 function updateRoomStats(){
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
   allData.forEach(p=>{
-    let r = clean(p.room_ac);
+    let r = clean(p.ROOM_AC);
     if(roomCount[r] !== undefined){
       roomCount[r]++;
     }
@@ -322,9 +315,7 @@ function updateRoomStats(){
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* =========================
-   CREATE ROW
-========================= */
+/* CREATE ROW */
 function createRow(p){
 
   let tr = document.createElement("tr");
@@ -369,16 +360,12 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* =========================
-     MODE OF PAYMENT (🔥 FIXED)
-  ========================= */
+  /* MODE */
   const modeSelect = tr.querySelector(".mode");
-
   modeSelect.onchange = (e)=>{
     lastEdit = Date.now();
 
     let newValue = e.target.value;
-
     p.modeOfPayment = newValue;
 
     send("mode", {
@@ -387,9 +374,7 @@ function createRow(p){
     });
   };
 
-  /* =========================
-     ROOM OPTIONS
-  ========================= */
+  /* ROOM OPTIONS */
   const roomSelect = tr.querySelector(".roomac");
 
   function refreshRoomOptions(){
@@ -400,8 +385,8 @@ function createRow(p){
 
         return `
           <option value="${r}"
-            ${p.room_ac===r?"selected":""}
-            ${full && p.room_ac!==r?"disabled":""}>
+            ${p.ROOM_AC===r?"selected":""}
+            ${full && p.ROOM_AC!==r?"disabled":""}>
             ${r} ${full?"(FULL)":""}
           </option>
         `;
@@ -457,7 +442,7 @@ function createRow(p){
     lastEdit = Date.now();
 
     let newRoom = clean(e.target.value);
-    let oldRoom = clean(p.room_ac);
+    let oldRoom = clean(p.ROOM_AC);
 
     if(newRoom && roomCount[newRoom] >= 18 && newRoom !== oldRoom){
       alert("ROOM FULL (18)");
@@ -465,7 +450,7 @@ function createRow(p){
       return;
     }
 
-    p.room_ac = newRoom;
+    p.ROOM_AC = newRoom;
 
     send("room_ac",{rowIndex:p.rowIndex,value:newRoom});
 
@@ -484,9 +469,7 @@ function createRow(p){
 
 }
 
-/* =========================
-   SEND
-========================= */
+/* SEND */
 function send(action,data){
   let fd = new FormData();
   fd.append("action",action);
@@ -499,9 +482,7 @@ function send(action,data){
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
-/* =========================
-   LOAD (🔥 STRONG NO SNAP BACK)
-========================= */
+/* LOAD */
 async function loadData(){
 
   if(Date.now() - lastEdit < 8000) return;
@@ -529,9 +510,6 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
     r.style.display = r.innerText.toLowerCase().includes(q)?"":"none";
   });
 });
-
-
-
 
 </script>
 
