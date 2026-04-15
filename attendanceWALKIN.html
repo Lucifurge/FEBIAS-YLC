@@ -60,7 +60,6 @@ h1{
   outline:none;
 }
 
-
 .stats{
   display:flex;
   justify-content:center;
@@ -200,9 +199,9 @@ select{
 Loading...
 </div>
 
-<button>🔄 REFRESH</button>
+<!-- ✅ FIXED BUTTON -->
+<button onclick="loadData()">🔄 REFRESH</button>
 
-<!-- ✅ FIXED TABLE -->
 <div class="table-wrap">
 <table>
 
@@ -224,7 +223,7 @@ Loading...
 </tr>
 </thead>
 
-<tbody></tbody> <!-- ✅ REQUIRED -->
+<tbody></tbody>
 
 </table>
 </div>
