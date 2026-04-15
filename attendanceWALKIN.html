@@ -63,7 +63,7 @@ h1{
   outline:none;
 }
 
-/* DROPDOWN STYLE */
+/* DROPDOWN */
 .room-dropdown-wrap{
   display:flex;
   justify-content:center;
@@ -135,6 +135,7 @@ th{
   padding:12px;
   position:sticky;
   top:0;
+  z-index:2;
 }
 
 td{
@@ -158,6 +159,42 @@ select{
 
 <body>
 
+<h1>YLC 2026 WALK IN ADMIN ATTENDANCE SYSTEM</h1>
+<div class="sub">FEBIAS College of Bible System</div>
+
+<div class="instructions">
+<b>HOW TO USE SYSTEM:</b><br>
+1. Search campers instantly using the search bar.<br>
+2. Click PAY → toggles PAID / NOT PAID.<br>
+3. Click ATT → updates attendance status.<br>
+4. Choose Mode (Onsite / GCASH / BANK).<br>
+5. ROOM_AC has max 9 campers per room.<br>
+6. Full rooms are disabled automatically.<br>
+</div>
+
+<div class="search-bar">
+  <input type="text" placeholder="Search camper name, room, church...">
+</div>
+
+<div class="room-dropdown-wrap">
+  <select id="roomDropdown">
+    <option value="">Select Group</option>
+  </select>
+</div>
+
+<div class="stats">
+  <div class="box">Total<br><span id="total">0</span></div>
+  <div class="box">Paid<br><span id="paid">0</span></div>
+  <div class="box">Waiting<br><span id="waiting">0</span></div>
+</div>
+
+<div class="room-box" id="roomStats">
+<b>ROOM AC STATUS</b><br>
+Loading...
+</div>
+
+<button>🔄 REFRESH</button>
+
 <div class="table-wrap">
 <table>
 <thead>
@@ -180,13 +217,13 @@ select{
 
 <tbody>
 
-<!-- SAMPLE ROW STRUCTURE -->
+<!-- TEMPLATE ROW (JS WILL GENERATE THIS) -->
 <tr>
-  <td>1</td>
-  <td>Sample Name</td>
-  <td>Male</td>
+  <td>#</td>
+  <td>Name</td>
+  <td>Gender</td>
 
-  <!-- ✅ ROOM DROPDOWN -->
+  <!-- ✅ ROOM ASSIGNMENT -->
   <td>
     <select class="roomAssign">
       <option value="">Select Room</option>
@@ -218,7 +255,7 @@ select{
     </select>
   </td>
 
-  <td>❌ NOT PAID</td>
+  <td>❌</td>
   <td>1500</td>
   <td>ONSITE</td>
   <td>❌</td>
@@ -227,7 +264,7 @@ select{
   <td>❌</td>
   <td>❌</td>
 
-  <!-- 🚫 ROOM_AC UNTOUCHED -->
+  <!-- 🚫 ROOM_AC -->
   <td>ROOM_AC</td>
 </tr>
 
