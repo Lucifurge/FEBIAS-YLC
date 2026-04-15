@@ -210,18 +210,6 @@ If you paid online, please screenshot your receipt and present it during registr
 </div>
 </div>
 
-<div id="online-upload" style="display:none">
-<h2>Upload Receipt</h2>
-<label>Receipt Name</label>
-<input type="text" id="fileName">
-<label>Upload Receipt Photo</label>
-<input type="file" id="receipt" accept="image/*">
-</div>
-
-<button type="submit">Confirm Payment</button>
-</form>
-</div>
-
 <div id="loader">Processing payment...</div>
 
 <footer>
@@ -242,49 +230,35 @@ if(!rowIndex){
   window.location.href="ylc.html";
 }
 
-/* SHOW/HIDE OPTIONS */
+/* ================= SHOW OPTIONS ================= */
 paymentRadios.forEach(radio=>{
   radio.addEventListener('change',()=>{
+
+    if(radio.value === "Onsite"){
+      processPayment("Onsite");
+    }
+
     if(radio.value === "Online"){
       document.querySelector('.payment-methods').style.display="flex";
-      document.getElementById("online-upload").style.display="block";
-    } else {
-      document.querySelector('.payment-methods').style.display="none";
-      document.getElementById("online-upload").style.display="none";
     }
   });
 });
 
-/* SELECT METHOD */
+/* ================= SELECT ONLINE METHOD ================= */
 paymentBoxes.forEach(box=>{
   box.addEventListener('click',()=>{
     paymentBoxes.forEach(b=>b.classList.remove('selected'));
     box.classList.add('selected');
+
+    const method = box.dataset.method;
+    processPayment("Online", method);
   });
 });
 
-/* SUBMIT */
-document.getElementById('payment-form').addEventListener('submit', async e=>{
-  e.preventDefault();
-
-  const submitBtn = e.target.querySelector('button');
-  const paymentBy = document.querySelector('input[name="payment_by"]:checked')?.value;
-  const selectedBox = document.querySelector('.payment-box.selected');
-  const method = selectedBox?.dataset.method;
-
-  if(!paymentBy){
-    alert("Select payment type");
-    return;
-  }
-
-  if(paymentBy === "Online" && !method){
-    alert("Select payment method");
-    return;
-  }
+/* ================= MAIN PROCESS ================= */
+async function processPayment(type, method=""){
 
   loader.style.display="block";
-  submitBtn.disabled=true;
-  submitBtn.innerText="Processing...";
 
   try{
 
@@ -293,42 +267,34 @@ document.getElementById('payment-form').addEventListener('submit', async e=>{
     postData.append("rowIndex",rowIndex);
 
     postData.append("payment_by",
-      paymentBy === "Online"
+      type === "Online"
         ? `Online (${method})`
         : "Onsite"
     );
 
     postData.append("payment_status",
-      paymentBy === "Online"
+      type === "Online"
         ? "Paid (Online - QR)"
         : "To Pay Onsite"
     );
 
-    const res = await fetch(sheetUrl,{
+    await fetch(sheetUrl,{
       method:"POST",
       body:postData
     });
 
-    const result = await res.json();
-
-    if(result.result !== "success"){
-      throw new Error(result.error || "Payment failed");
-    }
-
-    // ✅ FINAL REDIRECT FIX
-    if(paymentBy === "Onsite"){
+    // ✅ REDIRECT
+    if(type === "Onsite"){
       window.location.href = "thankyou.html?rowIndex=" + rowIndex;
     } else {
       window.location.href = "thankyou2.html?rowIndex=" + rowIndex;
     }
 
   } catch(err){
-    alert(err.message || "Something went wrong");
+    alert("Something went wrong");
     loader.style.display="none";
-    submitBtn.disabled=false;
-    submitBtn.innerText="Confirm Payment";
   }
-});
+}
 </script>
 
 </body>
