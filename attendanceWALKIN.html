@@ -272,7 +272,7 @@ function applyLocal(data){
   });
 }
 
-/* 🔍 SEARCH FILTER */
+/* 🔍 SEARCH */
 function filterData(data){
   if(!searchQuery) return data;
 
@@ -365,10 +365,15 @@ function createRow(p){
     <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
     <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
+    <!-- ✅ SHIRT (FIXED) -->
     <td>
       <select class="shirt">
-        <option>S</option><option>M</option><option>L</option>
-        <option>XL</option><option>XXL</option><option>3XL</option>
+        <option ${p.shirtSize==="S"?"selected":""}>S</option>
+        <option ${p.shirtSize==="M"?"selected":""}>M</option>
+        <option ${p.shirtSize==="L"?"selected":""}>L</option>
+        <option ${p.shirtSize==="XL"?"selected":""}>XL</option>
+        <option ${p.shirtSize==="XXL"?"selected":""}>XXL</option>
+        <option ${p.shirtSize==="3XL"?"selected":""}>3XL</option>
       </select>
     </td>
 
@@ -377,7 +382,6 @@ function createRow(p){
 
     <td><select class="roomac"></select></td>
 
-    <!-- CLASSIFICATION (UNCHANGED POSITION) -->
     <td class="${p.classification === 'Silver' ? 'silver' : 'copper'}">
       ${p.classification || ""}
     </td>
@@ -385,7 +389,15 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ROOM LOGIC */
+  /* SHIRT SAVE */
+  tr.querySelector(".shirt").onchange = e=>{
+    let val = e.target.value;
+    p.shirtSize = val;
+    saveLocal(p.rowIndex,"shirtSize",val);
+    send("shirt",{rowIndex:p.rowIndex,value:val});
+  };
+
+  /* ROOM */
   const roomSelect = tr.querySelector(".roomac");
   let allowedRoom = getAutoRoomAC(p.room);
 
@@ -419,7 +431,6 @@ function createRow(p){
 
     p.ROOM_AC = val;
     saveLocal(p.rowIndex,"ROOM_AC",val);
-
     send("room_ac",{rowIndex:p.rowIndex,value:val});
     updateRoomStats();
   };
@@ -452,7 +463,7 @@ async function loadData(){
   updateStats(filtered);
 }
 
-/* 🔍 SEARCH EVENT */
+/* SEARCH */
 document.querySelector(".search-bar input").addEventListener("input", e=>{
   searchQuery = e.target.value.toLowerCase();
   loadData();
@@ -462,6 +473,5 @@ loadData();
 setInterval(loadData,4000);
 
 </script>
-
 </body>
 </html>
