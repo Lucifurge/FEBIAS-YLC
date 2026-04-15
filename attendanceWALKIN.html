@@ -258,9 +258,11 @@ function createRow(p){
     <td class="classification"></td>
 
     <td></td>
+
     <td class="payment"></td>
     <td class="amount"></td>
-    <td></td>
+
+    <td class="mode"></td>
 
     <td class="pay clickable"></td>
     <td class="att clickable"></td>
@@ -270,9 +272,8 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ========================= CLASSIFICATION (NEW FIX) */
+  /* ========================= CLASSIFICATION */
   let classSelect = document.createElement("select");
-
   let currentClass = p.classification || "No class";
 
   classSelect.innerHTML = `
@@ -283,18 +284,34 @@ function createRow(p){
 
   classSelect.onchange = ()=>{
     let val = classSelect.value;
-
     p.classification = val;
     allData[p.rowIndex].classification = val;
-
     send("classification",{rowIndex:p.rowIndex,value:val});
   };
 
   tr.querySelector(".classification").appendChild(classSelect);
 
+  /* ========================= MODE */
+  let modeSelect = document.createElement("select");
+  let modeVal = norm(p.mode_of_payment);
+
+  modeSelect.innerHTML = `
+    <option ${modeVal==="ONSITE"?"selected":""}>ONSITE</option>
+    <option ${modeVal==="ONLINE"?"selected":""}>ONLINE</option>
+  `;
+
+  modeSelect.onchange = ()=>{
+    let val = modeSelect.value;
+    p.mode_of_payment = val;
+    allData[p.rowIndex].mode_of_payment = val;
+    send("mode",{rowIndex:p.rowIndex,value:val});
+  };
+
+  tr.querySelector(".mode").appendChild(modeSelect);
+
   /* ========================= PAY */
   tr.querySelector(".pay").onclick = ()=>{
-    let current = norm(p.payment_indicator);
+    let current = norm(p.payment_indicator || "WAITING");
 
     let next =
       current.includes("WAIT") ? "ONSITE" :
@@ -350,12 +367,14 @@ function updateRowUI(tr,p){
   tr.querySelector(".name").textContent =
     (p.lastName||"") + ", " + (p.firstName||"");
 
-  tr.querySelector(".payment").textContent = payIcon(p.payment_indicator);
-  tr.querySelector(".pay").textContent = payIcon(p.payment_indicator);
+  let payVal = p.payment_indicator || "WAITING";
+
+  tr.querySelector(".payment").textContent = payIcon(payVal);
+  tr.querySelector(".pay").textContent = payIcon(payVal);
 
   tr.querySelector(".amount").textContent =
-    norm(p.payment_indicator).includes("ONSITE") ||
-    norm(p.payment_indicator).includes("PAID")
+    norm(payVal).includes("ONSITE") ||
+    norm(payVal).includes("PAID")
     ? "₱1500" : "";
 
   tr.querySelector(".att").textContent = attIcon(p.attendance_status);
@@ -364,7 +383,7 @@ function updateRowUI(tr,p){
   tr.dataset.search = ((p.firstName||"")+" "+(p.lastName||"")).toLowerCase();
 }
 
-/* ========================= LOAD (NO SNAPBACK) */
+/* ========================= LOAD (NO SNAPBACK REAL FIX) */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -382,24 +401,26 @@ async function loadData(){
 
     let local = allData[id];
 
-    let changed =
+    // 🔥 ONLY update if server differs (TRUE fix)
+    if(
       local.payment_indicator !== server.payment_indicator ||
       local.attendance_status !== server.attendance_status ||
       local.kit_distribution !== server.kit_distribution ||
-      local.classification !== server.classification;
-
-    if(changed){
+      local.mode_of_payment !== server.mode_of_payment ||
+      local.classification !== server.classification
+    ){
       Object.assign(local, server);
 
       let tr = document.querySelector(`tr[data-id="${id}"]`);
       if(tr){
         updateRowUI(tr, local);
 
-        // 🔥 update classification dropdown too
-        let sel = tr.querySelector(".classification select");
-        if(sel && sel.value !== (server.classification || "No class")){
-          sel.value = server.classification || "No class";
-        }
+        // sync dropdowns
+        let modeSel = tr.querySelector(".mode select");
+        if(modeSel) modeSel.value = server.mode_of_payment || "";
+
+        let classSel = tr.querySelector(".classification select");
+        if(classSel) classSel.value = server.classification || "No class";
       }
     }
   });
