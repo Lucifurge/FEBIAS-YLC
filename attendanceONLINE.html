@@ -241,8 +241,6 @@ Loading...
 
 <script>
 
-
-
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
@@ -263,12 +261,9 @@ let allData = [];
 let roomCount = {};
 let lastEdit = 0;
 
-/* CLEAN */
 const clean = v => (v || "").toString().trim();
 
-/* =========================
-   ICONS
-========================= */
+/* ICONS */
 function payIcon(v){
   if(v === "PAID") return "✅ PAID";
   if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
@@ -281,9 +276,7 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* =========================
-   STATS
-========================= */
+/* STATS */
 function updateStats(){
   let paid = 0, waiting = 0;
 
@@ -297,18 +290,14 @@ function updateStats(){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* =========================
-   ROOM COUNT
-========================= */
+/* ROOM COUNT */
 function updateRoomStats(){
   roomCount = {};
   AC_ROOMS.forEach(r => roomCount[r] = 0);
 
   allData.forEach(p=>{
     let r = clean(p.room_ac);
-    if(roomCount[r] !== undefined){
-      roomCount[r]++;
-    }
+    if(roomCount[r] !== undefined) roomCount[r]++;
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
@@ -323,9 +312,19 @@ function updateRoomStats(){
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* =========================
-   CREATE ROW
-========================= */
+/* SEND */
+function send(action,data){
+  let fd = new FormData();
+  fd.append("action",action);
+
+  for(let k in data){
+    fd.append(k,data[k]);
+  }
+
+  fetch(BASE_URL,{method:"POST",body:fd});
+}
+
+/* CREATE ROW */
 function createRow(p){
 
   let tr = document.createElement("tr");
@@ -342,9 +341,10 @@ function createRow(p){
 
     <td>
       <select class="mode">
-        <option ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
-        <option ${p.modeOfPayment==="GCASH"?"selected":""}>GCASH</option>
-        <option ${p.modeOfPayment==="BANK"?"selected":""}>BANK</option>
+        <option value="ONSITE" ${clean(p.mode_of_payment)==="ONSITE"?"selected":""}>ONSITE</option>
+        <option value="ONLINE" ${clean(p.mode_of_payment)==="ONLINE"?"selected":""}>ONLINE</option>
+        <option value="GCASH" ${clean(p.mode_of_payment)==="GCASH"?"selected":""}>GCASH</option>
+        <option value="BANK" ${clean(p.mode_of_payment)==="BANK"?"selected":""}>BANK</option>
       </select>
     </td>
 
@@ -368,30 +368,17 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ===== ROOM OPTIONS (FIXED) ===== */
-  const roomSelect = tr.querySelector(".roomac");
+  /* MODE FIX */
+  tr.querySelector(".mode").onchange = (e)=>{
+    lastEdit = Date.now();
+    let val = e.target.value;
 
-  function refreshRoomOptions(){
-    roomSelect.innerHTML = `<option value="">ROOM AC</option>` +
-      AC_ROOMS.map(r=>{
-        let count = roomCount[r] || 0;
-        let full = count >= 18;
+    p.mode_of_payment = val; // prevent snapback
 
-        return `
-          <option value="${r}"
-            ${p.room_ac===r?"selected":""}
-            ${full && p.room_ac!==r?"disabled":""}>
-            ${r} ${full?"(FULL)":""}
-          </option>
-        `;
-      }).join("");
-  }
+    send("mode",{rowIndex:p.rowIndex,value:val});
+  };
 
-  refreshRoomOptions();
-
-  /* =========================
-     PAYMENT (3 STATE FIX)
-  ========================= */
+  /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
     lastEdit = Date.now();
 
@@ -414,20 +401,14 @@ function createRow(p){
     updateStats();
   };
 
-  /* =========================
-     ATTENDANCE (FIXED)
-  ========================= */
+  /* ATTENDANCE */
   tr.querySelector(".att").onclick = ()=>{
     lastEdit = Date.now();
 
     let next;
-    if(p.attendanceStatus === "Cancelled"){
-      next = "ON-waiting";
-    } else if(p.attendanceStatus === "ON-waiting"){
-      next = "Attended";
-    } else {
-      next = "Cancelled";
-    }
+    if(p.attendanceStatus === "Cancelled") next = "ON-waiting";
+    else if(p.attendanceStatus === "ON-waiting") next = "Attended";
+    else next = "Cancelled";
 
     p.attendanceStatus = next;
     tr.querySelector(".att").textContent = attIcon(next);
@@ -441,8 +422,8 @@ function createRow(p){
 
     let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
     p.kit = next;
-    tr.querySelector(".kit").textContent = next;
 
+    tr.querySelector(".kit").textContent = next;
     send("kit",{rowIndex:p.rowIndex,state:next});
   };
 
@@ -452,60 +433,53 @@ function createRow(p){
 
     let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
     p.aircon = next;
-    tr.querySelector(".aircon").textContent = next;
 
+    tr.querySelector(".aircon").textContent = next;
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
   /* ROOM AC */
+  const roomSelect = tr.querySelector(".roomac");
+
+  function refreshRooms(){
+    roomSelect.innerHTML =
+      `<option value="">ROOM AC</option>` +
+      AC_ROOMS.map(r=>{
+        let count = roomCount[r] || 0;
+        let full = count >= 18;
+
+        return `
+          <option value="${r}"
+            ${p.room_ac===r?"selected":""}
+            ${full && p.room_ac!==r?"disabled":""}>
+            ${r} ${full?"(FULL)":""}
+          </option>
+        `;
+      }).join("");
+  }
+
+  refreshRooms();
+
   roomSelect.onchange = (e)=>{
     lastEdit = Date.now();
 
-    let newRoom = clean(e.target.value);
-    let oldRoom = clean(p.room_ac);
+    let val = clean(e.target.value);
 
-    if(newRoom && roomCount[newRoom] >= 18 && newRoom !== oldRoom){
+    if(val && roomCount[val] >= 18 && val !== p.room_ac){
       alert("ROOM FULL (18)");
-      e.target.value = oldRoom;
+      e.target.value = p.room_ac;
       return;
     }
 
-    p.room_ac = newRoom;
-
-    send("room_ac",{rowIndex:p.rowIndex,value:newRoom});
+    p.room_ac = val;
+    send("room_ac",{rowIndex:p.rowIndex,value:val});
 
     updateRoomStats();
-    refreshRoomOptions();
+    refreshRooms();
   };
-
-  /* SHIRT */
-  const shirt = tr.querySelector(".shirt");
-  shirt.value = p.shirt || "";
-
-  shirt.onchange = (e)=>{
-    lastEdit = Date.now();
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
-  };
-
 }
 
-/* =========================
-   SEND
-========================= */
-function send(action,data){
-  let fd = new FormData();
-  fd.append("action",action);
-
-  for(let k in data){
-    fd.append(k,data[k]);
-  }
-
-  fetch(BASE_URL,{method:"POST",body:fd});
-}
-
-/* =========================
-   LOAD (NO SNAP BACK)
-========================= */
+/* LOAD */
 async function loadData(){
 
   if(Date.now() - lastEdit < 5000) return;
@@ -533,7 +507,6 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
     r.style.display = r.innerText.toLowerCase().includes(q)?"":"none";
   });
 });
-
 
 </script>
 
