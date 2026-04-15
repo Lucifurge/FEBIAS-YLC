@@ -211,7 +211,7 @@ let allData = {};
 const norm = v => (v || "").toString().toUpperCase();
 
 /* =========================
-   ICONS (SAFE)
+   ICONS
 ========================= */
 function payIcon(v){
   v = norm(v);
@@ -263,7 +263,8 @@ function send(action,data){
     fd.append(k,data[k]);
   }
 
-  fetch(BASE_URL,{method:"POST",body:fd});
+  fetch(BASE_URL,{method:"POST",body:fd})
+    .catch(()=>console.log("send failed"));
 }
 
 /* =========================
@@ -323,11 +324,15 @@ function createRow(p){
     send("room_assignment",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* SHIRT */
+  /* SHIRT (SYNC FIXED) */
   let shirt = tr.querySelector(".shirt");
   shirt.onchange = e=>{
-    p.shirt_size = e.target.value;
-    send("shirt",{rowIndex:p.rowIndex,value:e.target.value});
+    let val = e.target.value;
+
+    p.shirt_size = val;
+    allData[p.rowIndex].shirt_size = val;
+
+    send("shirt",{rowIndex:p.rowIndex,value:val});
   };
 
   /* PAY */
@@ -402,7 +407,7 @@ function updateRowUI(tr,p){
 }
 
 /* =========================
-   LOAD
+   LOAD (FINAL SYNC)
 ========================= */
 async function loadData(){
 
@@ -432,9 +437,16 @@ async function loadData(){
     if(tr){
       updateRowUI(tr, allData[id]);
 
+      /* 🔥 PERFECT SHIRT SYNC */
       let shirt = tr.querySelector(".shirt");
-      if(shirt && shirt.value !== (p.shirt_size||"")){
-        shirt.value = p.shirt_size || "";
+      if(shirt){
+        let sheetVal = (p.shirt_size || "").toString();
+
+        if(shirt.value !== sheetVal){
+          shirt.value = sheetVal;
+        }
+
+        allData[id].shirt_size = sheetVal;
       }
     }
   });
