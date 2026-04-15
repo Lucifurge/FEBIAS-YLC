@@ -242,7 +242,6 @@ Loading...
 <script>
 
 
-
 const BASE_URL = "https://script.google.com/macros/s/AKfycbz2KwC7F750vELj7GgoAKxTxQqxsa_Gr6k78rGkUkyvRtilxisU3BYJGVce2Fn6J8pS/exec";
 const SHEET = "Pre-Registration";
 
@@ -342,9 +341,11 @@ function createRow(p){
 
     <td>
       <select class="mode">
-        <option ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
-        <option ${p.modeOfPayment==="GCASH"?"selected":""}>GCASH</option>
-        <option ${p.modeOfPayment==="BANK"?"selected":""}>BANK</option>
+        <option value="">Select</option>
+        <option value="Onsite (BO)" ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite (BO)</option>
+        <option value="Onsite (orange tag)" ${p.modeOfPayment==="Onsite (orange tag)"?"selected":""}>Onsite (orange tag)</option>
+        <option value="Online (GCASH)" ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>Online (GCASH)</option>
+        <option value="Online (BANK)" ${p.modeOfPayment==="Online (BANK)"?"selected":""}>Online (BANK)</option>
       </select>
     </td>
 
@@ -368,7 +369,27 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ===== ROOM OPTIONS (FIXED) ===== */
+  /* =========================
+     MODE OF PAYMENT (🔥 FIXED)
+  ========================= */
+  const modeSelect = tr.querySelector(".mode");
+
+  modeSelect.onchange = (e)=>{
+    lastEdit = Date.now();
+
+    let newValue = e.target.value;
+
+    p.modeOfPayment = newValue;
+
+    send("mode", {
+      rowIndex: p.rowIndex,
+      value: newValue
+    });
+  };
+
+  /* =========================
+     ROOM OPTIONS
+  ========================= */
   const roomSelect = tr.querySelector(".roomac");
 
   function refreshRoomOptions(){
@@ -389,9 +410,7 @@ function createRow(p){
 
   refreshRoomOptions();
 
-  /* =========================
-     PAYMENT (3 STATE FIX)
-  ========================= */
+  /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
     lastEdit = Date.now();
 
@@ -414,9 +433,7 @@ function createRow(p){
     updateStats();
   };
 
-  /* =========================
-     ATTENDANCE (FIXED)
-  ========================= */
+  /* ATTENDANCE */
   tr.querySelector(".att").onclick = ()=>{
     lastEdit = Date.now();
 
@@ -433,28 +450,6 @@ function createRow(p){
     tr.querySelector(".att").textContent = attIcon(next);
 
     send("attendance",{rowIndex:p.rowIndex,status:next});
-  };
-
-  /* KIT */
-  tr.querySelector(".kit").onclick = ()=>{
-    lastEdit = Date.now();
-
-    let next = p.kit==="❌"?"🟠":p.kit==="🟠"?"✅":"❌";
-    p.kit = next;
-    tr.querySelector(".kit").textContent = next;
-
-    send("kit",{rowIndex:p.rowIndex,state:next});
-  };
-
-  /* AIRCON */
-  tr.querySelector(".aircon").onclick = ()=>{
-    lastEdit = Date.now();
-
-    let next = p.aircon==="❌"?"🟠":p.aircon==="🟠"?"✅":"❌";
-    p.aircon = next;
-    tr.querySelector(".aircon").textContent = next;
-
-    send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
   /* ROOM AC */
@@ -495,6 +490,7 @@ function createRow(p){
 function send(action,data){
   let fd = new FormData();
   fd.append("action",action);
+  fd.append("sheet",SHEET);
 
   for(let k in data){
     fd.append(k,data[k]);
@@ -504,11 +500,11 @@ function send(action,data){
 }
 
 /* =========================
-   LOAD (NO SNAP BACK)
+   LOAD (🔥 STRONG NO SNAP BACK)
 ========================= */
 async function loadData(){
 
-  if(Date.now() - lastEdit < 5000) return;
+  if(Date.now() - lastEdit < 8000) return;
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
@@ -533,6 +529,8 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
     r.style.display = r.innerText.toLowerCase().includes(q)?"":"none";
   });
 });
+
+
 
 
 </script>
