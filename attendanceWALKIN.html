@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+ <<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -87,37 +87,6 @@ h1{
   font-size:20px;
 }
 
-/* ROOM BOX */
-.room-box{
-  max-width:1100px;
-  margin:12px auto;
-  background:linear-gradient(145deg,#151515,#101010);
-  border:1px solid #2a2a2a;
-  padding:12px;
-  border-radius:12px;
-  font-size:13px;
-  color:#ccc;
-}
-
-/* BADGES */
-.badge{
-  padding:4px 10px;
-  border-radius:8px;
-  font-size:12px;
-  margin-left:8px;
-  font-weight:bold;
-}
-
-.full{
-  background:#ff2e2e;
-  color:white;
-}
-
-.available{
-  background:#1db954;
-  color:white;
-}
-
 /* BUTTON */
 button{
   display:block;
@@ -147,7 +116,7 @@ button:hover{
 
 table{
   width:100%;
-  min-width:1600px;
+  min-width:1300px;
   border-collapse:collapse;
 }
 
@@ -187,12 +156,10 @@ select{
 <div class="instructions">
 <b>HOW TO USE SYSTEM:</b><br>
 1. Search campers instantly using the search bar.<br>
-2. Click PAY → toggles PAID / NOT PAID (₱1500 auto display).<br>
+2. Click PAY → toggles NOT PAID → ONSITE → PAID.<br>
 3. Click ATT → updates attendance status.<br>
-4. Choose Mode (Onsite / GCASH / BANK).<br>
-5. ROOM_AC has max 18 campers per room.<br>
-6. Full rooms are disabled automatically.<br>
-7. Shirt sizes now include up to 3XL.<br>
+4. Choose Mode (Onsite / Online).<br>
+5. Shirt sizes include up to 3XL.<br>
 </div>
 
 <div class="search-bar">
@@ -205,12 +172,7 @@ select{
   <div class="box">Waiting<br><span id="waiting">0</span></div>
 </div>
 
-<div class="room-box" id="roomStats">
-<b>ROOM AC STATUS</b><br>
-Loading...
-</div>
-
-<button>🔄 REFRESH</button>
+<button onclick="loadData()">🔄 REFRESH</button>
 
 <div class="table-wrap">
 <table>
@@ -227,17 +189,12 @@ Loading...
   <th>ATT</th>
   <th>Shirt</th>
   <th>Kit</th>
-  <th>Aircon</th>
-  <th>ROOM_AC</th>
 </tr>
 </thead>
 
 <tbody></tbody>
 </table>
 </div>
-
-
-
 
 <script>
 
