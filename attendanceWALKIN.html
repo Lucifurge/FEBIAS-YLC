@@ -245,6 +245,8 @@ Loading...
 const BASE_URL = "https://script.google.com/macros/s/AKfycbwLaZlaSDJKLwuSGQejc2Mi3R34VLAhvPzRtI_uDsUY_6RaAKlsLBnOBRYHcuu42xqA/exec";
 const SHEET = "WALK-IN";
 
+const ROOM_LIMIT = 9;
+
 const AC_ROOMS = [
   "Berean Area",
   "Berean – Abraham 2",
@@ -260,6 +262,7 @@ const AC_ROOMS = [
 let tbody = document.querySelector("tbody");
 let allData = [];
 let roomCount = {};
+let updatingRows = new Set();
 
 const clean = v => (v || "").toString().trim();
 
@@ -288,11 +291,8 @@ function updateStats(){
   let paid = 0, waiting = 0;
 
   allData.forEach(p=>{
-    let pay = p.payment_indicator || "";
-    let att = p.attendance_status || "";
-
-    if(pay.includes("PAID")) paid++;
-    if(att === "ON-waiting") waiting++;
+    if((p.payment_indicator||"").includes("PAID")) paid++;
+    if(p.attendance_status === "ON-waiting") waiting++;
   });
 
   document.getElementById("total").textContent = allData.length;
@@ -320,16 +320,16 @@ function updateRoomStats(){
 
   AC_ROOMS.forEach(r=>{
     let c = roomCount[r];
-    let full = c >= 18;
+    let full = c >= ROOM_LIMIT;
 
-    html += `${r} <span class="badge ${full?"full":"available"}">${c}/18</span><br>`;
+    html += `${r} <span class="badge ${full?"full":"available"}">${c}/${ROOM_LIMIT}</span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
 }
 
 /* =========================
-   SEND SAFE
+   SEND (STRONG LOCK SYSTEM)
 ========================= */
 function send(action,data){
   let fd = new FormData();
@@ -339,10 +339,22 @@ function send(action,data){
     fd.append(k,data[k]);
   }
 
+  let id = String(data.rowIndex);
+
+  // 🔒 HARD LOCK (no snapback)
+  updatingRows.add(id);
+
   fetch(BASE_URL,{method:"POST",body:fd})
     .then(r=>r.json())
-    .then(res=>console.log("OK:",res))
-    .catch(err=>console.error("ERROR:",err));
+    .then(()=>{
+      // longer delay = NO snapback even if sheet is slow
+      setTimeout(()=>{
+        updatingRows.delete(id);
+      },3000); 
+    })
+    .catch(()=>{
+      updatingRows.delete(id);
+    });
 }
 
 /* =========================
@@ -400,7 +412,7 @@ function createRow(p){
       `<option value="">ROOM AC</option>` +
       AC_ROOMS.map(r=>{
         let count = roomCount[r] || 0;
-        let full = count >= 18;
+        let full = count >= ROOM_LIMIT;
 
         return `
           <option value="${r}"
@@ -416,11 +428,10 @@ function createRow(p){
 
   /* MODE */
   tr.querySelector(".mode").onchange = (e)=>{
-    let val = e.target.value;
-    send("mode",{rowIndex:p.rowIndex,value:val});
+    send("mode",{rowIndex:p.rowIndex,value:e.target.value});
   };
 
-  /* PAYMENT (FIXED LOGIC) */
+  /* PAYMENT */
   tr.querySelector(".pay").onclick = ()=>{
 
     let state = p.payment_indicator;
@@ -471,15 +482,15 @@ function createRow(p){
     send("aircon",{rowIndex:p.rowIndex,state:next});
   };
 
-  /* ROOM AC (ANTI-OVERFLOW FIXED) */
+  /* ROOM AC (STRICT LIMIT 9) */
   roomSelect.onchange = (e)=>{
     let val = clean(e.target.value);
 
     let tempCount = {...roomCount};
     tempCount[val] = (tempCount[val] || 0) + 1;
 
-    if(val && tempCount[val] > 18 && val !== p.room_ac){
-      alert("ROOM FULL");
+    if(val && tempCount[val] > ROOM_LIMIT && val !== p.room_ac){
+      alert("ROOM FULL (9 MAX)");
       e.target.value = p.room_ac;
       return;
     }
@@ -499,29 +510,41 @@ function createRow(p){
 }
 
 /* =========================
-   LOAD DATA
+   LOAD DATA (NO SNAPBACK VERSION)
 ========================= */
 async function loadData(){
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
   let data = await res.json();
 
+  data.forEach(newRow=>{
+    let id = String(newRow.rowIndex);
+
+    // 🔒 DO NOT TOUCH rows being edited
+    if(updatingRows.has(id)) return;
+
+    let existing = document.querySelector(`tr[data-id="${id}"]`);
+
+    if(existing){
+      existing.querySelector(".payment").textContent = payIcon(newRow.payment_indicator);
+      existing.querySelector(".pay").textContent = payIcon(newRow.payment_indicator);
+      existing.querySelector(".att").textContent = attIcon(newRow.attendance_status);
+      existing.querySelector(".kit").textContent = newRow.kit_distribution || "❌";
+      existing.querySelector(".aircon").textContent = newRow.aircon_pref || "❌";
+    } else {
+      createRow(newRow);
+    }
+  });
+
   allData = data;
-
-  tbody.innerHTML = "";
-
   updateRoomStats();
-  allData.forEach(createRow);
   updateStats();
 }
 
-/* =========================
-   INIT
-========================= */
+/* INIT */
 loadData();
 
-/* LESS AGGRESSIVE REFRESH */
-setInterval(loadData,10000);
-
+/* SLOW REFRESH = SMOOTH */
+setInterval(loadData,12000);
 </script>
 
 </body>
