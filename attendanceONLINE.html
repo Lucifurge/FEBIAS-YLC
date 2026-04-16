@@ -445,6 +445,155 @@ function updateRoomStats(){
       let people = subRooms[room];
       let count = people.length;
 
+      html += `const BASE_URL = "https://script.google.com/macros/s/AKfycbw001kJ1qi8HGE_1rlOb8991eDz6Zhaq4T_nM8scvaL0DHFVDbzu9SVIX8MF0aRDSrafw/exec";
+const SHEET = "Pre-Registration";
+const ROOM_LIMIT = 18;
+
+let tbody = document.querySelector("tbody");
+let allData = [];
+let roomCount = {};
+let localChanges = {};
+let searchQuery = "";
+let isUpdating = false;
+
+const clean = v => (v || "").toString().trim();
+
+//////////////////////////////////////////////////
+// AUTO ROOM
+//////////////////////////////////////////////////
+function getAutoRoomAC(room){
+  if(!room) return "";
+  let r = room.toLowerCase();
+
+  if(r.includes("barnabas") || r.includes("caleb")) return "Berean – Abraham (2)";
+  if(r.includes("joseph") || r.includes("david") || r.includes("daniel")) return "Berean – Elijah (2)";
+  if(r.includes("moses") || r.includes("nehemiah")) return "Berean – Joshua (3)";
+  if(r.includes("timothy") || r.includes("stephen") || r.includes("paul")) return "Berean – Elisha (3)";
+  if(r.includes("esther") || r.includes("eunice")) return "Sharon – Deborah (2)";
+  if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah")) return "Sharon – Abigail (2)";
+  if(r.includes("priscilla") || r.includes("sarah")) return "Sharon – Martha (3)";
+  if(r.includes("mary") || r.includes("elizabeth")) return "Sharon – Eve (3)";
+  return "";
+}
+
+//////////////////////////////////////////////////
+// ICONS
+//////////////////////////////////////////////////
+function payIcon(v){
+  if(v === "PAID") return "✅ PAID";
+  if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
+  return "❌ NOT PAID";
+}
+
+function attIcon(v){
+  if(v === "Attended") return "✔ ATTENDED";
+  if(v === "ON-waiting") return "🟠 WAITING";
+  return "❌ CANCELLED";
+}
+
+//////////////////////////////////////////////////
+// LOCAL CACHE
+//////////////////////////////////////////////////
+function saveLocal(row, field, val){
+  if(!localChanges[row]) localChanges[row] = {};
+  localChanges[row][field] = val;
+}
+
+function applyLocal(data){
+  return data.map(p=>{
+    if(localChanges[p.rowIndex]){
+      return {...p, ...localChanges[p.rowIndex]};
+    }
+    return p;
+  });
+}
+
+//////////////////////////////////////////////////
+// FILTER
+//////////////////////////////////////////////////
+function filterData(data){
+  if(!searchQuery) return data;
+
+  return data.filter(p =>
+    `${p.firstName} ${p.lastName} ${p.room} ${p.gender} ${p.classification}`
+    .toLowerCase()
+    .includes(searchQuery)
+  );
+}
+
+//////////////////////////////////////////////////
+// STATS (UPDATED)
+//////////////////////////////////////////////////
+function updateStats(data){
+  let paid=0, waiting=0, attended=0, sales=0;
+
+  data.forEach(p=>{
+    if(p.paymentIndicator==="PAID"){
+      paid++;
+      sales += 1500;
+    }
+
+    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+
+    if(p.attendanceStatus==="Attended") attended++;
+  });
+
+  document.getElementById("total").textContent = data.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+  document.getElementById("attended").textContent = attended;
+  document.getElementById("sales").textContent = "₱" + sales.toLocaleString();
+}
+
+//////////////////////////////////////////////////
+// ROOM_AC + SUB ROOM (COMBINED)
+//////////////////////////////////////////////////
+function updateRoomStats(){
+
+  // ROOM_AC (original)
+  roomCount = {
+    "Berean – Abraham (2)":0,
+    "Berean – Elijah (2)":0,
+    "Berean – Joshua (3)":0,
+    "Berean – Elisha (3)":0,
+    "Sharon – Deborah (2)":0,
+    "Sharon – Abigail (2)":0,
+    "Sharon – Martha (3)":0,
+    "Sharon – Eve (3)":0
+  };
+
+  // SUB ROOMS
+  let subRooms = {};
+
+  allData.forEach(p=>{
+    let r = clean(p.ROOM_AC);
+    if(roomCount[r] !== undefined) roomCount[r]++;
+
+    let sub = clean(p.room) || "No Room";
+    if(!subRooms[sub]) subRooms[sub] = [];
+    subRooms[sub].push(`${p.firstName} ${p.lastName}`);
+  });
+
+  let html = "<b>ROOM AC STATUS</b><br>";
+
+  // ROOM_AC DISPLAY
+  Object.keys(roomCount).forEach(room=>{
+    let c = roomCount[room];
+    html += `${room}
+      <span class="badge ${c>=ROOM_LIMIT?"full":"available"}">
+      ${c}/${ROOM_LIMIT}
+      </span><br>`;
+  });
+
+  // SUB ROOM DISPLAY
+  html += "<br><b>SUB ROOM STATUS</b><br>";
+
+  Object.keys(subRooms)
+    .sort()
+    .forEach(room=>{
+      let people = subRooms[room];
+      let count = people.length;
+
       html += `
         <div class="room-card">
           <div class="room-title">
@@ -468,7 +617,7 @@ function updateRoomStats(){
 }
 
 //////////////////////////////////////////////////
-// CREATE ROW (UNCHANGED)
+// CREATE ROW
 //////////////////////////////////////////////////
 function createRow(p){
 
@@ -538,10 +687,146 @@ function createRow(p){
 }
 
 //////////////////////////////////////////////////
-// EVENTS + SEND + LOAD (UNCHANGED)
+// EVENTS (UNCHANGED)
 //////////////////////////////////////////////////
+tbody.addEventListener("click", e=>{
+  if(isUpdating) return;
 
-// (keep everything below EXACTLY as your original)
+  let row = e.target.closest("tr");
+  let id = row?.dataset.id;
+  let p = allData.find(x=>x.rowIndex==id);
+  if(!p) return;
+
+  isUpdating = true;
+
+  if(e.target.classList.contains("pay")){
+    let val = p.paymentIndicator==="PAID"?"NOT PAID":"PAID";
+    p.paymentIndicator = val;
+    saveLocal(id,"paymentIndicator",val);
+
+    row.querySelector(".pay").textContent = payIcon(val);
+    row.querySelector(".paytxt").textContent = payIcon(val);
+    row.querySelector(".amt").textContent = val==="PAID"?"₱1500":"";
+
+    send("payment",{rowIndex:id,value:val});
+  }
+
+  if(e.target.classList.contains("att")){
+    let val = p.attendanceStatus==="Attended"?"ON-waiting":"Attended";
+    p.attendanceStatus = val;
+    saveLocal(id,"attendanceStatus",val);
+
+    row.querySelector(".att").textContent = attIcon(val);
+    send("attendance",{rowIndex:id,value:val});
+  }
+
+  if(e.target.classList.contains("kit")){
+    let next = p.kit==="YES"?"NO":p.kit==="NO"?"":"YES";
+    p.kit = next;
+    saveLocal(id,"kit",next);
+    e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
+    send("kit",{rowIndex:id,value:next});
+  }
+
+  if(e.target.classList.contains("aircon")){
+    let next = p.aircon==="YES"?"NO":p.aircon==="NO"?"":"YES";
+    p.aircon = next;
+    saveLocal(id,"aircon",next);
+    e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
+    send("aircon",{rowIndex:id,value:next});
+  }
+
+  setTimeout(()=>isUpdating=false,200);
+});
+
+tbody.addEventListener("change", e=>{
+  let row = e.target.closest("tr");
+  let id = row.dataset.id;
+  let p = allData.find(x=>x.rowIndex==id);
+
+  if(e.target.classList.contains("mode")){
+    let val = clean(e.target.value);
+    p.modeOfPayment = val;
+    saveLocal(id,"modeOfPayment",val);
+    send("mode",{rowIndex:id,value:val});
+  }
+
+  if(e.target.classList.contains("shirt")){
+    let val = clean(e.target.value);
+    p.shirtSize = val;
+    saveLocal(id,"shirtSize",val);
+    send("shirt",{rowIndex:id,value:val});
+  }
+
+  if(e.target.classList.contains("roomac")){
+    let val = clean(e.target.value);
+    let allowed = getAutoRoomAC(p.room);
+
+    if(val && val !== allowed){
+      alert("❌ Not allowed room");
+      e.target.value = p.ROOM_AC || "";
+      return;
+    }
+
+    if(val && roomCount[val] >= ROOM_LIMIT){
+      alert("ROOM FULL");
+      e.target.value = p.ROOM_AC || "";
+      return;
+    }
+
+    p.ROOM_AC = val;
+    saveLocal(id,"ROOM_AC",val);
+    send("room_ac",{rowIndex:id,value:val});
+  }
+});
+
+//////////////////////////////////////////////////
+// SEND
+//////////////////////////////////////////////////
+function send(action,data){
+  let fd=new FormData();
+  fd.append("action",action);
+  fd.append("sheet",SHEET);
+  for(let k in data) fd.append(k,data[k]);
+  fetch(BASE_URL,{method:"POST",body:fd});
+}
+
+//////////////////////////////////////////////////
+// LOAD
+//////////////////////////////////////////////////
+async function loadData(){
+  if(isUpdating) return;
+
+  let res = await fetch(BASE_URL+"?sheet="+SHEET);
+  let data = await res.json();
+
+  allData = applyLocal(data);
+
+  updateRoomStats();
+
+  let filtered = filterData(allData);
+
+  tbody.innerHTML="";
+  filtered.forEach(createRow);
+
+  updateStats(filtered);
+}
+
+//////////////////////////////////////////////////
+// SEARCH + REFRESH
+//////////////////////////////////////////////////
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  searchQuery = e.target.value.toLowerCase();
+  loadData();
+});
+
+document.querySelector("button").onclick = loadData;
+
+setInterval(()=>{
+  if(!isUpdating) loadData();
+},6000);
+
+loadData();
 </script>
 </body>
 </html>
