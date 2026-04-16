@@ -61,6 +61,12 @@ h1{
   background:#111;
   color:white;
   outline:none;
+  transition:0.2s;
+}
+
+.search-bar input:focus{
+  border-color:#ff6a00;
+  box-shadow:0 0 8px rgba(255,106,0,0.4);
 }
 
 /* STATS */
@@ -158,6 +164,7 @@ th{
   position:sticky;
   top:0;
   z-index:2;
+  text-align:center;
 }
 
 td{
@@ -175,9 +182,21 @@ select{
   border:1px solid #333;
   padding:6px;
   border-radius:8px;
+  cursor:pointer;
 }
 
-/* 🔥 CLASSIFICATION COLORS */
+/* CLICKABLE CELLS (🔥 UX FIX) */
+.clickable{
+  cursor:pointer;
+  transition:0.15s;
+  font-weight:bold;
+}
+
+.clickable:hover{
+  background:#1a1a1a;
+}
+
+/* CLASSIFICATION */
 .silver{
   color:#c0c0c0;
   font-weight:bold;
@@ -198,16 +217,15 @@ select{
 <div class="instructions">
 <b>HOW TO USE SYSTEM:</b><br>
 1. Search campers instantly using the search bar.<br>
-2. Click PAY → toggles PAID / NOT PAID (₱1500 auto display).<br>
+2. Click PAY → toggles PAID / NOT PAID.<br>
 3. Click ATT → updates attendance status.<br>
-4. Choose Mode (Onsite / GCASH / BANK).<br>
-5. ROOM_AC has max 18 campers per room.<br>
-6. Full rooms are disabled automatically.<br>
-7. Shirt sizes now include up to 3XL.<br>
+4. Click KIT / AIRCON → cycles ✔ ❌ 🟠.<br>
+5. Select ROOM_AC using dropdown.<br>
+6. Full rooms are tracked automatically.<br>
 </div>
 
 <div class="search-bar">
-  <input type="text" placeholder="Search camper name, room, church...">
+  <input type="text" placeholder="Search camper name, room, gender, classification...">
 </div>
 
 <div class="stats">
@@ -240,14 +258,13 @@ Loading...
   <th>Kit</th>
   <th>Aircon</th>
   <th>ROOM_AC</th>
-  <th>Classification</th> <!-- ✅ NEW -->
+  <th>Classification</th>
 </tr>
 </thead>
 
 <tbody></tbody>
 </table>
 </div>
-
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbw001kJ1qi8HGE_1rlOb8991eDz6Zhaq4T_nM8scvaL0DHFVDbzu9SVIX8MF0aRDSrafw/exec";
 const SHEET = "Pre-Registration";
