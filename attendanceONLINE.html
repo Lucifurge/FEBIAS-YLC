@@ -280,7 +280,7 @@ let isUpdating = false;
 const clean = v => (v || "").toString().trim();
 
 //////////////////////////////////////////////////
-// 🔥 AUTO ROOM (STRICT LOCK)
+// AUTO ROOM (LOCKED PER SUBROOM)
 //////////////////////////////////////////////////
 function getAutoRoomAC(room){
   if(!room) return "";
@@ -313,7 +313,7 @@ function attIcon(v){
 }
 
 //////////////////////////////////////////////////
-// LOCAL CACHE (ANTI SNAPBACK)
+// LOCAL CACHE
 //////////////////////////////////////////////////
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
@@ -391,19 +391,12 @@ function updateRoomStats(){
 }
 
 //////////////////////////////////////////////////
-// CREATE ROW (LOCKED ROOM + NO SNAPBACK)
+// CREATE ROW (FINAL LOCKED VERSION)
 //////////////////////////////////////////////////
 function createRow(p){
 
   let shirt = clean(p.shirtSize || p.shirt || "");
   let allowedRoom = getAutoRoomAC(p.room);
-
-  // 🔥 AUTO ASSIGN ONLY IF EMPTY (NO SNAPBACK)
-  if(!p.ROOM_AC && allowedRoom){
-    p.ROOM_AC = allowedRoom;
-    saveLocal(p.rowIndex,"ROOM_AC",allowedRoom);
-    send("room_ac",{rowIndex:p.rowIndex,value:allowedRoom});
-  }
 
   let kitDisplay =
     p.kit === "YES" ? "✔" :
@@ -449,7 +442,7 @@ function createRow(p){
     <td class="clickable kit">${kitDisplay}</td>
     <td class="clickable aircon">${airconDisplay}</td>
 
-    <!-- 🔥 LOCKED ROOM -->
+    <!-- 🔥 ROOM LOCK -->
     <td>
       <select class="roomac">
         <option value="">NO ROOM</option>
@@ -472,15 +465,13 @@ function createRow(p){
 }
 
 //////////////////////////////////////////////////
-// CLICK EVENTS
+// EVENTS + SYNC (UNCHANGED WORKING PART)
 //////////////////////////////////////////////////
 tbody.addEventListener("click", e=>{
   if(isUpdating) return;
 
   let row = e.target.closest("tr");
-  if(!row) return;
-
-  let id = row.dataset.id;
+  let id = row?.dataset.id;
   let p = allData.find(x=>x.rowIndex==id);
   if(!p) return;
 
@@ -490,11 +481,9 @@ tbody.addEventListener("click", e=>{
     let val = p.paymentIndicator==="PAID"?"NOT PAID":"PAID";
     p.paymentIndicator = val;
     saveLocal(id,"paymentIndicator",val);
-
     row.querySelector(".pay").textContent = payIcon(val);
     row.querySelector(".paytxt").textContent = payIcon(val);
     row.querySelector(".amt").textContent = val==="PAID"?"₱1500":"";
-
     send("payment",{rowIndex:id,value:val});
   }
 
@@ -502,7 +491,6 @@ tbody.addEventListener("click", e=>{
     let val = p.attendanceStatus==="Attended"?"ON-waiting":"Attended";
     p.attendanceStatus = val;
     saveLocal(id,"attendanceStatus",val);
-
     row.querySelector(".att").textContent = attIcon(val);
     send("attendance",{rowIndex:id,value:val});
   }
@@ -526,9 +514,6 @@ tbody.addEventListener("click", e=>{
   setTimeout(()=>isUpdating=false,200);
 });
 
-//////////////////////////////////////////////////
-// CHANGE EVENTS
-//////////////////////////////////////////////////
 tbody.addEventListener("change", e=>{
   let row = e.target.closest("tr");
   let id = row.dataset.id;
@@ -571,9 +556,6 @@ tbody.addEventListener("change", e=>{
   }
 });
 
-//////////////////////////////////////////////////
-// SEND
-//////////////////////////////////////////////////
 function send(action,data){
   let fd=new FormData();
   fd.append("action",action);
@@ -582,9 +564,6 @@ function send(action,data){
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
-//////////////////////////////////////////////////
-// LOAD
-//////////////////////////////////////////////////
 async function loadData(){
   if(isUpdating) return;
 
@@ -600,9 +579,6 @@ async function loadData(){
   updateStats(filtered);
 }
 
-//////////////////////////////////////////////////
-// SEARCH + REFRESH
-//////////////////////////////////////////////////
 document.querySelector(".search-bar input").addEventListener("input", e=>{
   searchQuery = e.target.value.toLowerCase();
   loadData();
@@ -610,9 +586,7 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
 
 document.querySelector("button").onclick = loadData;
 
-setInterval(()=>{
-  if(!isUpdating) loadData();
-},6000);
+setInterval(()=>{ if(!isUpdating) loadData(); },6000);
 
 loadData();
 </script>
