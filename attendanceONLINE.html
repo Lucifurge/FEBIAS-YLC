@@ -251,7 +251,6 @@ Loading...
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbw001kJ1qi8HGE_1rlOb8991eDz6Zhaq4T_nM8scvaL0DHFVDbzu9SVIX8MF0aRDSrafw/exec";
 const SHEET = "Pre-Registration";
-
 const ROOM_LIMIT = 18;
 
 let tbody = document.querySelector("tbody");
@@ -276,7 +275,6 @@ function getAutoRoomAC(room){
   if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah")) return "Sharon – Abigail (2)";
   if(r.includes("priscilla") || r.includes("sarah")) return "Sharon – Martha (3)";
   if(r.includes("mary") || r.includes("elizabeth")) return "Sharon – Eve (3)";
-
   return "";
 }
 
@@ -286,7 +284,6 @@ function payIcon(v){
   if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
   return "❌ NOT PAID";
 }
-
 function attIcon(v){
   if(v === "Attended") return "✔ ATTENDED";
   if(v === "ON-waiting") return "🟠 WAITING";
@@ -298,41 +295,14 @@ function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
   localChanges[row][field] = val;
 }
-
 function applyLocal(data){
   return data.map(p=>{
-    if(localChanges[p.rowIndex]){
-      return {...p, ...localChanges[p.rowIndex]};
-    }
+    if(localChanges[p.rowIndex]) return {...p, ...localChanges[p.rowIndex]};
     return p;
   });
 }
 
-/* FILTER */
-function filterData(data){
-  if(!searchQuery) return data;
-  return data.filter(p =>
-    `${p.firstName} ${p.lastName} ${p.room} ${p.gender} ${p.classification}`
-    .toLowerCase()
-    .includes(searchQuery)
-  );
-}
-
-/* STATS */
-function updateStats(data){
-  let paid=0, waiting=0;
-
-  data.forEach(p=>{
-    if(p.paymentIndicator==="PAID") paid++;
-    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
-  });
-
-  document.getElementById("total").textContent = data.length;
-  document.getElementById("paid").textContent = paid;
-  document.getElementById("waiting").textContent = waiting;
-}
-
-/* ROOM COUNT */
+/* ROOM COUNT FIX */
 function updateRoomStats(){
   roomCount = {
     "Berean – Abraham (2)":0,
@@ -351,15 +321,11 @@ function updateRoomStats(){
   });
 
   let html = "<b>ROOM AC STATUS</b><br>";
-
   Object.keys(roomCount).forEach(room=>{
     let c = roomCount[room];
-    let full = c >= ROOM_LIMIT;
-
     html += `${room}
-      <span class="badge ${full?"full":"available"}">
-      ${c}/${ROOM_LIMIT}
-      </span><br>`;
+      <span class="badge ${c>=ROOM_LIMIT?"full":"available"}">
+      ${c}/${ROOM_LIMIT}</span><br>`;
   });
 
   document.getElementById("roomStats").innerHTML = html;
@@ -368,13 +334,15 @@ function updateRoomStats(){
 /* CREATE ROW */
 function createRow(p){
 
-  let shirt = clean(p.shirtSize || p.shirt || "");
   let allowedRoom = getAutoRoomAC(p.room);
 
   let kitDisplay =
     p.kit === "YES" ? "✔" :
-    p.kit === "NO" ? "❌" :
-    "🟠";
+    p.kit === "NO" ? "❌" : "🟠";
+
+  let airconDisplay =
+    p.aircon === "YES" ? "✔" :
+    p.aircon === "NO" ? "❌" : "🟠";
 
   let tr = document.createElement("tr");
 
@@ -390,30 +358,17 @@ function createRow(p){
     <td>
       <select class="mode">
         <option value="">Select</option>
-        <option ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite (BO)</option>
-        <option ${p.modeOfPayment==="Onsite (orange tag)"?"selected":""}>Onsite (orange tag)</option>
-        <option ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>Online (GCASH)</option>
-        <option ${p.modeOfPayment==="Online (BANK)"?"selected":""}>Online (BANK)</option>
+        <option ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite</option>
+        <option ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>GCASH</option>
+        <option ${p.modeOfPayment==="Online (BANK)"?"selected":""}>BANK</option>
       </select>
     </td>
 
     <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
     <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
-    <td>
-      <select class="shirt">
-        <option value="">Select</option>
-        <option ${shirt==="S"?"selected":""}>S</option>
-        <option ${shirt==="M"?"selected":""}>M</option>
-        <option ${shirt==="L"?"selected":""}>L</option>
-        <option ${shirt==="XL"?"selected":""}>XL</option>
-        <option ${shirt==="XXL"?"selected":""}>XXL</option>
-        <option ${shirt==="3XL"?"selected":""}>3XL</option>
-      </select>
-    </td>
-
     <td class="clickable kit">${kitDisplay}</td>
-    <td class="clickable aircon">${p.aircon || "❌"}</td>
+    <td class="clickable aircon">${airconDisplay}</td>
 
     <td>
       <select class="roomac">
@@ -421,77 +376,62 @@ function createRow(p){
         ${allowedRoom ? `<option value="${allowedRoom}">${allowedRoom}</option>` : ""}
       </select>
     </td>
-
-    <td class="${p.classification === 'Silver' ? 'silver' : 'copper'}">
-      ${p.classification || ""}
-    </td>
   `;
 
   tr.dataset.id = p.rowIndex;
   tbody.appendChild(tr);
-
   tr.querySelector(".roomac").value = p.ROOM_AC || "";
 }
 
 /* CLICK EVENTS */
 tbody.addEventListener("click", e=>{
   if(isUpdating) return;
-
   let row = e.target.closest("tr");
   if(!row) return;
 
   let id = row.dataset.id;
-  let p = allData.find(x => x.rowIndex == id);
+  let p = allData.find(x=>x.rowIndex==id);
   if(!p) return;
 
   isUpdating = true;
 
-  /* KIT FIXED */
+  /* KIT */
   if(e.target.classList.contains("kit")){
-    let current = p.kit === "YES" ? "✔" : p.kit === "NO" ? "❌" : "🟠";
-
-    let nextVal;
-
-    if(current === "🟠") nextVal = "YES";
-    else if(current === "YES" || current === "✔") nextVal = "NO";
-    else nextVal = "";
-
-    p.kit = nextVal;
-    saveLocal(id,"kit",nextVal);
-
-    e.target.textContent =
-      nextVal === "YES" ? "✔" :
-      nextVal === "NO" ? "❌" :
-      "🟠";
-
-    send("kit",{rowIndex:id,value:nextVal});
+    let next = p.kit==="YES"?"NO":p.kit==="NO"?"":"YES";
+    p.kit = next;
+    saveLocal(id,"kit",next);
+    e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
+    send("kit",{rowIndex:id,value:next});
   }
 
-  setTimeout(()=> isUpdating = false,300);
+  /* AIRCON (3 STATE FIX) */
+  if(e.target.classList.contains("aircon")){
+    let next = p.aircon==="YES"?"NO":p.aircon==="NO"?"":"YES";
+    p.aircon = next;
+    saveLocal(id,"aircon",next);
+    e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
+    send("aircon",{rowIndex:id,value:next});
+  }
+
+  setTimeout(()=>isUpdating=false,300);
 });
 
-/* CHANGE EVENTS */
+/* ROOM AC FIX */
 tbody.addEventListener("change", e=>{
   let row = e.target.closest("tr");
   let id = row.dataset.id;
-  let p = allData.find(x => x.rowIndex == id);
+  let p = allData.find(x=>x.rowIndex==id);
 
-  if(e.target.classList.contains("mode")){
+  if(e.target.classList.contains("roomac")){
     let val = clean(e.target.value);
-    p.modeOfPayment = val;
-    saveLocal(id,"modeOfPayment",val);
-    send("mode",{rowIndex:id,value:val});
+    p.ROOM_AC = val;
+
+    saveLocal(id,"ROOM_AC",val);
+    send("room_ac",{rowIndex:id,value:val});
+
+    updateRoomStats(); // 🔥 FIX COUNT
   }
 });
-
-/* SEND */
-function send(action,data){
-  let fd=new FormData();
-  fd.append("action",action);
-  fd.append("sheet",SHEET);
-  for(let k in data) fd.append(k,data[k]);
-  fetch(BASE_URL,{method:"POST",body:fd});
-}
 
 /* LOAD */
 async function loadData(){
@@ -501,15 +441,13 @@ async function loadData(){
   let data = await res.json();
 
   allData = applyLocal(data);
-  let filtered = filterData(allData);
 
   tbody.innerHTML="";
   updateRoomStats();
-  filtered.forEach(createRow);
-  updateStats(filtered);
+  allData.forEach(createRow);
 }
 
-setInterval(()=>{ if(!isUpdating) loadData(); },6000);
+setInterval(()=>{ if(!isUpdating) loadData(); },5000);
 loadData();
 </script>
 </body>
