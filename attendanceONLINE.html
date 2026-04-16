@@ -279,7 +279,9 @@ let isUpdating = false;
 
 const clean = v => (v || "").toString().trim();
 
-/* AUTO ROOM */
+//////////////////////////////////////////////////
+// 🔥 AUTO ROOM (LOCKED PROPERLY)
+//////////////////////////////////////////////////
 function getAutoRoomAC(room){
   if(!room) return "";
   let r = room.toLowerCase();
@@ -292,10 +294,13 @@ function getAutoRoomAC(room){
   if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah")) return "Sharon – Abigail (2)";
   if(r.includes("priscilla") || r.includes("sarah")) return "Sharon – Martha (3)";
   if(r.includes("mary") || r.includes("elizabeth")) return "Sharon – Eve (3)";
+
   return "";
 }
 
-/* ICONS */
+//////////////////////////////////////////////////
+// ICONS
+//////////////////////////////////////////////////
 function payIcon(v){
   if(v === "PAID") return "✅ PAID";
   if(v === "ON-WAITING PAYMENT") return "🟠 WAITING";
@@ -308,7 +313,9 @@ function attIcon(v){
   return "❌ CANCELLED";
 }
 
-/* LOCAL CACHE */
+//////////////////////////////////////////////////
+// LOCAL CACHE
+//////////////////////////////////////////////////
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
   localChanges[row][field] = val;
@@ -323,9 +330,12 @@ function applyLocal(data){
   });
 }
 
-/* FILTER */
+//////////////////////////////////////////////////
+// FILTER
+//////////////////////////////////////////////////
 function filterData(data){
   if(!searchQuery) return data;
+
   return data.filter(p =>
     `${p.firstName} ${p.lastName} ${p.room} ${p.gender} ${p.classification}`
     .toLowerCase()
@@ -333,7 +343,9 @@ function filterData(data){
   );
 }
 
-/* STATS */
+//////////////////////////////////////////////////
+// STATS
+//////////////////////////////////////////////////
 function updateStats(data){
   let paid=0, waiting=0;
 
@@ -347,7 +359,9 @@ function updateStats(data){
   document.getElementById("waiting").textContent = waiting;
 }
 
-/* ROOM COUNT */
+//////////////////////////////////////////////////
+// ROOM COUNT
+//////////////////////////////////////////////////
 function updateRoomStats(){
   roomCount = {
     "Berean – Abraham (2)":0,
@@ -380,26 +394,26 @@ function updateRoomStats(){
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* CREATE ROW */
+//////////////////////////////////////////////////
+// CREATE ROW
+//////////////////////////////////////////////////
 function createRow(p){
 
   let shirt = clean(p.shirtSize || p.shirt || "");
   let allowedRoom = getAutoRoomAC(p.room);
 
-  /* 🔥 CRITICAL FIX: FORCE AUTO ROOM */
-  if(allowedRoom){
+  // ✅ SAFE AUTO LOCK (NO SNAPBACK BUG)
+  if(allowedRoom && !p.ROOM_AC){
     p.ROOM_AC = allowedRoom;
   }
 
   let kitDisplay =
     p.kit === "YES" ? "✔" :
-    p.kit === "NO" ? "❌" :
-    "🟠";
+    p.kit === "NO" ? "❌" : "🟠";
 
   let airconDisplay =
     p.aircon === "YES" ? "✔" :
-    p.aircon === "NO" ? "❌" :
-    "🟠";
+    p.aircon === "NO" ? "❌" : "🟠";
 
   let tr = document.createElement("tr");
 
@@ -455,7 +469,9 @@ function createRow(p){
   tr.querySelector(".roomac").value = p.ROOM_AC || "";
 }
 
-/* CLICK EVENTS */
+//////////////////////////////////////////////////
+// CLICK EVENTS
+//////////////////////////////////////////////////
 tbody.addEventListener("click", e=>{
   if(isUpdating) return;
 
@@ -486,7 +502,6 @@ tbody.addEventListener("click", e=>{
     saveLocal(id,"attendanceStatus",val);
 
     row.querySelector(".att").textContent = attIcon(val);
-
     send("attendance",{rowIndex:id,value:val});
   }
 
@@ -511,7 +526,9 @@ tbody.addEventListener("click", e=>{
   setTimeout(()=> isUpdating = false,200);
 });
 
-/* CHANGE EVENTS */
+//////////////////////////////////////////////////
+// CHANGE EVENTS
+//////////////////////////////////////////////////
 tbody.addEventListener("change", e=>{
   let row = e.target.closest("tr");
   let id = row.dataset.id;
@@ -554,7 +571,9 @@ tbody.addEventListener("change", e=>{
   }
 });
 
-/* SEND */
+//////////////////////////////////////////////////
+// SEND
+//////////////////////////////////////////////////
 function send(action,data){
   let fd=new FormData();
   fd.append("action",action);
@@ -563,7 +582,9 @@ function send(action,data){
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
-/* LOAD */
+//////////////////////////////////////////////////
+// LOAD
+//////////////////////////////////////////////////
 async function loadData(){
   if(isUpdating) return;
 
@@ -579,16 +600,19 @@ async function loadData(){
   updateStats(filtered);
 }
 
-/* SEARCH */
+//////////////////////////////////////////////////
+// SEARCH
+//////////////////////////////////////////////////
 document.querySelector(".search-bar input").addEventListener("input", e=>{
   searchQuery = e.target.value.toLowerCase();
   loadData();
 });
 
-/* REFRESH */
+//////////////////////////////////////////////////
+// REFRESH
+//////////////////////////////////////////////////
 document.querySelector("button").onclick = loadData;
 
-/* AUTO REFRESH */
 setInterval(()=>{
   if(!isUpdating) loadData();
 },6000);
