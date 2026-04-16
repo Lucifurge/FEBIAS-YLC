@@ -272,28 +272,11 @@ const ROOM_LIMIT = 18;
 
 let tbody = document.querySelector("tbody");
 let allData = [];
-let roomCount = {};
 let localChanges = {};
 let searchQuery = "";
 let isUpdating = false;
 
 const clean = v => (v || "").toString().trim();
-
-/* AUTO ROOM */
-function getAutoRoomAC(room){
-  if(!room) return "";
-  let r = room.toLowerCase();
-
-  if(r.includes("barnabas") || r.includes("caleb")) return "Berean – Abraham (2)";
-  if(r.includes("joseph") || r.includes("david") || r.includes("daniel")) return "Berean – Elijah (2)";
-  if(r.includes("moses") || r.includes("nehemiah")) return "Berean – Joshua (3)";
-  if(r.includes("timothy") || r.includes("stephen") || r.includes("paul")) return "Berean – Elisha (3)";
-  if(r.includes("esther") || r.includes("eunice")) return "Sharon – Deborah (2)";
-  if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah")) return "Sharon – Abigail (2)";
-  if(r.includes("priscilla") || r.includes("sarah")) return "Sharon – Martha (3)";
-  if(r.includes("mary") || r.includes("elizabeth")) return "Sharon – Eve (3)";
-  return "";
-}
 
 /* ICONS */
 function payIcon(v){
@@ -322,23 +305,29 @@ function applyLocal(data){
 /* SEARCH */
 function filterData(data){
   if(!searchQuery) return data;
-
   return data.filter(p=>{
-    let text = `
-      ${p.firstName}
-      ${p.lastName}
-      ${p.room}
-      ${p.gender}
-      ${p.classification}
-    `.toLowerCase();
-
+    let text = `${p.firstName} ${p.lastName} ${p.room} ${p.gender} ${p.classification}`.toLowerCase();
     return text.includes(searchQuery);
   });
 }
 
+/* STATS */
+function updateStats(data){
+  let paid=0, waiting=0;
+
+  data.forEach(p=>{
+    if(p.paymentIndicator==="PAID") paid++;
+    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+  });
+
+  document.getElementById("total").textContent = data.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+}
+
 /* ROOM COUNT */
-function updateRoomStats(){
-  roomCount = {
+function updateRoomStats(data){
+  let roomCount = {
     "Berean – Abraham (2)":0,
     "Berean – Elijah (2)":0,
     "Berean – Joshua (3)":0,
@@ -349,7 +338,7 @@ function updateRoomStats(){
     "Sharon – Eve (3)":0
   };
 
-  allData.forEach(p=>{
+  data.forEach(p=>{
     let r = clean(p.ROOM_AC);
     if(roomCount[r] !== undefined) roomCount[r]++;
   });
@@ -368,8 +357,6 @@ function updateRoomStats(){
 /* CREATE ROW */
 function createRow(p){
 
-  let shirt = clean(p.shirt || "");
-
   let kitDisplay =
     p.kit === "YES" ? "✔" :
     p.kit === "NO" ? "❌" : "🟠";
@@ -377,8 +364,6 @@ function createRow(p){
   let airconDisplay =
     p.aircon === "YES" ? "✔" :
     p.aircon === "NO" ? "❌" : "🟠";
-
-  let allowedRoom = getAutoRoomAC(p.room);
 
   let tr = document.createElement("tr");
 
@@ -394,9 +379,10 @@ function createRow(p){
     <td>
       <select class="mode">
         <option value="">Select</option>
-        <option ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite</option>
-        <option ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>GCASH</option>
-        <option ${p.modeOfPayment==="Online (BANK)"?"selected":""}>BANK</option>
+        <option value="Onsite" ${p.modeOfPayment==="Onsite"?"selected":""}>Onsite</option>
+        <option value="Online (GCASH)" ${p.modeOfPayment==="Online (GCASH)"?"selected":""}>Online (GCASH)</option>
+        <option value="Online (BANK)" ${p.modeOfPayment==="Online (BANK)"?"selected":""}>Online (BANK)</option>
+        <option value="Onsite (BO)" ${p.modeOfPayment==="Onsite (BO)"?"selected":""}>Onsite (BO)</option>
       </select>
     </td>
 
@@ -406,12 +392,9 @@ function createRow(p){
     <td>
       <select class="shirt">
         <option value="">Select</option>
-        <option ${shirt==="S"?"selected":""}>S</option>
-        <option ${shirt==="M"?"selected":""}>M</option>
-        <option ${shirt==="L"?"selected":""}>L</option>
-        <option ${shirt==="XL"?"selected":""}>XL</option>
-        <option ${shirt==="XXL"?"selected":""}>XXL</option>
-        <option ${shirt==="3XL"?"selected":""}>3XL</option>
+        ${["S","M","L","XL","XXL","3XL"].map(s=>`
+          <option ${p.shirt===s?"selected":""}>${s}</option>
+        `).join("")}
       </select>
     </td>
 
@@ -421,7 +404,14 @@ function createRow(p){
     <td>
       <select class="roomac">
         <option value="">NO ROOM</option>
-        ${allowedRoom ? `<option value="${allowedRoom}">${allowedRoom}</option>` : ""}
+        <option ${p.ROOM_AC==="Berean – Abraham (2)"?"selected":""}>Berean – Abraham (2)</option>
+        <option ${p.ROOM_AC==="Berean – Elijah (2)"?"selected":""}>Berean – Elijah (2)</option>
+        <option ${p.ROOM_AC==="Berean – Joshua (3)"?"selected":""}>Berean – Joshua (3)</option>
+        <option ${p.ROOM_AC==="Berean – Elisha (3)"?"selected":""}>Berean – Elisha (3)</option>
+        <option ${p.ROOM_AC==="Sharon – Deborah (2)"?"selected":""}>Sharon – Deborah (2)</option>
+        <option ${p.ROOM_AC==="Sharon – Abigail (2)"?"selected":""}>Sharon – Abigail (2)</option>
+        <option ${p.ROOM_AC==="Sharon – Martha (3)"?"selected":""}>Sharon – Martha (3)</option>
+        <option ${p.ROOM_AC==="Sharon – Eve (3)"?"selected":""}>Sharon – Eve (3)</option>
       </select>
     </td>
 
@@ -432,7 +422,6 @@ function createRow(p){
 
   tr.dataset.id = p.rowIndex;
   tbody.appendChild(tr);
-  tr.querySelector(".roomac").value = p.ROOM_AC || "";
 }
 
 /* CLICK EVENTS */
@@ -444,7 +433,6 @@ tbody.addEventListener("click", e=>{
 
   let id = row.dataset.id;
   let p = allData.find(x=>x.rowIndex==id);
-  if(!p) return;
 
   isUpdating = true;
 
@@ -468,8 +456,7 @@ tbody.addEventListener("click", e=>{
     saveLocal(id,"attendanceStatus",val);
 
     row.querySelector(".att").textContent = attIcon(val);
-
-    send("attendance",{rowIndex:id,value:val});
+    send("attendance",{rowIndex:id,status:val});
   }
 
   /* KIT */
@@ -478,7 +465,7 @@ tbody.addEventListener("click", e=>{
     p.kit = next;
     saveLocal(id,"kit",next);
     e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
-    send("kit",{rowIndex:id,value:next});
+    send("kit",{rowIndex:id,state:next});
   }
 
   /* AIRCON */
@@ -487,10 +474,10 @@ tbody.addEventListener("click", e=>{
     p.aircon = next;
     saveLocal(id,"aircon",next);
     e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
-    send("aircon",{rowIndex:id,value:next});
+    send("aircon",{rowIndex:id,state:next});
   }
 
-  setTimeout(()=>isUpdating=false,300);
+  setTimeout(()=>isUpdating=false,200);
 });
 
 /* CHANGE EVENTS */
@@ -499,12 +486,18 @@ tbody.addEventListener("change", e=>{
   let id = row.dataset.id;
   let p = allData.find(x=>x.rowIndex==id);
 
+  if(e.target.classList.contains("mode")){
+    let val = clean(e.target.value);
+    p.modeOfPayment = val;
+    saveLocal(id,"modeOfPayment",val);
+    send("mode",{rowIndex:id,value:val});
+  }
+
   if(e.target.classList.contains("roomac")){
     let val = clean(e.target.value);
     p.ROOM_AC = val;
     saveLocal(id,"ROOM_AC",val);
     send("room_ac",{rowIndex:id,value:val});
-    updateRoomStats();
   }
 
   if(e.target.classList.contains("shirt")){
@@ -513,19 +506,6 @@ tbody.addEventListener("change", e=>{
     saveLocal(id,"shirt",val);
     send("shirt",{rowIndex:id,value:val});
   }
-
-  if(e.target.classList.contains("mode")){
-    let val = clean(e.target.value);
-    p.modeOfPayment = val;
-    saveLocal(id,"modeOfPayment",val);
-    send("mode",{rowIndex:id,value:val});
-  }
-});
-
-/* SEARCH EVENT */
-document.querySelector(".search-bar input").addEventListener("input", e=>{
-  searchQuery = e.target.value.toLowerCase();
-  loadData();
 });
 
 /* SEND */
@@ -545,18 +525,26 @@ async function loadData(){
   let data = await res.json();
 
   allData = applyLocal(data);
-
   let filtered = filterData(allData);
 
   tbody.innerHTML="";
-  updateRoomStats();
   filtered.forEach(createRow);
+
+  updateRoomStats(filtered);
+  updateStats(filtered);
 }
+
+/* SEARCH */
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  searchQuery = e.target.value.toLowerCase();
+  loadData();
+});
 
 /* REFRESH */
 document.querySelector("button").onclick = loadData;
 
-setInterval(()=>{ if(!isUpdating) loadData(); },6000);
+/* AUTO REFRESH */
+setInterval(()=>{ if(!isUpdating) loadData(); },5000);
 
 loadData();
 </script>
