@@ -386,15 +386,18 @@ function createRow(p){
   let shirt = clean(p.shirtSize || p.shirt || "");
   let allowedRoom = getAutoRoomAC(p.room);
 
+  /* 🔒 AUTO LOCK ROOM */
+  if(allowedRoom){
+    p.ROOM_AC = allowedRoom;
+  }
+
   let kitDisplay =
     p.kit === "YES" ? "✔" :
-    p.kit === "NO" ? "❌" :
-    "🟠";
+    p.kit === "NO" ? "❌" : "🟠";
 
   let airconDisplay =
     p.aircon === "YES" ? "✔" :
-    p.aircon === "NO" ? "❌" :
-    "🟠";
+    p.aircon === "NO" ? "❌" : "🟠";
 
   let tr = document.createElement("tr");
 
@@ -433,7 +436,7 @@ function createRow(p){
     <td class="clickable aircon">${airconDisplay}</td>
 
     <td>
-      <select class="roomac">
+      <select class="roomac" ${allowedRoom ? "disabled" : ""}>
         <option value="">NO ROOM</option>
         ${allowedRoom ? `<option value="${allowedRoom}">${allowedRoom}</option>` : ""}
       </select>
@@ -463,7 +466,6 @@ tbody.addEventListener("click", e=>{
 
   isUpdating = true;
 
-  /* PAY */
   if(e.target.classList.contains("pay")){
     let val = p.paymentIndicator === "PAID" ? "NOT PAID" : "PAID";
     p.paymentIndicator = val;
@@ -476,7 +478,6 @@ tbody.addEventListener("click", e=>{
     send("payment",{rowIndex:id,value:val});
   }
 
-  /* ATT */
   if(e.target.classList.contains("att")){
     let val = p.attendanceStatus === "Attended" ? "ON-waiting" : "Attended";
     p.attendanceStatus = val;
@@ -487,7 +488,6 @@ tbody.addEventListener("click", e=>{
     send("attendance",{rowIndex:id,value:val});
   }
 
-  /* KIT */
   if(e.target.classList.contains("kit")){
     let next = p.kit==="YES"?"NO":p.kit==="NO"?"":"YES";
     p.kit = next;
@@ -497,7 +497,6 @@ tbody.addEventListener("click", e=>{
     send("kit",{rowIndex:id,value:next});
   }
 
-  /* AIRCON */
   if(e.target.classList.contains("aircon")){
     let next = p.aircon==="YES"?"NO":p.aircon==="NO"?"":"YES";
     p.aircon = next;
@@ -516,13 +515,6 @@ tbody.addEventListener("change", e=>{
   let id = row.dataset.id;
   let p = allData.find(x => x.rowIndex == id);
 
-  if(e.target.classList.contains("shirt")){
-    let val = clean(e.target.value);
-    p.shirtSize = val;
-    saveLocal(id,"shirtSize",val);
-    send("shirt",{rowIndex:id,value:val});
-  }
-
   if(e.target.classList.contains("mode")){
     let val = clean(e.target.value);
     p.modeOfPayment = val;
@@ -534,9 +526,8 @@ tbody.addEventListener("change", e=>{
     let val = clean(e.target.value);
     let allowed = getAutoRoomAC(p.room);
 
-    if(val && val !== allowed){
-      alert("❌ Not allowed room");
-      e.target.value = p.ROOM_AC || "";
+    if(allowed){
+      e.target.value = allowed;
       return;
     }
 
@@ -550,6 +541,13 @@ tbody.addEventListener("change", e=>{
     saveLocal(id,"ROOM_AC",val);
     send("room_ac",{rowIndex:id,value:val});
     updateRoomStats();
+  }
+
+  if(e.target.classList.contains("shirt")){
+    let val = clean(e.target.value);
+    p.shirtSize = val;
+    saveLocal(id,"shirtSize",val);
+    send("shirt",{rowIndex:id,value:val});
   }
 });
 
