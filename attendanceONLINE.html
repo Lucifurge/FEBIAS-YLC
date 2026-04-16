@@ -302,6 +302,23 @@ function applyLocal(data){
   });
 }
 
+/* SEARCH */
+function filterData(data){
+  if(!searchQuery) return data;
+
+  return data.filter(p=>{
+    let text = `
+      ${p.firstName}
+      ${p.lastName}
+      ${p.room}
+      ${p.gender}
+      ${p.classification}
+    `.toLowerCase();
+
+    return text.includes(searchQuery);
+  });
+}
+
 /* ROOM COUNT */
 function updateRoomStats(){
   roomCount = {
@@ -331,7 +348,7 @@ function updateRoomStats(){
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* CREATE ROW (🔥 FIXED ALIGNMENT) */
+/* CREATE ROW */
 function createRow(p){
 
   let shirt = clean(p.shirt || "");
@@ -414,6 +431,30 @@ tbody.addEventListener("click", e=>{
 
   isUpdating = true;
 
+  /* PAY */
+  if(e.target.classList.contains("pay")){
+    let val = p.paymentIndicator === "PAID" ? "NOT PAID" : "PAID";
+    p.paymentIndicator = val;
+    saveLocal(id,"paymentIndicator",val);
+
+    row.querySelector(".pay").textContent = payIcon(val);
+    row.querySelector(".paytxt").textContent = payIcon(val);
+    row.querySelector(".amt").textContent = val==="PAID"?"₱1500":"";
+
+    send("payment",{rowIndex:id,value:val});
+  }
+
+  /* ATT */
+  if(e.target.classList.contains("att")){
+    let val = p.attendanceStatus === "Attended" ? "ON-waiting" : "Attended";
+    p.attendanceStatus = val;
+    saveLocal(id,"attendanceStatus",val);
+
+    row.querySelector(".att").textContent = attIcon(val);
+
+    send("attendance",{rowIndex:id,value:val});
+  }
+
   /* KIT */
   if(e.target.classList.contains("kit")){
     let next = p.kit==="YES"?"NO":p.kit==="NO"?"":"YES";
@@ -464,6 +505,12 @@ tbody.addEventListener("change", e=>{
   }
 });
 
+/* SEARCH EVENT */
+document.querySelector(".search-bar input").addEventListener("input", e=>{
+  searchQuery = e.target.value.toLowerCase();
+  loadData();
+});
+
 /* SEND */
 function send(action,data){
   let fd=new FormData();
@@ -482,12 +529,18 @@ async function loadData(){
 
   allData = applyLocal(data);
 
+  let filtered = filterData(allData);
+
   tbody.innerHTML="";
   updateRoomStats();
-  allData.forEach(createRow);
+  filtered.forEach(createRow);
 }
 
+/* REFRESH */
+document.querySelector("button").onclick = loadData;
+
 setInterval(()=>{ if(!isUpdating) loadData(); },6000);
+
 loadData();
 </script>
 </body>
