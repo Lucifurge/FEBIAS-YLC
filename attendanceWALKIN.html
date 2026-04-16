@@ -219,7 +219,7 @@ let tbody = document.querySelector("tbody");
 let searchInput = document.querySelector(".search-bar input");
 
 let allData = {};
-let lastEdit = {};
+let pending = {}; // field-level protection
 
 const norm = v => (v || "").toString().toUpperCase();
 
@@ -249,7 +249,9 @@ function kitIcon(v){
 /* ========================= SEND */
 function send(action,data){
   let id = String(data.rowIndex);
-  lastEdit[id] = Date.now();
+
+  if(!pending[id]) pending[id] = {};
+  pending[id][action] = true;
 
   let fd = new FormData();
   fd.append("action",action);
@@ -291,7 +293,7 @@ function createRow(p){
 
   tbody.appendChild(tr);
 
-  /* ========================= CLASSIFICATION */
+  /* CLASSIFICATION */
   let classSelect = document.createElement("select");
   let currentClass = p.classification || "No class";
 
@@ -310,7 +312,7 @@ function createRow(p){
 
   tr.querySelector(".classification").appendChild(classSelect);
 
-  /* ========================= ROOM */
+  /* ROOM */
   let roomSelect = document.createElement("select");
 
   let rooms = [
@@ -336,7 +338,7 @@ function createRow(p){
 
   tr.querySelector(".room").appendChild(roomSelect);
 
-  /* ========================= SHIRT */
+  /* SHIRT */
   let shirtSelect = document.createElement("select");
   let sizes = ["","S","M","L","XL","XXL","3XL"];
 
@@ -353,7 +355,7 @@ function createRow(p){
 
   tr.querySelector(".shirt").appendChild(shirtSelect);
 
-  /* ========================= MODE */
+  /* MODE */
   let modeSelect = document.createElement("select");
 
   modeSelect.innerHTML = `
@@ -370,7 +372,7 @@ function createRow(p){
 
   tr.querySelector(".mode").appendChild(modeSelect);
 
-  /* ========================= PAY */
+  /* PAY */
   tr.querySelector(".pay").onclick = ()=>{
     let current = norm(p.payment_indicator || "WAITING");
 
@@ -389,7 +391,7 @@ function createRow(p){
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
   };
 
-  /* ========================= ATT */
+  /* ATT */
   tr.querySelector(".att").onclick = ()=>{
     let current = norm(p.attendance_status || "WAITING");
 
@@ -405,7 +407,7 @@ function createRow(p){
     send("attendance",{rowIndex:p.rowIndex,status:next});
   };
 
-  /* ========================= KIT */
+  /* KIT */
   tr.querySelector(".kit").onclick = ()=>{
     let current = norm(p.kit_distribution);
 
@@ -426,7 +428,6 @@ function createRow(p){
 
 /* ========================= UI UPDATE */
 function updateRowUI(tr,p){
-
   tr.querySelector(".name").textContent =
     (p.lastName||"") + ", " + (p.firstName||"");
 
@@ -473,22 +474,43 @@ async function loadData(){
       return;
     }
 
-    if(lastEdit[id] && Date.now() - lastEdit[id] < 5000){
-      return;
-    }
-
     let local = allData[id];
-    Object.assign(local, server);
+    let pend = pending[id] || {};
+
+    const fieldMap = {
+      payment_indicator: "payment",
+      attendance_status: "attendance",
+      kit_distribution: "kit",
+      room_assignment: "room_assignment",
+      shirt_size: "shirt",
+      mode_of_payment: "mode",
+      classification: "classification"
+    };
+
+    for(let key in server){
+
+      let action = fieldMap[key];
+
+      if(action && pend[action]){
+        // ✅ unlock ONLY when server matches
+        if(server[key] === local[key]){
+          delete pending[id][action];
+        } else {
+          continue;
+        }
+      }
+
+      local[key] = server[key];
+    }
 
     let tr = document.querySelector(`tr[data-id="${id}"]`);
     if(tr){
       updateRowUI(tr, local);
 
-      // sync dropdowns
-      tr.querySelector(".room select").value = server.room_assignment || "";
-      tr.querySelector(".shirt select").value = server.shirt_size || "";
-      tr.querySelector(".mode select").value = server.mode_of_payment || "";
-      tr.querySelector(".classification select").value = server.classification || "No class";
+      if(!pend.room_assignment) tr.querySelector(".room select").value = local.room_assignment || "";
+      if(!pend.shirt) tr.querySelector(".shirt select").value = local.shirt_size || "";
+      if(!pend.mode) tr.querySelector(".mode select").value = local.mode_of_payment || "";
+      if(!pend.classification) tr.querySelector(".classification select").value = local.classification || "No class";
     }
   });
 
