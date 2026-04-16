@@ -302,7 +302,7 @@ function applyLocal(data){
   });
 }
 
-/* ROOM COUNT FIX */
+/* ROOM COUNT */
 function updateRoomStats(){
   roomCount = {
     "Berean – Abraham (2)":0,
@@ -331,10 +331,10 @@ function updateRoomStats(){
   document.getElementById("roomStats").innerHTML = html;
 }
 
-/* CREATE ROW */
+/* CREATE ROW (🔥 FIXED ALIGNMENT) */
 function createRow(p){
 
-  let allowedRoom = getAutoRoomAC(p.room);
+  let shirt = clean(p.shirt || "");
 
   let kitDisplay =
     p.kit === "YES" ? "✔" :
@@ -343,6 +343,8 @@ function createRow(p){
   let airconDisplay =
     p.aircon === "YES" ? "✔" :
     p.aircon === "NO" ? "❌" : "🟠";
+
+  let allowedRoom = getAutoRoomAC(p.room);
 
   let tr = document.createElement("tr");
 
@@ -367,6 +369,18 @@ function createRow(p){
     <td class="clickable pay">${payIcon(p.paymentIndicator)}</td>
     <td class="clickable att">${attIcon(p.attendanceStatus)}</td>
 
+    <td>
+      <select class="shirt">
+        <option value="">Select</option>
+        <option ${shirt==="S"?"selected":""}>S</option>
+        <option ${shirt==="M"?"selected":""}>M</option>
+        <option ${shirt==="L"?"selected":""}>L</option>
+        <option ${shirt==="XL"?"selected":""}>XL</option>
+        <option ${shirt==="XXL"?"selected":""}>XXL</option>
+        <option ${shirt==="3XL"?"selected":""}>3XL</option>
+      </select>
+    </td>
+
     <td class="clickable kit">${kitDisplay}</td>
     <td class="clickable aircon">${airconDisplay}</td>
 
@@ -375,6 +389,10 @@ function createRow(p){
         <option value="">NO ROOM</option>
         ${allowedRoom ? `<option value="${allowedRoom}">${allowedRoom}</option>` : ""}
       </select>
+    </td>
+
+    <td class="${p.classification==='Silver'?'silver':'copper'}">
+      ${p.classification || ""}
     </td>
   `;
 
@@ -386,6 +404,7 @@ function createRow(p){
 /* CLICK EVENTS */
 tbody.addEventListener("click", e=>{
   if(isUpdating) return;
+
   let row = e.target.closest("tr");
   if(!row) return;
 
@@ -404,7 +423,7 @@ tbody.addEventListener("click", e=>{
     send("kit",{rowIndex:id,value:next});
   }
 
-  /* AIRCON (3 STATE FIX) */
+  /* AIRCON */
   if(e.target.classList.contains("aircon")){
     let next = p.aircon==="YES"?"NO":p.aircon==="NO"?"":"YES";
     p.aircon = next;
@@ -416,7 +435,7 @@ tbody.addEventListener("click", e=>{
   setTimeout(()=>isUpdating=false,300);
 });
 
-/* ROOM AC FIX */
+/* CHANGE EVENTS */
 tbody.addEventListener("change", e=>{
   let row = e.target.closest("tr");
   let id = row.dataset.id;
@@ -425,13 +444,34 @@ tbody.addEventListener("change", e=>{
   if(e.target.classList.contains("roomac")){
     let val = clean(e.target.value);
     p.ROOM_AC = val;
-
     saveLocal(id,"ROOM_AC",val);
     send("room_ac",{rowIndex:id,value:val});
+    updateRoomStats();
+  }
 
-    updateRoomStats(); // 🔥 FIX COUNT
+  if(e.target.classList.contains("shirt")){
+    let val = clean(e.target.value);
+    p.shirt = val;
+    saveLocal(id,"shirt",val);
+    send("shirt",{rowIndex:id,value:val});
+  }
+
+  if(e.target.classList.contains("mode")){
+    let val = clean(e.target.value);
+    p.modeOfPayment = val;
+    saveLocal(id,"modeOfPayment",val);
+    send("mode",{rowIndex:id,value:val});
   }
 });
+
+/* SEND */
+function send(action,data){
+  let fd=new FormData();
+  fd.append("action",action);
+  fd.append("sheet",SHEET);
+  for(let k in data) fd.append(k,data[k]);
+  fetch(BASE_URL,{method:"POST",body:fd});
+}
 
 /* LOAD */
 async function loadData(){
@@ -447,7 +487,7 @@ async function loadData(){
   allData.forEach(createRow);
 }
 
-setInterval(()=>{ if(!isUpdating) loadData(); },5000);
+setInterval(()=>{ if(!isUpdating) loadData(); },6000);
 loadData();
 </script>
 </body>
