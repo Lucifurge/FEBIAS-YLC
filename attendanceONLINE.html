@@ -313,7 +313,7 @@ function attIcon(v){
 }
 
 //////////////////////////////////////////////////
-// LOCAL CACHE
+// LOCAL CACHE (ANTI SNAPBACK)
 //////////////////////////////////////////////////
 function saveLocal(row, field, val){
   if(!localChanges[row]) localChanges[row] = {};
@@ -358,7 +358,7 @@ function updateStats(data){
 }
 
 //////////////////////////////////////////////////
-// ROOM COUNT
+// ROOM COUNT (GLOBAL SOURCE OF TRUTH)
 //////////////////////////////////////////////////
 function updateRoomStats(){
   roomCount = {
@@ -391,7 +391,7 @@ function updateRoomStats(){
 }
 
 //////////////////////////////////////////////////
-// CREATE ROW (FINAL LOCKED VERSION)
+// CREATE ROW (LOCKED + NO ROOM DEFAULT)
 //////////////////////////////////////////////////
 function createRow(p){
 
@@ -442,7 +442,7 @@ function createRow(p){
     <td class="clickable kit">${kitDisplay}</td>
     <td class="clickable aircon">${airconDisplay}</td>
 
-    <!-- 🔥 ROOM LOCK -->
+    <!-- 🔥 LOCKED ROOM -->
     <td>
       <select class="roomac">
         <option value="">NO ROOM</option>
@@ -465,7 +465,7 @@ function createRow(p){
 }
 
 //////////////////////////////////////////////////
-// EVENTS + SYNC (UNCHANGED WORKING PART)
+// EVENTS
 //////////////////////////////////////////////////
 tbody.addEventListener("click", e=>{
   if(isUpdating) return;
@@ -481,9 +481,11 @@ tbody.addEventListener("click", e=>{
     let val = p.paymentIndicator==="PAID"?"NOT PAID":"PAID";
     p.paymentIndicator = val;
     saveLocal(id,"paymentIndicator",val);
+
     row.querySelector(".pay").textContent = payIcon(val);
     row.querySelector(".paytxt").textContent = payIcon(val);
     row.querySelector(".amt").textContent = val==="PAID"?"₱1500":"";
+
     send("payment",{rowIndex:id,value:val});
   }
 
@@ -491,6 +493,7 @@ tbody.addEventListener("click", e=>{
     let val = p.attendanceStatus==="Attended"?"ON-waiting":"Attended";
     p.attendanceStatus = val;
     saveLocal(id,"attendanceStatus",val);
+
     row.querySelector(".att").textContent = attIcon(val);
     send("attendance",{rowIndex:id,value:val});
   }
@@ -499,6 +502,7 @@ tbody.addEventListener("click", e=>{
     let next = p.kit==="YES"?"NO":p.kit==="NO"?"":"YES";
     p.kit = next;
     saveLocal(id,"kit",next);
+
     e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
     send("kit",{rowIndex:id,value:next});
   }
@@ -507,6 +511,7 @@ tbody.addEventListener("click", e=>{
     let next = p.aircon==="YES"?"NO":p.aircon==="NO"?"":"YES";
     p.aircon = next;
     saveLocal(id,"aircon",next);
+
     e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
     send("aircon",{rowIndex:id,value:next});
   }
@@ -556,6 +561,9 @@ tbody.addEventListener("change", e=>{
   }
 });
 
+//////////////////////////////////////////////////
+// SEND
+//////////////////////////////////////////////////
 function send(action,data){
   let fd=new FormData();
   fd.append("action",action);
@@ -564,6 +572,9 @@ function send(action,data){
   fetch(BASE_URL,{method:"POST",body:fd});
 }
 
+//////////////////////////////////////////////////
+// LOAD (FIXED ORDER)
+//////////////////////////////////////////////////
 async function loadData(){
   if(isUpdating) return;
 
@@ -571,14 +582,21 @@ async function loadData(){
   let data = await res.json();
 
   allData = applyLocal(data);
+
+  // ✅ FIXED ORDER
+  updateRoomStats();
+
   let filtered = filterData(allData);
 
   tbody.innerHTML="";
-  updateRoomStats();
   filtered.forEach(createRow);
+
   updateStats(filtered);
 }
 
+//////////////////////////////////////////////////
+// SEARCH + REFRESH
+//////////////////////////////////////////////////
 document.querySelector(".search-bar input").addEventListener("input", e=>{
   searchQuery = e.target.value.toLowerCase();
   loadData();
@@ -586,7 +604,9 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
 
 document.querySelector("button").onclick = loadData;
 
-setInterval(()=>{ if(!isUpdating) loadData(); },6000);
+setInterval(()=>{
+  if(!isUpdating) loadData();
+},6000);
 
 loadData();
 </script>
