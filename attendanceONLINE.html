@@ -280,23 +280,18 @@ let isUpdating = false;
 const clean = v => (v || "").toString().trim();
 
 //////////////////////////////////////////////////
-// 🔥 AUTO ROOM (LOCKED PROPERLY)
+// ROOM LIST (GLOBAL)
 //////////////////////////////////////////////////
-function getAutoRoomAC(room){
-  if(!room) return "";
-  let r = room.toLowerCase();
-
-  if(r.includes("barnabas") || r.includes("caleb")) return "Berean – Abraham (2)";
-  if(r.includes("joseph") || r.includes("david") || r.includes("daniel")) return "Berean – Elijah (2)";
-  if(r.includes("moses") || r.includes("nehemiah")) return "Berean – Joshua (3)";
-  if(r.includes("timothy") || r.includes("stephen") || r.includes("paul")) return "Berean – Elisha (3)";
-  if(r.includes("esther") || r.includes("eunice")) return "Sharon – Deborah (2)";
-  if(r.includes("rebecca") || r.includes("lydia") || r.includes("hannah")) return "Sharon – Abigail (2)";
-  if(r.includes("priscilla") || r.includes("sarah")) return "Sharon – Martha (3)";
-  if(r.includes("mary") || r.includes("elizabeth")) return "Sharon – Eve (3)";
-
-  return "";
-}
+const ROOM_LIST = [
+  "Berean – Abraham (2)",
+  "Berean – Elijah (2)",
+  "Berean – Joshua (3)",
+  "Berean – Elisha (3)",
+  "Sharon – Deborah (2)",
+  "Sharon – Abigail (2)",
+  "Sharon – Martha (3)",
+  "Sharon – Eve (3)"
+];
 
 //////////////////////////////////////////////////
 // ICONS
@@ -363,16 +358,8 @@ function updateStats(data){
 // ROOM COUNT
 //////////////////////////////////////////////////
 function updateRoomStats(){
-  roomCount = {
-    "Berean – Abraham (2)":0,
-    "Berean – Elijah (2)":0,
-    "Berean – Joshua (3)":0,
-    "Berean – Elisha (3)":0,
-    "Sharon – Deborah (2)":0,
-    "Sharon – Abigail (2)":0,
-    "Sharon – Martha (3)":0,
-    "Sharon – Eve (3)":0
-  };
+  roomCount = {};
+  ROOM_LIST.forEach(r => roomCount[r] = 0);
 
   allData.forEach(p=>{
     let r = clean(p.ROOM_AC);
@@ -381,7 +368,7 @@ function updateRoomStats(){
 
   let html = "<b>ROOM AC STATUS</b><br>";
 
-  Object.keys(roomCount).forEach(room=>{
+  ROOM_LIST.forEach(room=>{
     let c = roomCount[room];
     let full = c >= ROOM_LIMIT;
 
@@ -400,12 +387,6 @@ function updateRoomStats(){
 function createRow(p){
 
   let shirt = clean(p.shirtSize || p.shirt || "");
-  let allowedRoom = getAutoRoomAC(p.room);
-
-  // ✅ SAFE AUTO LOCK (NO SNAPBACK BUG)
-  if(allowedRoom && !p.ROOM_AC){
-    p.ROOM_AC = allowedRoom;
-  }
 
   let kitDisplay =
     p.kit === "YES" ? "✔" :
@@ -454,7 +435,15 @@ function createRow(p){
     <td>
       <select class="roomac">
         <option value="">NO ROOM</option>
-        ${allowedRoom ? `<option value="${allowedRoom}">${allowedRoom}</option>` : ""}
+
+        ${ROOM_LIST.map(r => `
+          <option value="${r}"
+            ${p.ROOM_AC === r ? "selected" : ""}
+            ${roomCount[r] >= ROOM_LIMIT && p.ROOM_AC !== r ? "disabled" : ""}>
+            ${r}
+          </option>
+        `).join("")}
+
       </select>
     </td>
 
@@ -465,8 +454,6 @@ function createRow(p){
 
   tr.dataset.id = p.rowIndex;
   tbody.appendChild(tr);
-
-  tr.querySelector(".roomac").value = p.ROOM_AC || "";
 }
 
 //////////////////////////////////////////////////
@@ -550,15 +537,8 @@ tbody.addEventListener("change", e=>{
 
   if(e.target.classList.contains("roomac")){
     let val = clean(e.target.value);
-    let allowed = getAutoRoomAC(p.room);
 
-    if(val && val !== allowed){
-      alert("❌ Not allowed room");
-      e.target.value = p.ROOM_AC || "";
-      return;
-    }
-
-    if(val && roomCount[val] >= ROOM_LIMIT){
+    if(val && roomCount[val] >= ROOM_LIMIT && p.ROOM_AC !== val){
       alert("ROOM FULL");
       e.target.value = p.ROOM_AC || "";
       return;
