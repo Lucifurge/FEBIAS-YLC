@@ -318,6 +318,20 @@ function filterData(data){
   );
 }
 
+/* STATS */
+function updateStats(data){
+  let paid=0, waiting=0;
+
+  data.forEach(p=>{
+    if(p.paymentIndicator==="PAID") paid++;
+    if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+  });
+
+  document.getElementById("total").textContent = data.length;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+}
+
 /* ROOM COUNT */
 function updateRoomStats(){
   roomCount = {
@@ -458,32 +472,18 @@ tbody.addEventListener("click", e=>{
     send("attendance",{rowIndex:id,value:val});
   }
 
-  /* KIT (FIXED) */
+  /* KIT */
   if(e.target.classList.contains("kit")){
-
-    let current =
-      p.kit === "YES" ? "✔" :
-      p.kit === "NO" ? "❌" :
-      p.kit || "🟠";
+    let current = p.kit === "YES" ? "✔" : p.kit === "NO" ? "❌" : p.kit || "🟠";
 
     let uiVal, backendVal;
 
-    if(current === "🟠"){
-      uiVal = "✔";
-      backendVal = "YES";
-    }
-    else if(current === "✔"){
-      uiVal = "❌";
-      backendVal = "NO";
-    }
-    else{
-      uiVal = "🟠";
-      backendVal = "";
-    }
+    if(current === "🟠"){ uiVal="✔"; backendVal="YES"; }
+    else if(current === "✔"){ uiVal="❌"; backendVal="NO"; }
+    else{ uiVal="🟠"; backendVal=""; }
 
     p.kit = uiVal;
     saveLocal(id,"kit",uiVal);
-
     e.target.textContent = uiVal;
 
     send("kit",{rowIndex:id,value:backendVal});
@@ -494,13 +494,12 @@ tbody.addEventListener("click", e=>{
     let val = p.aircon === "✔" ? "❌" : "✔";
     p.aircon = val;
     saveLocal(id,"aircon",val);
-
     e.target.textContent = val;
 
     send("aircon",{rowIndex:id,value:val});
   }
 
-  setTimeout(()=>{ isUpdating = false; }, 300);
+  setTimeout(()=> isUpdating = false,300);
 });
 
 /* CHANGE EVENTS */
@@ -514,6 +513,13 @@ tbody.addEventListener("change", e=>{
     p.shirtSize = val;
     saveLocal(id,"shirtSize",val);
     send("shirt",{rowIndex:id,value:val});
+  }
+
+  if(e.target.classList.contains("mode")){
+    let val = clean(e.target.value);
+    p.modeOfPayment = val;
+    saveLocal(id,"modeOfPayment",val);
+    send("mode",{rowIndex:id,value:val});
   }
 
   if(e.target.classList.contains("roomac")){
@@ -535,7 +541,6 @@ tbody.addEventListener("change", e=>{
     p.ROOM_AC = val;
     saveLocal(id,"ROOM_AC",val);
     send("room_ac",{rowIndex:id,value:val});
-
     updateRoomStats();
   }
 });
@@ -562,6 +567,7 @@ async function loadData(){
   tbody.innerHTML="";
   updateRoomStats();
   filtered.forEach(createRow);
+  updateStats(filtered);
 }
 
 /* SEARCH */
@@ -570,7 +576,10 @@ document.querySelector(".search-bar input").addEventListener("input", e=>{
   loadData();
 });
 
-/* SAFE REFRESH */
+/* MANUAL REFRESH */
+document.querySelector("button").onclick = loadData;
+
+/* AUTO REFRESH */
 setInterval(()=>{
   if(!isUpdating) loadData();
 },6000);
