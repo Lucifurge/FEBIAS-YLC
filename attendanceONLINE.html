@@ -334,6 +334,7 @@ function applyLocal(data){
 //////////////////////////////////////////////////
 function filterData(data){
   if(!searchQuery) return data;
+
   return data.filter(p =>
     `${p.firstName} ${p.lastName} ${p.room} ${p.gender} ${p.classification}`
     .toLowerCase()
@@ -358,7 +359,7 @@ function updateStats(data){
 }
 
 //////////////////////////////////////////////////
-// ROOM COUNT (GLOBAL SOURCE OF TRUTH)
+// ROOM COUNT
 //////////////////////////////////////////////////
 function updateRoomStats(){
   roomCount = {
@@ -391,20 +392,15 @@ function updateRoomStats(){
 }
 
 //////////////////////////////////////////////////
-// CREATE ROW (LOCKED + NO ROOM DEFAULT)
+// CREATE ROW (FINAL PERFECT VERSION)
 //////////////////////////////////////////////////
 function createRow(p){
 
   let shirt = clean(p.shirtSize || p.shirt || "");
   let allowedRoom = getAutoRoomAC(p.room);
 
-  let kitDisplay =
-    p.kit === "YES" ? "✔" :
-    p.kit === "NO" ? "❌" : "🟠";
-
-  let airconDisplay =
-    p.aircon === "YES" ? "✔" :
-    p.aircon === "NO" ? "❌" : "🟠";
+  let kitDisplay = p.kit==="YES"?"✔":p.kit==="NO"?"❌":"🟠";
+  let airconDisplay = p.aircon==="YES"?"✔":p.aircon==="NO"?"❌":"🟠";
 
   let tr = document.createElement("tr");
 
@@ -442,16 +438,21 @@ function createRow(p){
     <td class="clickable kit">${kitDisplay}</td>
     <td class="clickable aircon">${airconDisplay}</td>
 
-    <!-- 🔥 LOCKED ROOM -->
+    <!-- ✅ FINAL ROOM LOGIC -->
     <td>
       <select class="roomac">
-        <option value="">NO ROOM</option>
+
+        <!-- TRUE DEFAULT -->
+        <option value="" ${!p.ROOM_AC ? "selected" : ""}>NO ROOM</option>
+
         ${allowedRoom ? `
           <option value="${allowedRoom}"
             ${p.ROOM_AC===allowedRoom?"selected":""}
             ${roomCount[allowedRoom]>=ROOM_LIMIT && p.ROOM_AC!==allowedRoom?"disabled":""}>
             ${allowedRoom}
-          </option>` : ""}
+          </option>
+        ` : ""}
+
       </select>
     </td>
 
@@ -502,7 +503,6 @@ tbody.addEventListener("click", e=>{
     let next = p.kit==="YES"?"NO":p.kit==="NO"?"":"YES";
     p.kit = next;
     saveLocal(id,"kit",next);
-
     e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
     send("kit",{rowIndex:id,value:next});
   }
@@ -511,7 +511,6 @@ tbody.addEventListener("click", e=>{
     let next = p.aircon==="YES"?"NO":p.aircon==="NO"?"":"YES";
     p.aircon = next;
     saveLocal(id,"aircon",next);
-
     e.target.textContent = next==="YES"?"✔":next==="NO"?"❌":"🟠";
     send("aircon",{rowIndex:id,value:next});
   }
@@ -573,7 +572,7 @@ function send(action,data){
 }
 
 //////////////////////////////////////////////////
-// LOAD (FIXED ORDER)
+// LOAD
 //////////////////////////////////////////////////
 async function loadData(){
   if(isUpdating) return;
@@ -583,7 +582,6 @@ async function loadData(){
 
   allData = applyLocal(data);
 
-  // ✅ FIXED ORDER
   updateRoomStats();
 
   let filtered = filterData(allData);
