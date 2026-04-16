@@ -61,7 +61,6 @@ h1{
   background:#111;
   color:white;
   outline:none;
-  transition:0.2s;
 }
 
 .search-bar input:focus{
@@ -105,6 +104,39 @@ h1{
   color:#ccc;
 }
 
+/* ROOM CARD */
+.room-card{
+  background:#121212;
+  border:1px solid #2a2a2a;
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:10px;
+  transition:0.2s;
+}
+
+.room-card:hover{
+  border-color:#ff6a00;
+  box-shadow:0 0 10px rgba(255,106,0,0.2);
+}
+
+.room-title{
+  font-weight:bold;
+  color:#ff6a00;
+  font-size:14px;
+}
+
+.room-people{
+  margin-top:5px;
+  font-size:12px;
+  color:#aaa;
+  line-height:1.4;
+}
+
+.empty{
+  color:#555;
+  font-style:italic;
+}
+
 /* BADGES */
 .badge{
   padding:4px 10px;
@@ -135,14 +167,7 @@ button{
   color:white;
   font-weight:bold;
   cursor:pointer;
-  transition:0.2s;
   box-shadow:0 0 10px rgba(255,106,0,0.3);
-  font-size:14px;
-}
-
-button:hover{
-  transform:translateY(-2px);
-  box-shadow:0 0 18px rgba(255,106,0,0.5);
 }
 
 /* TABLE */
@@ -185,10 +210,9 @@ select{
   cursor:pointer;
 }
 
-/* CLICKABLE CELLS (🔥 UX FIX) */
+/* CLICKABLE */
 .clickable{
   cursor:pointer;
-  transition:0.15s;
   font-weight:bold;
 }
 
@@ -221,21 +245,24 @@ select{
 3. Click ATT → updates attendance status.<br>
 4. Click KIT / AIRCON → cycles ✔ ❌ 🟠.<br>
 5. Select ROOM_AC using dropdown.<br>
-6. Full rooms are tracked automatically.<br>
 </div>
 
 <div class="search-bar">
   <input type="text" placeholder="Search camper name, room, gender, classification...">
 </div>
 
+<!-- 🔥 UPDATED STATS -->
 <div class="stats">
   <div class="box">Total<br><span id="total">0</span></div>
   <div class="box">Paid<br><span id="paid">0</span></div>
   <div class="box">Waiting<br><span id="waiting">0</span></div>
+  <div class="box">Attended<br><span id="attended">0</span></div>
+  <div class="box">Sales<br><span id="sales">₱0</span></div>
 </div>
 
+<!-- 🔥 SUB ROOM DISPLAY -->
 <div class="room-box" id="roomStats">
-<b>ROOM AC STATUS</b><br>
+<b>SUB ROOM STATUS</b><br>
 Loading...
 </div>
 
@@ -261,10 +288,11 @@ Loading...
   <th>Classification</th>
 </tr>
 </thead>
-
 <tbody></tbody>
 </table>
 </div>
+
+
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbw001kJ1qi8HGE_1rlOb8991eDz6Zhaq4T_nM8scvaL0DHFVDbzu9SVIX8MF0aRDSrafw/exec";
 const SHEET = "Pre-Registration";
@@ -280,7 +308,7 @@ let isUpdating = false;
 const clean = v => (v || "").toString().trim();
 
 //////////////////////////////////////////////////
-// AUTO ROOM (LOCKED PER SUBROOM)
+// AUTO ROOM (UNCHANGED)
 //////////////////////////////////////////////////
 function getAutoRoomAC(room){
   if(!room) return "";
@@ -343,56 +371,78 @@ function filterData(data){
 }
 
 //////////////////////////////////////////////////
-// STATS
+// 🔥 UPDATED STATS (WITH SALES + ATTENDED)
 //////////////////////////////////////////////////
 function updateStats(data){
-  let paid=0, waiting=0;
+  let paid=0, waiting=0, attended=0, sales=0;
 
   data.forEach(p=>{
-    if(p.paymentIndicator==="PAID") paid++;
+    if(p.paymentIndicator==="PAID"){
+      paid++;
+      sales += 1500;
+    }
+
     if(p.paymentIndicator==="ON-WAITING PAYMENT") waiting++;
+
+    if(p.attendanceStatus==="Attended") attended++;
   });
 
   document.getElementById("total").textContent = data.length;
   document.getElementById("paid").textContent = paid;
   document.getElementById("waiting").textContent = waiting;
+  document.getElementById("attended").textContent = attended;
+  document.getElementById("sales").textContent = "₱" + sales.toLocaleString();
 }
 
 //////////////////////////////////////////////////
-// ROOM COUNT
+// 🔥 SUB ROOM STATS (BASED ON p.room)
 //////////////////////////////////////////////////
 function updateRoomStats(){
-  roomCount = {
-    "Berean – Abraham (2)":0,
-    "Berean – Elijah (2)":0,
-    "Berean – Joshua (3)":0,
-    "Berean – Elisha (3)":0,
-    "Sharon – Deborah (2)":0,
-    "Sharon – Abigail (2)":0,
-    "Sharon – Martha (3)":0,
-    "Sharon – Eve (3)":0
-  };
+
+  let subRooms = {};
 
   allData.forEach(p=>{
-    let r = clean(p.ROOM_AC);
-    if(roomCount[r] !== undefined) roomCount[r]++;
+    let r = clean(p.room) || "No Room";
+
+    if(!subRooms[r]){
+      subRooms[r] = [];
+    }
+
+    subRooms[r].push(`${p.firstName} ${p.lastName}`);
   });
 
-  let html = "<b>ROOM AC STATUS</b><br>";
+  let html = "<b>SUB ROOM STATUS</b><br>";
 
-  Object.keys(roomCount).forEach(room=>{
-    let c = roomCount[room];
-    html += `${room}
-      <span class="badge ${c>=ROOM_LIMIT?"full":"available"}">
-      ${c}/${ROOM_LIMIT}
-      </span><br>`;
-  });
+  Object.keys(subRooms)
+    .sort()
+    .forEach(room=>{
+      let people = subRooms[room];
+      let count = people.length;
+
+      html += `
+        <div class="room-card">
+          <div class="room-title">
+            ${room}
+            <span class="badge ${count>=ROOM_LIMIT?"full":"available"}">
+              ${count}
+            </span>
+          </div>
+
+          <div class="room-people">
+            ${people.length 
+              ? people.join(", ")
+              : '<span class="empty">No occupants</span>'
+            }
+          </div>
+        </div>
+      `;
+    });
 
   document.getElementById("roomStats").innerHTML = html;
 }
 
 //////////////////////////////////////////////////
-// CREATE ROW (FINAL PERFECT VERSION)
+// CREATE ROW (UNCHANGED)
 //////////////////////////////////////////////////
 function createRow(p){
 
@@ -438,11 +488,8 @@ function createRow(p){
     <td class="clickable kit">${kitDisplay}</td>
     <td class="clickable aircon">${airconDisplay}</td>
 
-    <!-- ✅ FINAL ROOM LOGIC -->
     <td>
       <select class="roomac">
-
-        <!-- TRUE DEFAULT -->
         <option value="" ${!p.ROOM_AC ? "selected" : ""}>NO ROOM</option>
 
         ${allowedRoom ? `
@@ -452,7 +499,6 @@ function createRow(p){
             ${allowedRoom}
           </option>
         ` : ""}
-
       </select>
     </td>
 
@@ -466,7 +512,7 @@ function createRow(p){
 }
 
 //////////////////////////////////////////////////
-// EVENTS
+// EVENTS (UNCHANGED)
 //////////////////////////////////////////////////
 tbody.addEventListener("click", e=>{
   if(isUpdating) return;
@@ -556,12 +602,11 @@ tbody.addEventListener("change", e=>{
     p.ROOM_AC = val;
     saveLocal(id,"ROOM_AC",val);
     send("room_ac",{rowIndex:id,value:val});
-    updateRoomStats();
   }
 });
 
 //////////////////////////////////////////////////
-// SEND
+// SEND (UNCHANGED)
 //////////////////////////////////////////////////
 function send(action,data){
   let fd=new FormData();
@@ -572,7 +617,7 @@ function send(action,data){
 }
 
 //////////////////////////////////////////////////
-// LOAD
+// LOAD (UNCHANGED FLOW)
 //////////////////////////////////////////////////
 async function loadData(){
   if(isUpdating) return;
