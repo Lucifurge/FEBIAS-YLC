@@ -228,20 +228,21 @@ function payIcon(v){
   v = norm(v);
   if(v.includes("PAID")) return "✔ PAID";
   if(v.includes("CANCEL")) return "❌ CANCELLED";
+  if(v.includes("ONSITE")) return "💰 ONSITE";
   return "🟠 WAITING";
 }
 
 function attIcon(v){
-  v = (v || "").toLowerCase();
-  if(v.includes("attended")) return "✔ ATTENDED";
-  if(v.includes("cancel")) return "❌ CANCELLED";
+  v = norm(v);
+  if(v.includes("ATTENDED")) return "✔ ATTENDED";
+  if(v.includes("CANCEL")) return "❌ CANCELLED";
   return "🟠 WAITING";
 }
 
 function kitIcon(v){
-  v = (v || "").toLowerCase();
-  if(v === "✔") return "✔ GIVEN";
-  if(v === "❌") return "❌ NOT GIVEN";
+  v = norm(v);
+  if(v === "✔" || v.includes("GIVEN")) return "✔ GIVEN";
+  if(v === "❌" || v.includes("NOT")) return "❌ NOT GIVEN";
   return "🟠 WAITING";
 }
 
@@ -317,7 +318,6 @@ function createRow(p){
     "Berean – Barnabas","Berean – Caleb","Berean – Daniel",
     "Berean – David","Berean – Joseph","Berean – Moses",
     "Berean – Nehemiah","Berean – Paul","Berean – Stephen","Berean – Timothy",
-
     "Sharon – Elizabeth","Sharon – Esther","Sharon – Eunice",
     "Sharon – Hannah","Sharon – Lydia","Sharon – Mary",
     "Sharon – Priscilla","Sharon – Rebecca","Sharon – Sarah","Sharon – Ruth"
@@ -331,7 +331,6 @@ function createRow(p){
     let val = roomSelect.value;
     p.room_assignment = val;
     allData[p.rowIndex].room_assignment = val;
-
     send("room_assignment",{rowIndex:p.rowIndex,value:val});
   };
 
@@ -349,7 +348,6 @@ function createRow(p){
     let val = shirtSelect.value;
     p.shirt_size = val;
     allData[p.rowIndex].shirt_size = val;
-
     send("shirt",{rowIndex:p.rowIndex,value:val});
   };
 
@@ -367,7 +365,6 @@ function createRow(p){
     let val = modeSelect.value;
     p.mode_of_payment = val;
     allData[p.rowIndex].mode_of_payment = val;
-
     send("mode",{rowIndex:p.rowIndex,value:val});
   };
 
@@ -387,16 +384,18 @@ function createRow(p){
     allData[p.rowIndex].payment_indicator = next;
 
     updateRowUI(tr,p);
+    updateStats();
+
     send("payment",{rowIndex:p.rowIndex,payment_by:next});
   };
 
   /* ========================= ATT */
   tr.querySelector(".att").onclick = ()=>{
-    let current = (p.attendance_status || "").toLowerCase();
+    let current = norm(p.attendance_status || "WAITING");
 
     let next =
-      current.includes("wait") ? "Attended" :
-      current.includes("attended") ? "Cancelled" :
+      current.includes("WAIT") ? "ATTENDED" :
+      current.includes("ATTENDED") ? "CANCELLED" :
       "WAITING";
 
     p.attendance_status = next;
@@ -408,12 +407,12 @@ function createRow(p){
 
   /* ========================= KIT */
   tr.querySelector(".kit").onclick = ()=>{
-    let current = p.kit_distribution || "";
+    let current = norm(p.kit_distribution);
 
     let next =
-      current === "" ? "✔" :
+      current === "" || current.includes("WAIT") ? "✔" :
       current === "✔" ? "❌" :
-      "WAITING";
+      "";
 
     p.kit_distribution = next;
     allData[p.rowIndex].kit_distribution = next;
@@ -441,7 +440,24 @@ function updateRowUI(tr,p){
   tr.querySelector(".kit").textContent = kitIcon(p.kit_distribution);
 }
 
-/* ========================= LOAD (NO SNAPBACK) */
+/* ========================= STATS */
+function updateStats(){
+  let total = Object.keys(allData).length;
+  let paid = 0;
+  let waiting = 0;
+
+  Object.values(allData).forEach(p=>{
+    let pay = norm(p.payment_indicator);
+    if(pay.includes("PAID")) paid++;
+    else if(pay.includes("WAIT")) waiting++;
+  });
+
+  document.getElementById("total").textContent = total;
+  document.getElementById("paid").textContent = paid;
+  document.getElementById("waiting").textContent = waiting;
+}
+
+/* ========================= LOAD */
 async function loadData(){
 
   let res = await fetch(BASE_URL+"?sheet="+SHEET);
@@ -457,7 +473,6 @@ async function loadData(){
       return;
     }
 
-    // 🔥 HARD SNAPBACK BLOCK (5s)
     if(lastEdit[id] && Date.now() - lastEdit[id] < 5000){
       return;
     }
@@ -476,9 +491,11 @@ async function loadData(){
       tr.querySelector(".classification select").value = server.classification || "No class";
     }
   });
+
+  updateStats();
 }
 
-/* SEARCH */
+/* ========================= SEARCH */
 searchInput.addEventListener("input",()=>{
   let v = searchInput.value.toLowerCase();
   document.querySelectorAll("tbody tr").forEach(tr=>{
@@ -486,7 +503,7 @@ searchInput.addEventListener("input",()=>{
   });
 });
 
-/* INIT */
+/* ========================= INIT */
 loadData();
 setInterval(loadData,15000);
 </script>
