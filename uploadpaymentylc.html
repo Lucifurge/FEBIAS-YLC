@@ -9,7 +9,6 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;700&family=Roboto:wght@400;500&display=swap');
 
-/* Body */
 body {
   margin:0;
   font-family: 'Montserrat', sans-serif;
@@ -17,7 +16,6 @@ body {
   color:#FFFFFF;
 }
 
-/* Container */
 .container {
   max-width:600px;
   margin:60px auto;
@@ -28,7 +26,6 @@ body {
   border-top:6px solid #FFD700;
 }
 
-/* Headings */
 h1 {
   text-align:center;
   color:#FF6A00;
@@ -36,24 +33,25 @@ h1 {
   font-family: 'Bebas Neue', cursive;
   text-transform: uppercase;
 }
+
 .subtitle {
   text-align:center;
-  color:#FFFFFF;
   margin-bottom:30px;
   font-size:14px;
 }
+
 h2 {
   margin-top:25px;
   color:#FF6A00;
   font-size:17px;
 }
 
-/* Labels & Inputs */
 label {
   display:block;
   margin-top:10px;
   cursor:pointer;
 }
+
 input[type=text],
 input[type=file] {
   width:100%;
@@ -63,16 +61,15 @@ input[type=file] {
   border:1px solid #FFD700;
   font-size:14px;
   background: rgba(255,255,255,0.1);
-  color: #FFFFFF;
+  color:#FFFFFF;
 }
+
 input:focus {
   outline:none;
   border-color:#FFD700;
   box-shadow:0 0 6px rgba(255,214,0,0.5);
-  background: rgba(255,255,255,0.15);
 }
 
-/* Notice box */
 .notice {
   margin:18px 0;
   padding:12px;
@@ -84,7 +81,16 @@ input:focus {
   text-align:center;
 }
 
-/* Button */
+.radio-group {
+  margin-top:10px;
+}
+.radio-group label {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:8px;
+}
+
 button {
   width:100%;
   padding:14px;
@@ -98,12 +104,12 @@ button {
   cursor:pointer;
   transition:all 0.3s ease;
 }
+
 button:hover {
   background:#FFD700;
   transform:scale(1.02);
 }
 
-/* Loader */
 #loader {
   display:none;
   position:fixed;
@@ -116,36 +122,38 @@ button:hover {
   font-size:18px;
   color:#FFD700;
   font-weight:bold;
-  font-family:'Montserrat', sans-serif;
 }
 
-/* Footer */
 footer {
   text-align:center;
   margin-top:40px;
   font-size:13px;
-  color:#FFFFFF;
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
 <h1>Upload Your Payment Receipt</h1>
-<p class="subtitle">YLC 2026 — Online Payment</p>
+<p class="subtitle">YLC 2026 — Payment Upload System</p>
 
 <form id="upload-form">
 
-<h2>Step 1: Receipt Name</h2>
-<label>Enter Receipt Name:</label>
+<h2>Step 1: Select Upload Type</h2>
+<div class="radio-group">
+  <label><input type="radio" name="uploadType" value="online" checked> Online Payment</label>
+  <label><input type="radio" name="uploadType" value="walkin"> Walk-in Payment</label>
+</div>
+
+<h2>Step 2: Receipt Name</h2>
 <input type="text" id="fileName" placeholder="E.g., John Doe Payment" required>
 
-<h2>Step 2: Upload Receipt Photo</h2>
-<label>Select Image File:</label>
+<h2>Step 3: Upload Receipt Photo</h2>
 <input type="file" id="receipt" accept="image/*" required>
 
 <div class="notice">
-Please ensure your receipt is clear and correctly named. After submission, you will see a confirmation.
+Make sure your receipt is clear and matches your selected payment type.
 </div>
 
 <button type="submit">Submit Receipt</button>
@@ -159,41 +167,60 @@ Please ensure your receipt is clear and correctly named. After submission, you w
 </footer>
 
 <script>
-const driveUrl = "https://script.google.com/macros/s/AKfycbxPZNYdzibgYGspJtRmcgdcaio5eFD_zSsF3Ef1S51zjoiAxk-UMjfGTPm4FPa0LCAp/exec";
+const ONLINE_URL = "https://script.google.com/macros/s/AKfycbwGvtDdMW4wjI1LV2t4Y8AhSDMKCRFIyb-LXKMfCjWuboLEgV89Un7kiqw8WFWJkxU-/exec";
+const WALKIN_URL = "https://script.google.com/macros/s/AKfycbxPZNYdzibgYGspJtRmcgdcaio5eFD_zSsF3Ef1S51zjoiAxk-UMjfGTPm4FPa0LCAp/exec";
+
 const loader = document.getElementById('loader');
 
 document.getElementById('upload-form').addEventListener('submit', async e => {
   e.preventDefault();
+
   const fileName = document.getElementById('fileName').value.trim();
   const file = document.getElementById('receipt').files[0];
-  if (!fileName || !file) { alert('Please provide receipt name and upload file.'); return; }
+  const uploadType = document.querySelector('input[name="uploadType"]:checked').value;
+
+  if (!fileName || !file) {
+    alert('Please provide receipt name and upload file.');
+    return;
+  }
+
+  const driveUrl = uploadType === "online" ? ONLINE_URL : WALKIN_URL;
 
   loader.style.display = 'block';
+
   const reader = new FileReader();
   reader.onload = async () => {
     try {
       const base64 = reader.result.split(',')[1];
+
       const postData = new URLSearchParams();
       postData.append('fileName', fileName);
       postData.append('file', base64);
       postData.append('fileType', file.type);
+      postData.append('category', uploadType);
 
-      const res = await fetch(driveUrl, { method: 'POST', body: postData });
+      const res = await fetch(driveUrl, {
+        method: 'POST',
+        body: postData
+      });
+
       const result = await res.json();
 
       if (result.result === 'success') {
-        alert('Receipt uploaded successfully!');
+        alert(`✅ ${uploadType.toUpperCase()} receipt uploaded successfully!`);
         window.location.href = 'thankyou2.html';
       } else {
         alert('Upload failed. Please try again.');
         loader.style.display = 'none';
       }
+
     } catch (err) {
       console.error(err);
       alert('Upload error. Please try again.');
       loader.style.display = 'none';
     }
   };
+
   reader.readAsDataURL(file);
 });
 </script>
